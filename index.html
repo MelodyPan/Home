@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="CathFlow 系統入口網站" />
+  <title>CathFlow 系統入口</title>
+
+  <style>
+    :root {
+      --primary: #0f766e;
+      --primary-dark: #115e59;
+      --secondary: #2563eb;
+      --secondary-dark: #1d4ed8;
+      --text-main: #153047;
+      --text-light: #60758a;
+      --card-bg: rgba(255, 255, 255, 0.92);
+      --border: rgba(148, 163, 184, 0.25);
+      --shadow: 0 20px 45px rgba(15, 47, 68, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family:
+        "Microsoft JhengHei",
+        "Noto Sans TC",
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+      color: var(--text-main);
+      background:
+        radial-gradient(circle at top left, rgba(45, 212, 191, 0.25), transparent 35%),
+        radial-gradient(circle at bottom right, rgba(96, 165, 250, 0.25), transparent 35%),
+        linear-gradient(135deg, #eefbf9 0%, #f5f9ff 48%, #edf5ff 100%);
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    .background-shape {
+      position: fixed;
+      border-radius: 999px;
+      filter: blur(4px);
+      opacity: 0.25;
+      pointer-events: none;
+    }
+
+    .shape-one {
+      width: 260px;
+      height: 260px;
+      top: -90px;
+      right: -70px;
+      background: #5eead4;
+    }
+
+    .shape-two {
+      width: 220px;
+      height: 220px;
+      bottom: -80px;
+      left: -60px;
+      background: #93c5fd;
+    }
+
+    header {
+      width: 100%;
+      padding: 26px 7vw;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      z-index: 1;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      font-size: 1.2rem;
+      letter-spacing: 0.04em;
+    }
+
+    .brand-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      color: white;
+      background: linear-gradient(135deg, var(--primary), #14b8a6);
+      box-shadow: 0 10px 25px rgba(15, 118, 110, 0.25);
+    }
+
+    .brand-icon svg {
+      width: 25px;
+      height: 25px;
+    }
+
+    .header-label {
+      color: var(--text-light);
+      font-size: 0.92rem;
+    }
+
+    main {
+      width: min(1080px, 88vw);
+      margin: auto;
+      padding: 44px 0 80px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .eyebrow {
+      display: inline-block;
+      padding: 8px 14px;
+      border-radius: 999px;
+      color: var(--primary);
+      background: rgba(20, 184, 166, 0.11);
+      border: 1px solid rgba(20, 184, 166, 0.18);
+      font-size: 0.86rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2.2rem, 6vw, 4.5rem);
+      line-height: 1.08;
+      letter-spacing: -0.04em;
+    }
+
+    .hero-highlight {
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .hero p {
+      max-width: 680px;
+      margin: 22px auto 0;
+      color: var(--text-light);
+      font-size: clamp(1rem, 2vw, 1.15rem);
+      line-height: 1.8;
+    }
+
+    .portal-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 26px;
+    }
+
+    .portal-card {
+      position: relative;
+      min-height: 310px;
+      padding: 34px;
+      border-radius: 28px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease,
+        border-color 0.25s ease;
+    }
+
+    .portal-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 28px 60px rgba(15, 47, 68, 0.18);
+    }
+
+    .portal-card.front:hover {
+      border-color: rgba(15, 118, 110, 0.35);
+    }
+
+    .portal-card.admin:hover {
+      border-color: rgba(37, 99, 235, 0.35);
+    }
+
+    .card-decoration {
+      position: absolute;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      right: -65px;
+      top: -65px;
+      opacity: 0.12;
+    }
+
+    .front .card-decoration {
+      background: var(--primary);
+    }
+
+    .admin .card-decoration {
+      background: var(--secondary);
+    }
+
+    .portal-icon {
+      width: 68px;
+      height: 68px;
+      border-radius: 20px;
+      display: grid;
+      place-items: center;
+      color: white;
+      margin-bottom: 28px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .front .portal-icon {
+      background: linear-gradient(135deg, var(--primary), #2dd4bf);
+      box-shadow: 0 12px 25px rgba(15, 118, 110, 0.25);
+    }
+
+    .admin .portal-icon {
+      background: linear-gradient(135deg, var(--secondary), #60a5fa);
+      box-shadow: 0 12px 25px rgba(37, 99, 235, 0.25);
+    }
+
+    .portal-icon svg {
+      width: 34px;
+      height: 34px;
+    }
+
+    .portal-card h2 {
+      margin: 0;
+      font-size: 1.65rem;
+    }
+
+    .portal-card p {
+      margin: 14px 0 28px;
+      color: var(--text-light);
+      line-height: 1.75;
+      flex-grow: 1;
+    }
+
+    .portal-link {
+      width: 100%;
+      min-height: 52px;
+      padding: 14px 20px;
+      border-radius: 15px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      text-decoration: none;
+      color: white;
+      font-weight: 800;
+      transition:
+        transform 0.2s ease,
+        filter 0.2s ease;
+    }
+
+    .portal-link:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.06);
+    }
+
+    .portal-link svg {
+      width: 19px;
+      height: 19px;
+      transition: transform 0.2s ease;
+    }
+
+    .portal-link:hover svg {
+      transform: translateX(4px);
+    }
+
+    .front .portal-link {
+      background: linear-gradient(135deg, var(--primary), #14b8a6);
+    }
+
+    .admin .portal-link {
+      background: linear-gradient(135deg, var(--secondary), #3b82f6);
+    }
+
+    footer {
+      text-align: center;
+      padding: 22px;
+      color: var(--text-light);
+      font-size: 0.86rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    @media (max-width: 760px) {
+      header {
+        padding: 20px 6vw;
+      }
+
+      .header-label {
+        display: none;
+      }
+
+      main {
+        width: min(92vw, 620px);
+        padding-top: 25px;
+      }
+
+      .hero {
+        margin-bottom: 34px;
+      }
+
+      .portal-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .portal-card {
+        min-height: 285px;
+        padding: 28px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="background-shape shape-one"></div>
+  <div class="background-shape shape-two"></div>
+
+  <header>
+    <div class="brand">
+      <div class="brand-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M12 3v18M3 12h18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <span>CathFlow</span>
+    </div>
+
+    <!-- <div class="header-label">心導管流程管理系統</div> -->
+  </header>
+
+  <main>
+    <section class="hero">
+      <!-- <div class="eyebrow">SYSTEM PORTAL</div> -->
+      <h1>歡迎使用 <span class="hero-highlight">CathFlow</span></h1>
+      <!-- <p>
+        請依照您的使用需求，選擇進入前台作業網站或後台管理網站。
+      </p> -->
+    </section>
+
+    <section class="portal-grid">
+      <article class="portal-card front">
+        <div class="card-decoration"></div>
+
+        <div class="portal-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M3 5.5A2.5 2.5 0 0 1 5.5 3h13A2.5 2.5 0 0 1 21 5.5v9A2.5 2.5 0 0 1 18.5 17h-13A2.5 2.5 0 0 1 3 14.5v-9Z" stroke="currentColor" stroke-width="2"/>
+            <path d="M8 21h8M12 17v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+
+        <h2>前台作業網站</h2>
+        <p>
+          提供臨床作業使用功能。
+        </p>
+
+        <a
+          id="frontendLink"
+          class="portal-link"
+          href="http://172.22.140.63:5020/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          進入前台
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
+      </article>
+
+      <article class="portal-card admin">
+        <div class="card-decoration"></div>
+
+        <div class="portal-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M12 3 4.5 6v5.4c0 4.4 3.2 8.5 7.5 9.6 4.3-1.1 7.5-5.2 7.5-9.6V6L12 3Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M9.5 12 11 13.5l3.5-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+
+        <h2>後台管理網站</h2>
+        <p>
+          提供系統設定、資料維護管理功能。
+        </p>
+
+        <a
+          id="backendLink"
+          class="portal-link"
+          href="http://172.22.140.63:5020/login"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          進入後台
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
+      </article>
+    </section>
+  </main>
+
+  <footer>
+    © <span id="currentYear"></span> CathFlow. All rights reserved.
+  </footer>
+
+  <script>
+    const cathFlowUrls = {
+      frontend: "http://172.22.140.63:5020",
+      backend: "http://172.22.140.63:5020/login"
+    };
+
+    document.getElementById("frontendLink").href = cathFlowUrls.frontend;
+    document.getElementById("backendLink").href = cathFlowUrls.backend;
+    document.getElementById("currentYear").textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
