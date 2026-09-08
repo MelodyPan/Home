@@ -299,6 +299,142 @@
       z-index: 1;
     }
 
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .about-button {
+      border: 1px solid rgba(15, 118, 110, 0.22);
+      background: rgba(255, 255, 255, 0.82);
+      color: var(--primary-dark);
+      min-height: 42px;
+      padding: 10px 16px;
+      border-radius: 13px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 8px 22px rgba(15, 47, 68, 0.08);
+      backdrop-filter: blur(10px);
+      transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        background 0.2s ease;
+    }
+
+    .about-button:hover {
+      transform: translateY(-2px);
+      background: #fff;
+      box-shadow: 0 12px 28px rgba(15, 47, 68, 0.13);
+    }
+
+    .about-button svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: rgba(15, 23, 42, 0.42);
+      backdrop-filter: blur(5px);
+    }
+
+    .modal-backdrop.is-open {
+      display: flex;
+    }
+
+    .about-modal {
+      width: min(680px, 94vw);
+      border-radius: 18px;
+      overflow: hidden;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      box-shadow: 0 28px 80px rgba(15, 23, 42, 0.32);
+      animation: modalIn 0.2s ease;
+    }
+
+    @keyframes modalIn {
+      from { opacity: 0; transform: translateY(10px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .about-modal-header {
+      min-height: 54px;
+      padding: 10px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #fff;
+      border-bottom: 1px solid #dbe3ea;
+    }
+
+    .about-modal-header h3 { margin: 0; font-size: 1.05rem; font-weight: 700; }
+
+    .modal-close {
+      width: 36px; height: 36px; border: 0; border-radius: 8px;
+      background: transparent; color: #475569; display: grid; place-items: center;
+      cursor: pointer; font-size: 1.55rem; line-height: 1;
+    }
+    .modal-close:hover { background: #eef2f7; color: #0f172a; }
+
+    .about-modal-body { padding: 0; text-align: left; }
+
+    .about-hero {
+      padding: 38px 42px 30px;
+      text-align: center;
+      background:
+        radial-gradient(circle at 20% 25%, rgba(20,184,166,.14), transparent 34%),
+        radial-gradient(circle at 80% 20%, rgba(59,130,246,.13), transparent 35%),
+        linear-gradient(135deg, #f7fffe, #eef6ff);
+      border-bottom: 1px solid #cbd5e1;
+    }
+    .about-brand-row { display:flex; justify-content:center; align-items:center; gap:18px; }
+    .about-logo {
+      width: 82px; height: 82px; border-radius: 24px; display:grid; place-items:center;
+      color:#fff; background:linear-gradient(135deg,var(--primary),var(--secondary));
+      box-shadow:0 14px 30px rgba(15,118,110,.22); flex:0 0 auto;
+    }
+    .about-logo svg { width:48px; height:48px; }
+    .about-product-name {
+      margin:0; font-size:clamp(2.6rem,8vw,4.8rem); line-height:1; letter-spacing:-.05em;
+      font-style:italic; background:linear-gradient(90deg,var(--primary),var(--secondary));
+      -webkit-background-clip:text; background-clip:text; color:transparent;
+      text-shadow:0 3px 8px rgba(15,47,68,.08);
+    }
+    .about-subtitle { margin-top:18px; color:#25384a; font-size:1.22rem; font-weight:800; }
+
+    .about-info { padding: 24px 34px 12px; color:#334155; font-size:1rem; line-height:1.7; }
+    .about-info-row { display:grid; grid-template-columns:90px 16px 1fr; gap:4px; align-items:start; }
+    .about-info-row + .about-info-row { margin-top:8px; }
+    .about-info-label { color:#0f172a; font-weight:700; }
+    .about-info-colon { color:#64748b; }
+    .about-license {
+      margin: 10px 34px 0; padding: 18px 0 4px; border-top:1px solid #cbd5e1;
+      font-size:1.05rem; color:#0f172a;
+    }
+    .about-license strong { color:var(--primary-dark); }
+    .about-copyright { margin:12px 34px 0; color:#94a3b8; font-size:.78rem; }
+
+    .about-modal-footer { padding: 18px 34px 26px; display:flex; justify-content:flex-end; }
+    .modal-confirm {
+      min-width:150px; min-height:44px; padding:10px 28px; border:1px solid #94a3b8;
+      border-radius:8px; color:#0f172a; background:#fff; font:inherit; font-weight:700; cursor:pointer;
+    }
+    .modal-confirm:hover { background:#f1f5f9; }
+
+
     @media (max-width: 760px) {
       header {
         padding: 20px 6vw;
@@ -343,7 +479,17 @@
       <span>CathFlow</span>
     </div>
 
-    <!-- <div class="header-label">心導管流程管理系統</div> -->
+    <div class="header-actions">
+      <!-- <div class="header-label">心導管流程管理系統</div> -->
+      <button class="about-button" id="aboutButton" type="button" aria-haspopup="dialog" aria-controls="aboutModal">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
+          <path d="M12 10.5V16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="12" cy="7.3" r="1.1" fill="currentColor"/>
+        </svg>
+        關於產品
+      </button>
+    </div>
   </header>
 
   <main>
@@ -374,7 +520,7 @@
         <a
           id="frontendLink"
           class="portal-link"
-          href="https://melodypan.github.io/CathFlow"
+          href="http://172.22.140.63:5020/"
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -403,7 +549,7 @@
         <a
           id="backendLink"
           class="portal-link"
-          href="https://melodypan.github.io/CathFlow/login"
+          href="http://172.22.140.63:5020/login"
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -416,19 +562,95 @@
     </section>
   </main>
 
+
+  <div class="modal-backdrop" id="aboutModal" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
+    <div class="about-modal">
+      <div class="about-modal-header">
+        <h3 id="aboutTitle">關於產品</h3>
+        <button class="modal-close" id="aboutCloseButton" type="button" aria-label="關閉">×</button>
+      </div>
+
+      <div class="about-modal-body">
+        <div class="about-hero">
+          <div class="about-brand-row">
+            <div class="about-logo" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M3 12h4l2-5 3 10 2-5h7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M12 21S4 16.2 4 9.7A4.7 4.7 0 0 1 12 6.3a4.7 4.7 0 0 1 8 3.4C20 16.2 12 21 12 21Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <h2 class="about-product-name">CathFlow</h2>
+          </div>
+          <div class="about-subtitle">心導管病患動態及資訊衛教軟體系統</div>
+        </div>
+
+        <div class="about-info">
+          <div class="about-info-row"><div class="about-info-label">品名</div><div class="about-info-colon">：</div><div>心導管病患動態及資訊衛教軟體系統</div></div>
+          <div class="about-info-row"><div class="about-info-label">型號</div><div class="about-info-colon">：</div><div>CathFlow</div></div>
+          <div class="about-info-row"><div class="about-info-label">產品序號</div><div class="about-info-colon">：</div><div>SN26-001</div></div>
+          <div class="about-info-row"><div class="about-info-label">Release</div><div class="about-info-colon">：</div><div>2026/8/11</div></div>
+        </div>
+
+        <div class="about-license">本產品已授權給：<strong>臺中榮民總醫院</strong></div>
+        <!-- <p class="about-copyright">© <span id="aboutCurrentYear"></span> CathFlow. All rights reserved.</p> -->
+      </div>
+
+      <div class="about-modal-footer">
+        <button class="modal-confirm" id="aboutConfirmButton" type="button">關閉</button>
+      </div>
+    </div>
+  </div>
+
   <footer>
     © <span id="currentYear"></span> CathFlow. All rights reserved.
   </footer>
 
   <script>
     const cathFlowUrls = {
-      frontend: "https://melodypan.github.io/CathFlow",
-      backend: "https://melodypan.github.io/CathFlow/login"
+      //frontend: "https://net.vghtc.gov.tw/CathFlow/",
+      frontend: "http://172.22.140.63:5020/",
+      backend: "http://172.22.140.63:5020/login"
+      //backend: "http://net.vghtc.gov.tw/cathFlow"
     };
+
+
+    const aboutModal = document.getElementById("aboutModal");
+    const aboutButton = document.getElementById("aboutButton");
+    const aboutCloseButton = document.getElementById("aboutCloseButton");
+    const aboutConfirmButton = document.getElementById("aboutConfirmButton");
+
+    function openAboutModal() {
+      aboutModal.classList.add("is-open");
+      document.body.style.overflow = "hidden";
+      aboutCloseButton.focus();
+    }
+
+    function closeAboutModal() {
+      aboutModal.classList.remove("is-open");
+      document.body.style.overflow = "";
+      aboutButton.focus();
+    }
+
+    aboutButton.addEventListener("click", openAboutModal);
+    aboutCloseButton.addEventListener("click", closeAboutModal);
+    aboutConfirmButton.addEventListener("click", closeAboutModal);
+
+    aboutModal.addEventListener("click", (event) => {
+      if (event.target === aboutModal) {
+        closeAboutModal();
+      }
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && aboutModal.classList.contains("is-open")) {
+        closeAboutModal();
+      }
+    });
 
     document.getElementById("frontendLink").href = cathFlowUrls.frontend;
     document.getElementById("backendLink").href = cathFlowUrls.backend;
     document.getElementById("currentYear").textContent = new Date().getFullYear();
+    document.getElementById("aboutCurrentYear").textContent = new Date().getFullYear();
   </script>
 </body>
 </html>
