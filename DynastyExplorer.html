@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="DynastyExplorer 中國歷史互動年表，探索朝代、人物與重大事件。" />
+  <title>DynastyExplorer｜中國歷史互動年表</title>
+  <style>
+    :root { --ink:#24211d; --muted:#817a70; --paper:#f5f1e8; --surface:#fbf8f0; --red:#b23a32; --red-dark:#7f2925; --line:#d8cdbc; --gold:#bd8b46; --sage:#819180; --blue:#708aa3; --sans:"Microsoft JhengHei","Noto Sans TC",sans-serif; --serif:Georgia,"Noto Serif TC","PMingLiU",serif; }
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    html,body { max-width:100%; overflow-x:clip; }
+    body { margin:0; color:var(--ink); background:var(--paper); font-family:var(--sans); line-height:1.6; background-image:radial-gradient(circle at 8% 15%,rgba(178,58,50,.06),transparent 25%),radial-gradient(circle at 90% 28%,rgba(129,145,128,.09),transparent 24%),linear-gradient(rgba(89,68,47,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(89,68,47,.025) 1px,transparent 1px); background-size:auto,auto,34px 34px,34px 34px; }
+    a { color:inherit; }
+    button,input { font:inherit; }
+    button,a,input { outline-color:var(--red); }
+    :focus-visible { outline:3px solid var(--red); outline-offset:3px; }
+    .shell { width:min(1240px,calc(100% - 48px)); margin:0 auto; }
+    header { position:sticky; top:0; z-index:20; border-bottom:1px solid rgba(116,87,59,.3); background:rgba(245,241,232,.94); backdrop-filter:blur(14px); }
+    .nav { min-height:70px; display:flex; align-items:center; justify-content:space-between; gap:20px; }
+    .brand { display:inline-flex; align-items:center; gap:10px; font-weight:900; letter-spacing:.01em; text-decoration:none; }
+    .brand-logo { display:block; width:34px; height:34px; object-fit:contain; border-radius:50%; box-shadow:0 3px 10px rgba(36,33,29,.12); }
+    .logo { display:grid; width:34px; height:34px; place-items:center; border-radius:50%; color:var(--paper); background:var(--ink); font-size:.74rem; }
+    .brand em { color:var(--red); font-style:normal; }
+    .nav-actions { display:flex; align-items:center; gap:10px; }
+    .back { color:var(--muted); font-size:.85rem; font-weight:700; text-decoration:none; }
+    .search { width:230px; padding:10px 13px; border:1px solid var(--line); border-radius:7px; color:var(--ink); background:rgba(255,255,255,.62); transition:border-color .2s ease,box-shadow .2s ease,background .2s ease; }
+    .search:focus { border-color:var(--red); background:var(--surface); box-shadow:0 0 0 4px rgba(178,58,50,.1); outline:0; }
+    .search::placeholder { color:#a49a8d; }
+    main { padding:58px 0 96px; }
+    .hero { display:block; margin-bottom:44px; padding:26px 0 34px; border-bottom:1px solid rgba(216,205,188,.7); }
+    .kicker { color:var(--red); font-size:.72rem; font-weight:900; letter-spacing:.22em; }
+    h1,h2,h3,p { margin-top:0; }
+    h1 { margin:12px 0 10px; font-family:var(--serif); font-size:clamp(3.2rem,7vw,6.6rem); font-weight:700; letter-spacing:.03em; line-height:1.03; }
+    .hero-subtitle { max-width:720px; color:var(--red); font-size:clamp(1.35rem,2.5vw,1.9rem); font-weight:900; letter-spacing:.02em; }
+    .hero-subtitle em { display:block; margin-top:2px; color:var(--muted); font-family:var(--serif); font-size:.6em; font-weight:400; letter-spacing:.03em; }
+    .hero p { max-width:690px; margin:20px 0 0; color:var(--muted); font-size:1.02rem; }
+    .preview { display:flex; gap:0; margin:36px 0 42px; border:1px solid var(--line); border-radius:8px; background:rgba(251,248,240,.58); box-shadow:0 8px 20px rgba(75,54,36,.05); overflow:auto; }
+    .preview button { flex:1 0 130px; padding:12px 14px; border:0; border-right:1px solid var(--line); color:var(--muted); background:transparent; font-family:var(--serif); font-size:1.05rem; text-align:center; cursor:pointer; transition:color .2s ease,background .2s ease; }
+    .preview button:first-child { color:var(--muted); }
+    .preview button:hover, .preview button.is-selected { color:var(--red-dark); background:rgba(178,58,50,.08); }
+    .toolbar { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:14px; margin-bottom:12px; padding:12px; border:1px solid var(--line); border-radius:8px; background:rgba(251,248,240,.58); }
+    .toolbar-group { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+    .toolbar-label { color:var(--muted); font-size:.78rem; font-weight:800; }
+    .select,.tool-button { min-height:38px; padding:7px 11px; border:1px solid var(--line); border-radius:4px; color:var(--ink); background:var(--surface); cursor:pointer; }
+    .tool-button:hover,.select:hover { border-color:var(--red); color:var(--red); }
+    .tool-button.primary { color:#fff; border-color:var(--red); background:var(--red); }
+    .year-range { color:var(--muted); font-family:var(--serif); font-size:.9rem; }
+    .layers { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px; }
+    .layer-toggle { display:inline-flex; align-items:center; gap:7px; padding:7px 10px; border:1px solid var(--line); border-radius:999px; color:var(--muted); background:rgba(255,255,255,.34); font-size:.78rem; cursor:pointer; }
+    .layer-toggle input { accent-color:var(--red); }
+    .timeline-frame { position:relative; width:100%; min-width:0; border:1px solid rgba(116,87,59,.46); border-radius:8px; background:rgba(251,248,240,.82); box-shadow:0 16px 36px rgba(75,54,36,.1); overflow:hidden; }
+    .timeline-scroll { width:100%; min-width:0; overflow-x:auto; overflow-y:hidden; cursor:grab; scrollbar-color:var(--red) var(--line); }
+    .timeline-scroll.is-dragging { cursor:grabbing; user-select:none; }
+    .timeline-canvas { position:relative; min-width:1100px; height:530px; }
+    .axis { position:absolute; inset:0; pointer-events:none; }
+    .axis-line { position:absolute; left:0; right:0; top:62px; border-top:1px solid var(--ink); opacity:.55; }
+    .axis-tick { position:absolute; top:53px; width:1px; height:18px; background:var(--ink); opacity:.65; }
+    .axis-label { position:absolute; top:18px; transform:translateX(-50%); color:var(--muted); font-family:var(--serif); font-size:.75rem; white-space:nowrap; }
+    .axis-label:first-letter { color:var(--red); }
+    .layer-row { position:absolute; left:0; right:0; height:68px; border-top:1px solid rgba(216,205,188,.75); }
+    .layer-name { position:absolute; left:12px; top:19px; z-index:3; width:96px; color:var(--muted); font-size:.76rem; font-weight:900; }
+    .layer-track { position:absolute; left:112px; right:0; top:0; bottom:0; }
+    .bar { position:absolute; top:15px; height:36px; min-width:18px; padding:4px 8px; border:1px solid rgba(57,42,30,.28); border-radius:2px; color:var(--ink); background:var(--bar-color); font-size:.76rem; font-weight:900; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer; transition:filter .18s ease,transform .18s ease; }
+    .bar:hover,.bar.is-selected { z-index:5; filter:saturate(1.22) brightness(.98); transform:translateY(-3px); box-shadow:0 6px 12px rgba(55,39,29,.18); }
+    .event-dot { position:absolute; top:19px; width:28px; height:28px; padding:0; border:3px solid var(--red-dark); border-radius:50%; color:var(--paper); background:var(--red); font-size:0; cursor:pointer; }
+    .event-dot:hover,.event-dot.is-selected { transform:scale(1.18); box-shadow:0 5px 12px rgba(127,41,37,.3); }
+    .event-dot::after { content:""; position:absolute; top:25px; left:50%; width:1px; height:20px; background:var(--red-dark); }
+    .event-label { position:absolute; top:44px; left:50%; transform:translateX(-50%); width:100px; color:var(--red-dark); font-size:.68rem; font-weight:900; line-height:1.25; text-align:center; white-space:normal; }
+    .person-line { position:absolute; top:15px; width:42px; height:34px; padding:4px; display:grid; place-items:center; border:1px solid var(--sage); border-radius:4px; color:#fff; background:var(--sage); cursor:pointer; }
+    .person-line svg { width:20px; height:20px; fill:currentColor; }
+    .person-line:hover,.person-line.is-selected { filter:saturate(1.15); box-shadow:0 5px 12px rgba(63,82,63,.22); transform:translateY(-3px); }
+    .timeline-hint { padding:10px 14px; border-top:1px solid var(--line); color:var(--muted); font-size:.75rem; }
+    .drawer { position:fixed; inset:0; z-index:30; display:none; justify-content:flex-end; background:rgba(36,33,29,.28); }
+    .drawer.is-open { display:flex; }
+    .drawer-panel { width:min(440px,92vw); padding:32px; overflow:auto; background:var(--surface); box-shadow:-12px 0 36px rgba(36,33,29,.2); animation:slideIn .22s ease; }
+    @keyframes slideIn { from { transform:translateX(100%); } to { transform:translateX(0); } }
+    .drawer-close { float:right; width:34px; height:34px; border:1px solid var(--line); border-radius:50%; color:var(--muted); background:transparent; cursor:pointer; }
+    .drawer-type { margin-top:24px; color:var(--red); font-size:.72rem; font-weight:900; letter-spacing:.18em; }
+    .drawer-panel h2 { margin:8px 0 0; font-family:var(--serif); font-size:2.25rem; }
+    .drawer-panel h2 em { display:block; color:var(--muted); font-size:.42em; font-weight:400; letter-spacing:.04em; }
+    .drawer-period { margin:10px 0 24px; color:var(--red); font-family:var(--serif); font-weight:800; }
+    .drawer-panel p { color:var(--muted); }
+    .drawer-facts { padding-top:18px; border-top:1px solid var(--line); }
+    .drawer-facts dt { color:var(--muted); font-size:.78rem; }
+    .drawer-facts dd { margin:2px 0 14px; font-weight:800; }
+    .search-results { position:absolute; top:58px; right:24px; z-index:25; display:none; width:300px; max-height:360px; overflow:auto; border:1px solid var(--line); background:var(--surface); box-shadow:0 12px 28px rgba(36,33,29,.18); }
+    .search-results.is-open { display:block; }
+    .search-result { display:block; width:100%; padding:11px 14px; border:0; border-bottom:1px solid var(--line); color:var(--ink); background:transparent; text-align:left; cursor:pointer; }
+    .search-result:hover { background:#eee4d4; }
+    .search-result small { display:block; color:var(--red); font-size:.68rem; font-weight:900; }
+    footer { padding:26px 0; border-top:1px solid rgba(116,87,59,.28); color:var(--muted); font-size:.8rem; }
+    @media (max-width:760px) { .shell { width:min(100% - 32px,620px); } .nav { min-height:64px; } .brand { min-width:0; } .brand span:last-child { white-space:nowrap; } .search { width:155px; } .hero { display:block; padding-top:14px; } .hero-stat { width:max-content; margin-top:24px; text-align:left; } .preview button { flex-basis:112px; } .timeline-canvas { height:600px; } .search-results { right:16px; width:min(300px,calc(100vw - 32px)); } }
+    @media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } *,*::before,*::after { transition-duration:.01ms !important; animation-duration:.01ms !important; } }
+  </style>
+</head>
+<body>
+  <header><div class="shell nav"><a class="brand" href="#top" aria-label="回到 DynastyExplorer 頁首"><img class="brand-logo" src="images/logo.png" alt="" /><span>DynastyExplorer</span></a><div class="nav-actions"><input class="search" id="globalSearch" type="search" placeholder="搜尋朝代、人物、事件" aria-label="搜尋朝代、人物、事件" /></div><div class="search-results" id="searchResults" role="listbox"></div></div></header>
+  <main id="top"><div class="shell">
+    <section class="hero"><div><div class="kicker">INTERACTIVE HISTORY · CHINA</div><div class="hero-subtitle">探索中國歷史的時間脈絡<em>Explore Chinese History Through Time</em></div><p>從朝代、帝王、人物到重大事件，沿著時間軸，看見彼此交會的歷史。</p></div></section>
+    <div class="preview" aria-label="歷史時期預覽"><button type="button" data-period="ancient">夏商周</button><button type="button" data-period="qinHan">秦漢</button><button type="button" data-period="weiJin">魏晉</button><button type="button" data-period="suiTang">隋唐</button><button type="button" data-period="songYuan">宋元</button><button type="button" data-period="mingQing">明清</button></div>
+    <section aria-label="互動式中國歷史時間軸"><div class="toolbar"><div class="toolbar-group"><span class="toolbar-label">朝代</span><select class="select" id="dynastySelect" aria-label="選擇朝代"><option value="">全部時期</option></select><button class="tool-button" id="resetView" type="button">重設視圖</button></div><div class="toolbar-group"><button class="tool-button" id="zoomOut" type="button" aria-label="縮小時間軸">−</button><span class="year-range" id="yearRange">221 BCE — 907 CE</span><button class="tool-button" id="zoomIn" type="button" aria-label="放大時間軸">+</button></div></div><div class="layers" aria-label="時間軸圖層"><label class="layer-toggle"><input type="checkbox" data-layer="dynasty" checked /> 朝代</label><label class="layer-toggle"><input type="checkbox" data-layer="person" checked /> 人物</label><label class="layer-toggle"><input type="checkbox" data-layer="event" checked /> 歷史事件</label><label class="layer-toggle"><input type="checkbox" data-layer="emperor" checked /> 帝王</label></div>
+      <div class="timeline-frame"><div class="timeline-scroll" id="timelineScroll"><div class="timeline-canvas" id="timelineCanvas"><div class="axis" id="axis"></div><div class="layer-row" data-render-layer="dynasty" style="top:82px"><div class="layer-name">朝代</div><div class="layer-track" id="dynastyLayer"></div></div><div class="layer-row" data-render-layer="emperor" style="top:158px"><div class="layer-name">帝王</div><div class="layer-track" id="emperorLayer"></div></div><div class="layer-row" data-render-layer="person" style="top:234px"><div class="layer-name">人物</div><div class="layer-track" id="personLayer"></div></div><div class="layer-row" data-render-layer="event" style="top:310px"><div class="layer-name">事件</div><div class="layer-track" id="eventLayer"></div></div></div></div><div class="timeline-hint">滑鼠拖曳平移 · 滑鼠滾輪水平瀏覽 · Ctrl/Cmd + 滾輪縮放 · 點擊色帶或事件查看詳情</div></div>
+    </section>
+  </div></main>
+  <aside class="drawer" id="detailDrawer" aria-hidden="true"><div class="drawer-panel" role="dialog" aria-modal="true" aria-labelledby="drawerTitle"><button class="drawer-close" id="drawerClose" type="button" aria-label="關閉詳細資訊">×</button><div class="drawer-type" id="drawerType">EVENT</div><h2 id="drawerTitle">事件名稱<em id="drawerTitleEn"></em></h2><div class="drawer-period" id="drawerPeriod"></div><p id="drawerDescription"></p><dl class="drawer-facts"><dt>相關人物</dt><dd id="drawerPeople">-</dd><dt>相關朝代</dt><dd id="drawerDynasty">-</dd></dl></div></aside>
+  <footer><div class="shell">© <span id="year"></span> Melody Pan · DynastyExplorer</div></footer>
+  <script>
+    const historyData = {
+      dynasties: [
+        { id:"qin", nameZh:"秦", nameEn:"Qin", startYear:-221, endYear:-206, description:"秦始皇統一六國，建立中國第一個大一統帝國與中央集權制度。", color:"#e4b38e" },
+        { id:"han-west", nameZh:"西漢", nameEn:"Western Han", startYear:-206, endYear:9, description:"漢帝國奠定漢文化與長期中央行政制度，絲綢之路也在此時發展。", color:"#a8c9d5" },
+        { id:"han-east", nameZh:"東漢", nameEn:"Eastern Han", startYear:25, endYear:220, description:"東漢延續漢帝國秩序，末期的政治與軍事動盪催生三國局面。", color:"#b7d8cb" },
+        { id:"three", nameZh:"三國", nameEn:"Three Kingdoms", startYear:220, endYear:280, description:"魏、蜀、吳三方鼎立，形成中國歷史中最具代表性的分裂時期之一。", color:"#d8b8a8" },
+        { id:"sui", nameZh:"隋", nameEn:"Sui", startYear:581, endYear:618, description:"隋朝重新統一南北，建立制度並開鑿大運河，為唐代繁榮奠定基礎。", color:"#c9c0d4" },
+        { id:"tang", nameZh:"唐", nameEn:"Tang", startYear:618, endYear:907, description:"唐代在制度、文化與國際交流上高度發展，長安成為世界性的城市。", color:"#d9a49b" },
+        { id:"song-north", nameZh:"北宋", nameEn:"Northern Song", startYear:960, endYear:1127, description:"城市、商業、印刷與科技持續發展，形成高度活躍的都市文化。", color:"#b8c8df" },
+        { id:"song-south", nameZh:"南宋", nameEn:"Southern Song", startYear:1127, endYear:1279, description:"南宋以江南為核心，海上貿易、城市經濟與文化活動持續繁盛。", color:"#c5d2b2" },
+        { id:"yuan", nameZh:"元", nameEn:"Yuan", startYear:1271, endYear:1368, description:"元朝建立跨地域的帝國交流網絡，歐亞之間的交通與文化互動增加。", color:"#c8b9d5" },
+        { id:"ming", nameZh:"明", nameEn:"Ming", startYear:1368, endYear:1644, description:"明代重建帝制秩序，城市經濟、海上交流與多元文化持續發展。", color:"#e5c56b" },
+        { id:"qing", nameZh:"清", nameEn:"Qing", startYear:1644, endYear:1912, description:"中國最後一個帝制王朝，面對疆域治理與近代世界秩序的轉型。", color:"#a7c976" }
+      ],
+      persons: [
+        { id:"qin-shi-huang", nameZh:"秦始皇", nameEn:"Qin Shi Huang", birthYear:-259, deathYear:-210, description:"秦王政，完成統一六國並建立中央集權帝國。", dynastyIds:["qin"] },
+        { id:"han-wu", nameZh:"漢武帝", nameEn:"Emperor Wu of Han", birthYear:-156, deathYear:-87, description:"西漢重要皇帝，推動對外擴張與儒學制度發展。", dynastyIds:["han-west"] },
+        { id:"cao-cao", nameZh:"曹操", nameEn:"Cao Cao", birthYear:155, deathYear:220, description:"東漢末年政治家與軍事家，奠定曹魏基礎。", dynastyIds:["han-east","three"] },
+        { id:"liu-bei", nameZh:"劉備", nameEn:"Liu Bei", birthYear:161, deathYear:223, description:"蜀漢建立者，三國時期的重要政治人物。", dynastyIds:["han-east","three"] },
+        { id:"sun-quan", nameZh:"孫權", nameEn:"Sun Quan", birthYear:182, deathYear:252, description:"吳國建立者，長期經營江東與長江流域。", dynastyIds:["three"] },
+        { id:"li-bai", nameZh:"李白", nameEn:"Li Bai", birthYear:701, deathYear:762, description:"盛唐詩人，以浪漫奔放的詩歌風格著稱。", dynastyIds:["tang"] },
+        { id:"du-fu", nameZh:"杜甫", nameEn:"Du Fu", birthYear:712, deathYear:770, description:"唐代詩人，作品深刻反映時代動盪與民生。", dynastyIds:["tang"] },
+        { id:"wang-wei", nameZh:"王維", nameEn:"Wang Wei", birthYear:701, deathYear:761, description:"唐代詩人與畫家，山水詩與禪意風格影響深遠。", dynastyIds:["tang"] },
+        { id:"xuanzong", nameZh:"唐玄宗", nameEn:"Emperor Xuanzong", birthYear:685, deathYear:762, description:"唐代前期重要皇帝，開創開元盛世，也經歷安史之亂。", dynastyIds:["tang"] }
+      ],
+      events: [
+        { id:"unification", nameZh:"秦統一六國", nameEn:"Qin Unifies China", year:-221, dynastyId:"qin", description:"秦王政完成六國統一，建立中國第一個中央集權帝國。", personIds:["qin-shi-huang"], importance:5 },
+        { id:"chu-han", nameZh:"楚漢戰爭", nameEn:"Chu-Han Contention", year:-206, endYear:-202, dynastyId:"han-west", description:"秦亡後劉邦與項羽爭奪天下，最終由劉邦建立漢朝。", personIds:[], importance:4 },
+        { id:"yellow-turbans", nameZh:"黃巾之亂", nameEn:"Yellow Turban Rebellion", year:184, dynastyId:"han-east", description:"東漢末年的大型民變，加速中央政權瓦解與軍閥割據。", personIds:["cao-cao","liu-bei"], importance:4 },
+        { id:"guandu", nameZh:"官渡之戰", nameEn:"Battle of Guandu", year:200, dynastyId:"han-east", description:"曹操以少勝多擊敗袁紹，奠定北方勢力優勢。", personIds:["cao-cao"], importance:4 },
+        { id:"red-cliffs", nameZh:"赤壁之戰", nameEn:"Battle of Red Cliffs", year:208, dynastyId:"han-east", description:"曹操與孫權、劉備聯軍在長江流域交戰，三國鼎立格局逐漸形成。", personIds:["cao-cao","liu-bei","sun-quan"], importance:5 },
+        { id:"taizong-rule", nameZh:"貞觀之治", nameEn:"Reign of Zhenguan", year:627, endYear:649, dynastyId:"tang", description:"唐太宗時期的政治局面，常被視為唐代早期治理與制度發展的代表。", personIds:["xuanzong"], importance:4 },
+        { id:"an-lushan", nameZh:"安史之亂", nameEn:"An Lushan Rebellion", year:755, endYear:763, dynastyId:"tang", description:"唐代中期重大內亂，深刻改變唐帝國的政治、軍事與人口分布。", personIds:["du-fu","xuanzong"], importance:5 }
+      ]
+    };
+    const state = { startYear:-300, endYear:1000, zoomLevel:1, visibleLayers:{ dynasty:true, emperor:true, person:true, event:true }, selectedDynastyId:null, selectedPersonIds:[], selectedEventId:null };
+    const refs = { canvas:document.getElementById("timelineCanvas"), scroll:document.getElementById("timelineScroll"), axis:document.getElementById("axis"), dynastyLayer:document.getElementById("dynastyLayer"), personLayer:document.getElementById("personLayer"), eventLayer:document.getElementById("eventLayer"), emperorLayer:document.getElementById("emperorLayer"), yearRange:document.getElementById("yearRange"), drawer:document.getElementById("detailDrawer") };
+    const allEntities = [...historyData.dynasties,...historyData.persons,...historyData.events];
+    const formatYear = year => year < 0 ? `${Math.abs(year)} BCE` : `${year} CE`;
+    const escapeHtml = text => String(text).replace(/[&<>"']/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[char]));
+    const percent = year => Math.max(0,Math.min(100,((year-state.startYear)/(state.endYear-state.startYear))*100));
+    const yearFromPointer = event => state.startYear + (event.clientX - refs.canvas.getBoundingClientRect().left - 112) / (refs.canvas.clientWidth - 112) * (state.endYear-state.startYear);
+    function entityStyle(start,end) { const left = percent(start); const width = Math.max(1.8,percent(end)-left); return `left:${left}%;width:${width}%;`; }
+    function renderAxis() { refs.axis.innerHTML = '<div class="axis-line"></div>'; const step = state.zoomLevel > 2 ? 50 : state.zoomLevel > 1 ? 100 : 200; const first = Math.ceil(state.startYear / step) * step; for (let year=first; year<=state.endYear; year+=step) { const left=percent(year); refs.axis.insertAdjacentHTML("beforeend", `<span class="axis-tick" style="left:${left}%"></span><span class="axis-label" style="left:${left}%">${escapeHtml(formatYear(year))}</span>`); } refs.yearRange.textContent = `${formatYear(state.startYear)} — ${formatYear(state.endYear)}`; }
+    function makeButton(className, label, html, onClick) { const button=document.createElement("button"); button.className=className; button.type="button"; button.setAttribute("aria-label",label); button.innerHTML=html; button.addEventListener("click",onClick); return button; }
+    function renderDynasties() { refs.dynastyLayer.innerHTML=""; if (!state.visibleLayers.dynasty) return; historyData.dynasties.forEach(dynasty => { if (dynasty.endYear < state.startYear || dynasty.startYear > state.endYear) return; const button=makeButton(`bar ${state.selectedDynastyId===dynasty.id?"is-selected":""}`,`查看${dynasty.nameZh}朝代`,escapeHtml(dynasty.nameZh),()=>openDrawer("DYNASTY",dynasty)); button.style.cssText=entityStyle(dynasty.startYear,dynasty.endYear); button.style.setProperty("--bar-color",dynasty.color); refs.dynastyLayer.appendChild(button); }); }
+    const personIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7" r="4"></circle><path d="M4 21c.6-4.2 3.4-7 8-7s7.4 2.8 8 7H4Z"></path></svg>';
+    function renderPeople() { refs.personLayer.innerHTML=""; if (!state.visibleLayers.person) return; historyData.persons.forEach(person => { if (person.deathYear < state.startYear || person.birthYear > state.endYear) return; const button=makeButton(`person-line ${state.selectedPersonIds.includes(person.id)?"is-selected":""}`,`查看${person.nameZh}`,personIcon,()=>openDrawer("PERSON",person)); button.title=person.nameZh; button.style.cssText=entityStyle(person.birthYear,person.deathYear); refs.personLayer.appendChild(button); }); }
+    function renderEvents() { refs.eventLayer.innerHTML=""; if (!state.visibleLayers.event) return; historyData.events.forEach(event => { if (event.year < state.startYear || event.year > state.endYear) return; const button=makeButton(`event-dot ${state.selectedEventId===event.id?"is-selected":""}`,`查看${event.nameZh}`,`<span class="event-label">${escapeHtml(event.nameZh)}<br />${escapeHtml(formatYear(event.year))}</span>`,()=>openDrawer("EVENT",event)); button.style.left=`${percent(event.year)}%`; refs.eventLayer.appendChild(button); }); }
+    function renderEmperors() { refs.emperorLayer.innerHTML=""; if (!state.visibleLayers.emperor) return; const emperors=historyData.persons.filter(person=>person.id.includes("qin")||person.id.includes("han-wu")||person.id.includes("xuanzong")); emperors.forEach(person=>{ if(person.deathYear<state.startYear||person.birthYear>state.endYear)return; const button=makeButton("person-line",`查看${person.nameZh}`,personIcon,()=>openDrawer("PERSON",person)); button.title=person.nameZh; button.style.cssText=entityStyle(person.birthYear,person.deathYear); button.style.background="#c08c70"; refs.emperorLayer.appendChild(button); }); }
+    function render() { refs.canvas.style.minWidth=`${Math.max(1100,(state.endYear-state.startYear)*1.15)}px`; renderAxis(); renderDynasties(); renderEmperors(); renderPeople(); renderEvents(); }
+    function setRange(start,end) { state.startYear=start; state.endYear=end; render(); }
+    function zoom(factor) { const center=(state.startYear+state.endYear)/2; const half=(state.endYear-state.startYear)*factor/2; setRange(Math.round(center-half),Math.round(center+half)); }
+    function focusEntity(entity) { const start=entity.startYear??entity.birthYear??entity.year-40; const end=entity.endYear??entity.deathYear??entity.year+40; const padding=Math.max(30,Math.round((end-start)*.2)); setRange(start-padding,end+padding); state.selectedDynastyId=entity.startYear!==undefined?entity.id:null; state.selectedPersonIds=entity.birthYear!==undefined?[entity.id]:[]; state.selectedEventId=entity.year!==undefined&&entity.startYear===undefined?entity.id:null; render(); }
+    const periodRanges = { ancient:[-1600,-206], qinHan:[-221,220], weiJin:[184,589], suiTang:[581,907], songYuan:[960,1368], mingQing:[1368,1912] };
+    document.querySelectorAll("[data-period]").forEach(button => button.addEventListener("click", () => { const range=periodRanges[button.dataset.period]; if (!range) return; document.querySelectorAll("[data-period]").forEach(item => item.classList.toggle("is-selected", item === button)); state.selectedDynastyId=null; state.selectedPersonIds=[]; state.selectedEventId=null; setRange(range[0],range[1]); document.getElementById("dynastySelect").value=""; document.getElementById("timelineScroll").scrollLeft=0; }));
+    function openDrawer(type,entity) { state.selectedEventId=type==="EVENT"?entity.id:null; state.selectedDynastyId=type==="DYNASTY"?entity.id:null; state.selectedPersonIds=type==="PERSON"?[entity.id]:[]; document.getElementById("drawerType").textContent=type; document.getElementById("drawerTitle").childNodes[0].textContent=entity.nameZh; document.getElementById("drawerTitleEn").textContent=entity.nameEn||""; document.getElementById("drawerPeriod").textContent=type==="EVENT"?`${formatYear(entity.year)}${entity.endYear?` — ${formatYear(entity.endYear)}`:""}`:type==="PERSON"?`${formatYear(entity.birthYear)} — ${formatYear(entity.deathYear)}`:`${formatYear(entity.startYear)} — ${formatYear(entity.endYear)}`; document.getElementById("drawerDescription").textContent=entity.description; const people=(entity.personIds||[]).map(id=>historyData.persons.find(person=>person.id===id)?.nameZh).filter(Boolean); document.getElementById("drawerPeople").textContent=people.length?people.join("、"):type==="PERSON"?entity.nameZh:"暫無資料"; const dynasty=entity.dynastyId?historyData.dynasties.find(item=>item.id===entity.dynastyId)?.nameZh:(entity.dynastyIds||[]).map(id=>historyData.dynasties.find(item=>item.id===id)?.nameZh).filter(Boolean).join("、"); document.getElementById("drawerDynasty").textContent=dynasty||"跨時期"; refs.drawer.classList.add("is-open"); refs.drawer.setAttribute("aria-hidden","false"); render(); document.getElementById("drawerClose").focus(); }
+    function closeDrawer() { refs.drawer.classList.remove("is-open"); refs.drawer.setAttribute("aria-hidden","true"); }
+    function search(query) { const results=document.getElementById("searchResults"); const term=query.trim().toLowerCase(); if(!term){ results.classList.remove("is-open"); results.innerHTML=""; return; } const matches=allEntities.filter(entity=>(entity.nameZh+" "+(entity.nameEn||"")).toLowerCase().includes(term)).slice(0,12); results.innerHTML=matches.length?matches.map(entity=>`<button class="search-result" type="button" data-id="${entity.id}"><small>${entity.birthYear!==undefined?"PERSON":entity.startYear!==undefined?"DYNASTY":"EVENT"}</small>${escapeHtml(entity.nameZh)}</button>`).join(""):"<div class=\"search-result\">找不到相關資料</div>"; results.classList.add("is-open"); results.querySelectorAll("button").forEach(button=>button.addEventListener("click",()=>{ const entity=allEntities.find(item=>item.id===button.dataset.id); focusEntity(entity); results.classList.remove("is-open"); document.getElementById("globalSearch").value=entity.nameZh; })); }
+    document.getElementById("globalSearch").addEventListener("input",event=>search(event.target.value));
+    document.getElementById("zoomIn").addEventListener("click",()=>zoom(.65)); document.getElementById("zoomOut").addEventListener("click",()=>zoom(1.45)); document.getElementById("resetView").addEventListener("click",()=>{state.selectedDynastyId=null;state.selectedPersonIds=[];state.selectedEventId=null;setRange(-300,1000);});
+    document.getElementById("dynastySelect").addEventListener("change",event=>{ const entity=historyData.dynasties.find(item=>item.id===event.target.value); if(entity) focusEntity(entity); }); historyData.dynasties.forEach(dynasty=>document.getElementById("dynastySelect").insertAdjacentHTML("beforeend",`<option value="${dynasty.id}">${dynasty.nameZh} · ${escapeHtml(dynasty.nameEn)}</option>`));
+    document.querySelectorAll("[data-layer]").forEach(input=>input.addEventListener("change",event=>{state.visibleLayers[event.target.dataset.layer]=event.target.checked;document.querySelector(`[data-render-layer=\"${event.target.dataset.layer}\"]`).style.display=event.target.checked?"":"none";render();}));
+    refs.drawer.addEventListener("click",event=>{if(event.target===refs.drawer)closeDrawer();}); document.getElementById("drawerClose").addEventListener("click",closeDrawer); document.addEventListener("keydown",event=>{if(event.key==="Escape")closeDrawer();});
+    let dragging=false,lastX=0; refs.scroll.addEventListener("pointerdown",event=>{if(event.target.closest("button"))return;dragging=true;lastX=event.clientX;refs.scroll.classList.add("is-dragging");refs.scroll.setPointerCapture(event.pointerId);}); refs.scroll.addEventListener("pointermove",event=>{if(!dragging)return;refs.scroll.scrollLeft-=event.clientX-lastX;lastX=event.clientX;}); refs.scroll.addEventListener("pointerup",()=>{dragging=false;refs.scroll.classList.remove("is-dragging");}); refs.scroll.addEventListener("pointercancel",()=>{dragging=false;refs.scroll.classList.remove("is-dragging");}); refs.scroll.addEventListener("wheel",event=>{if(event.ctrlKey||event.metaKey){event.preventDefault();zoom(event.deltaY>0?1.12:.88);}else if(Math.abs(event.deltaY)>Math.abs(event.deltaX)){event.preventDefault();refs.scroll.scrollLeft+=event.deltaY;}},{passive:false});
+    document.getElementById("year").textContent=new Date().getFullYear(); render();
+  </script>
+</body>
+</html>

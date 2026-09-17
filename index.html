@@ -17,6 +17,7 @@
     header { position:sticky; top:0; z-index:10; border-bottom:1px solid rgba(219,227,238,.88); background:rgba(244,247,251,.9); backdrop-filter:blur(14px); }
     .nav { min-height:76px; display:flex; align-items:center; justify-content:space-between; gap:24px; }
     .wordmark { display:inline-flex; align-items:center; gap:10px; text-decoration:none; font-size:1.05rem; font-weight:900; letter-spacing:.03em; }
+    .wordmark-logo { display:block; width:36px; height:36px; object-fit:contain; border-radius:50%; }
     .logo-mark { display:grid; width:36px; height:36px; place-items:center; border-radius:10px; color:var(--teal-dark); background:var(--lime); font-size:.78rem; font-weight:900; letter-spacing:-.05em; box-shadow:0 6px 14px rgba(183,243,74,.3); }
     .wordmark-name em { color:var(--teal); font-style:normal; }
     nav { display:flex; gap:26px; font-size:.9rem; color:var(--muted); }
@@ -27,6 +28,8 @@
     h1,h2,h3,p { margin-top:0; }
     h1 { max-width:720px; margin:14px 0 26px; font-size:clamp(3.2rem,8vw,6.8rem); font-weight:900; letter-spacing:-.07em; line-height:1.03; }
     h1 em { color:var(--teal); font-style:normal; }
+    .hero-subtitle { margin:-10px 0 22px; color:var(--teal); font-size:clamp(1.35rem,3vw,2rem); font-weight:900; letter-spacing:-.03em; line-height:1.3; }
+    .hero-subtitle em { display:block; margin-top:5px; color:var(--muted); font-size:.58em; font-weight:600; letter-spacing:.04em; }
     .intro { max-width:620px; color:var(--muted); font-size:1.12rem; line-height:2; }
     .hero-links { display:flex; flex-wrap:wrap; gap:12px; margin-top:32px; }
     .button { display:inline-flex; align-items:center; min-height:46px; padding:9px 18px; border:1px solid var(--teal); border-radius:10px; color:#fff; background:var(--teal); font-weight:800; text-decoration:none; box-shadow:0 8px 18px rgba(37,99,235,.18); transition:transform .2s ease,filter .2s ease,box-shadow .2s ease; }
@@ -47,17 +50,14 @@
     .timeline-item h3 { margin-bottom:4px; font-size:1.25rem; }
     .timeline-item p { margin-bottom:0; color:var(--muted); }
     .role { color:var(--coral); font-size:.9rem; }
-    .project-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:18px; }
-    .project { min-height:280px; padding:28px; border:1px solid var(--line); border-radius:18px; background:var(--surface); display:flex; flex-direction:column; box-shadow:0 12px 30px rgba(23,32,51,.05); transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease; }
-    .project:hover { transform:translateY(-5px); border-color:#a9bee0; box-shadow:0 20px 38px rgba(23,32,51,.1); }
-    .project.featured { grid-column:span 2; background:var(--teal-dark); color:#f7fffb; border-color:var(--teal-dark); }
-    .project-index { margin-bottom:22px; color:var(--coral); font-family:var(--serif); font-size:1.2rem; }
-    .project h3 { margin-bottom:12px; font-size:1.35rem; }
-    .project p { margin-bottom:22px; color:var(--muted); }
-    .featured p { color:#d4e6df; }
-    .project small { margin-top:auto; color:var(--teal); font-weight:800; }
-    .featured small { color:#ffd1c4; }
-    .project-link { display:inline-flex; align-items:center; gap:8px; width:max-content; margin-top:18px; padding:9px 13px; border:1px solid currentColor; border-radius:9px; color:inherit; font-size:.9rem; font-weight:800; text-decoration:none; }
+    .project-grid { display:flex; flex-direction:column; border-top:1px solid var(--line); }
+    .project { display:grid; grid-template-columns:72px minmax(0,1fr) auto; grid-template-rows:auto auto auto; column-gap:18px; align-items:center; padding:24px 8px 24px 0; border-bottom:1px solid var(--line); background:transparent; transition:background .2s ease,padding-left .2s ease; }
+    .project:hover { padding-left:12px; background:rgba(255,255,255,.58); }
+    .project-index { grid-row:1 / span 3; color:var(--coral); font-family:Georgia,"Times New Roman",serif; font-size:1.2rem; }
+    .project h3 { grid-column:2 / 4; margin-bottom:5px; font-size:1.25rem; }
+    .project p { grid-column:2 / 4; margin-bottom:8px; color:var(--muted); }
+    .project small { grid-column:2; color:var(--teal); font-weight:800; }
+    .project-link { grid-column:3; grid-row:3; display:inline-flex; align-items:center; gap:8px; width:max-content; margin:0; padding:8px 12px; border:1px solid currentColor; border-radius:9px; color:inherit; font-size:.85rem; font-weight:800; text-decoration:none; }
     .project-link:hover { background:rgba(255,255,255,.12); }
     .skills-layout { display:grid; grid-template-columns:.8fr 1.2fr; gap:80px; }
     .skills-layout > p { color:var(--muted); font-size:1.08rem; }
@@ -93,7 +93,10 @@
       .section-description { margin-top:18px; }
       .timeline-item { grid-template-columns:1fr; gap:4px; }
       .project-grid,.research-grid,.skills-layout,.quote-grid { grid-template-columns:1fr; gap:28px; }
-      .project.featured { grid-column:auto; }
+      .project { grid-template-columns:48px minmax(0,1fr); column-gap:12px; }
+      .project h3,.project p { grid-column:2; }
+      .project small { grid-column:2; }
+      .project-link { grid-column:2; grid-row:auto; margin-top:10px; }
       .closing p { margin-top:24px; }
     }
     @media (prefers-reduced-motion:reduce) {
@@ -103,11 +106,11 @@
   </style>
 </head>
 <body>
-  <header><div class="shell nav"><a class="wordmark" href="#top" aria-label="回到首頁"><span class="logo-mark" aria-hidden="true">MP</span><span class="wordmark-name">Melody <em>Pan</em></span></a><nav aria-label="主要導覽"><a href="#experience">經歷</a><a href="#works">作品</a><a href="#skills">專長</a><a href="#quotes">名言</a></nav></div></header>
+  <header><div class="shell nav"><a class="wordmark" href="#top" aria-label="回到首頁"><img class="wordmark-logo" src="images/logo.png" alt="" /><span class="wordmark-name">Melody <em>Pan</em></span></a><nav aria-label="主要導覽"><a href="#experience">經歷</a><a href="#works">作品</a><a href="#skills">專長</a><a href="#quotes">名言</a></nav></div></header>
   <main id="top">
-    <div class="shell"><section class="hero"><div><div class="kicker">INFORMATION SYSTEMS · HEALTHCARE</div><h1>把複雜流程，<em>做成好用的系統。</em></h1><p class="intro">我是Melody，專注於醫療資訊系統、網頁應用與跨平台 App 開發。從需求訪談、系統規畫到上線維護，持續把第一線工作者的需求轉化成可靠、清楚的數位工具。</p><div class="hero-links"><a class="button" href="#works">查看作品</a><a class="button secondary" href="#quotes">名言</a></div></div><aside class="hero-note"><strong>12+</strong><p>年軟體開發經驗<br />目前於臺中榮民總醫院服務</p></aside></section></div>
+    <div class="shell"><section class="hero"><div><div class="hero-subtitle">把複雜流程，做成好用的系統。</div><p class="intro">我是Melody，專注於醫療資訊系統、網頁應用與跨平台 App 開發。從需求訪談、系統規畫到上線維護，持續把第一線工作者的需求轉化成可靠、清楚的數位工具。</p><div class="hero-links"><a class="button" href="#works">查看作品</a></div></div><aside class="hero-note"><strong>12+</strong><p>年軟體開發經驗<br />目前於臺中榮民總醫院服務</p></aside></section></div>
     <section id="experience" class="tinted"><div class="shell"><div class="section-head"><div><span class="section-number">01 /</span><h2>工作經歷</h2></div><p class="section-description">從商業網站到醫療現場，累積完整的系統生命週期經驗。</p></div><div class="timeline"><article class="timeline-item"><div class="date">2014.06 — 目前</div><div><h3>臺中榮民總醫院</h3><div class="role">系統設計、開發與維護</div><p>負責行政、經費、手術排程、醫療儀器與病人預約等系統，與使用單位合作完成需求訪談、規畫、開發、上線及長期維運。</p></div></article><article class="timeline-item"><div class="date">2013.06 — 2014.06</div><div><h3>儀鼎科技有限公司</h3><div class="role">軟體開發</div><p>參與網站與資料庫應用開發，持續累積商業系統的實作經驗。</p></div></article><article class="timeline-item"><div class="date">2012.08 — 2013.05</div><div><h3>點通行銷股份有限公司</h3><div class="role">網頁程式設計</div><p>開發 DoSurvey 問卷市調網，使用 ASP.NET（C#）、MySQL 與 JavaScript 完成問卷建立、分享與結果匯出。</p></div></article></div></div></section>
-    <section id="works"><div class="shell"><div class="section-head"><div><span class="section-number">02 /</span><h2>作品</h2></div><p class="section-description">以實際使用情境為起點，讓系統能被理解、被使用，也能長久運作。</p></div><div class="project-grid"><article class="project featured"><div class="project-index">01</div><h3>動態幕自動廣播系統（CathFlow）</h3><p>醫療場域中的動態幕自動廣播系統，提供資訊展示與自動播放功能。</p><small>系統作品</small><a class="project-link" href="cathflow.html" target="_blank" rel="noopener noreferrer">查看 CathFlow 畫面 ↗</a></article><article class="project"><div class="project-index">02</div><h3>慢箋與多元預約系統再造</h3><p>將慢性處方箋預約系統改版為 RWD 現代化網站，並延伸整合多項醫療預約流程。</p><small>系統再造 · 2023 — 目前</small></article><article class="project"><div class="project-index">03</div><h3>手術排程系統</h3><p>為手術護理站開發排程控台，並支援手術房間流動刷手輸入各項流程時間點。</p><small>系統開發及維護 · 2017 — 目前</small></article><article class="project"><div class="project-index">04</div><h3>醫療儀器管理系統</h3><p>管理醫院內與病人相關儀器的完整生命週期，並以 Cordova 開發 Android 與 iOS App。</p><small>系統設計、開發及維護 · 2016 — 目前</small></article><article class="project"><div class="project-index">05</div><h3>院外計畫經費管控系統</h3><p>涵蓋計畫核定、預算、執行、核銷、會計串接與經費不足警示，從需求訪談一路參與至維護。</p><small>全生命週期開發 · 2015 — 2024</small></article><article class="project"><div class="project-index">06</div><h3>校務與問卷應用</h3><p>曾參與校務基本資料庫資訊系統與 DoSurvey 問卷市調網，熟悉會員、題型、資料分析與 Excel 匯出流程。</p><small>Web application · ASP.NET / JavaScript</small></article></div></div></section>
+    <section id="works"><div class="shell"><div class="section-head"><div><span class="section-number">02 /</span><h2>作品</h2></div><p class="section-description">以實際使用情境為起點，讓系統能被理解、被使用，也能長久運作。</p></div><div class="project-grid"><article class="project featured"><div class="project-index">01</div><h3>動態幕自動廣播系統（CathFlow）</h3><p>醫療場域中的動態幕自動廣播系統，提供資訊展示與自動播放功能。</p><small>系統開發</small><a class="project-link" href="cathflow.html" target="_blank" rel="noopener noreferrer">Demo</a></article><article class="project"><div class="project-index">02</div><h3>互動式中國年史表</h3><p>以互動時間軸整理中國歷代朝代與重要時期，點選朝代即可查看年代與歷史摘要。</p><small>系統開發</small><a class="project-link" href="DynastyExplorer.html" target="_blank" rel="noopener noreferrer">Demo</a></article><article class="project"><div class="project-index">03</div><h3>慢箋與多元預約系統再造</h3><p>將慢性處方箋預約系統改版為 RWD 現代化網站，並延伸整合多項醫療預約流程。</p><small>系統再造 · 2023 — 目前</small></article><article class="project"><div class="project-index">04</div><h3>手術排程系統</h3><p>為手術護理站開發排程控台，並支援手術房間流動刷手輸入各項流程時間點。</p><small>系統開發及維護 · 2017 — 目前</small></article><article class="project"><div class="project-index">05</div><h3>醫療儀器管理系統</h3><p>管理醫院內與病人相關儀器的完整生命週期，並以 Cordova 開發 Android 與 iOS App。</p><small>系統設計、開發及維護 · 2016 — 目前</small></article><article class="project"><div class="project-index">06</div><h3>院外計畫經費管控系統</h3><p>涵蓋計畫核定、預算、執行、核銷、會計串接與經費不足警示，從需求訪談到維護。</p><small>全生命週期開發 · 2015 — 2024</small></article><article class="project"><div class="project-index">07</div><h3>校務與問卷應用</h3><p>曾參與校務基本資料庫資訊系統與 DoSurvey 問卷市調網，熟悉會員、題型、資料分析與 Excel 匯出流程。</p><small>Web application · ASP.NET / JavaScript</small></article></div></div></section>
     <section id="skills" class="tinted"><div class="shell"><div class="section-head"><div><span class="section-number">03 /</span><h2>工具與專長</h2></div></div><div class="skills-layout"><p>我喜歡站在使用者與技術之間，把需求拆清楚，再用穩定、可維護的方式把它完成。</p><div class="skill-list" aria-label="技術技能"><span class="skill primary">C#</span><span class="skill primary">Angular</span><span class="skill primary">TypeScript</span><span class="skill primary">SQL</span><span class="skill primary">RESTful API</span><span class="skill primary">Cordova App</span><span class="skill">AngularJS</span><span class="skill">RxJS</span><span class="skill">JavaScript</span><span class="skill">jQuery / AJAX</span><span class="skill">ASP.NET</span><span class="skill">Kendo UI</span><span class="skill">Bootstrap</span><span class="skill">Tailwind</span><span class="skill">Oracle</span><span class="skill">MS SQL</span><span class="skill">GitHub Copilot</span></div></div></div></section>
     <section id="quotes"><div class="shell"><div class="section-head"><div><span class="section-number">04 /</span><h2>名言</h2></div><p class="section-description">提醒自己保持整理、謙遜，並且持續向前。</p></div><div class="quote-grid"><figure class="quote-card"><blockquote>把自己整理好，是對自己，也是對別人的尊重。</blockquote><cite>生活提醒</cite></figure><figure class="quote-card"><blockquote>如果我看得比其他人遠，是因為我站在巨人的肩膀上。</blockquote><cite>牛頓<span>If I have seen further than others, it is by standing upon the shoulders of giants.</span></cite></figure></div></div></section>
     <!-- <section id="research"><div class="shell"><div class="section-head"><div><span class="section-number">05 /</span><h2>研究與成就</h2></div><p class="section-description">資訊安全與資訊管理背景，讓我在實務之外持續追問系統為什麼這樣設計。</p></div><div class="research-grid"><div><h3>研究成果</h3><ol class="research-list"><li>〈A Keyed Hash Chain Based Authentication Protocol on UMTS〉，KC2010 知識社群研討會。</li><li>〈結合簡訊機制之簡易手機信用卡系統〉，2010 資訊安全技術創新應用研討會。</li><li>〈智慧型媒合系統應用於課輔志工服務網〉，2011 電子民生研討會。</li><li>〈植基於代理簽章技術之藝術授權〉，2011 電子民生研討會。</li></ol></div><div><h3>獎項與競賽</h3><ul class="award-list"><li><strong>金牌獎</strong>2011 第 36 屆克羅埃西亞 INOVA 國際發明展</li><li><strong>最佳論文</strong>2010 第六屆知識社群研討會</li><li><strong>特別獎</strong>2011 資訊學群專題成果展</li><li><strong>模範生</strong>2010 臺中市模範生</li></ul></div></div></div></section> -->
