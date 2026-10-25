@@ -23,10 +23,12 @@
  }
  function render(){
   const list=$('project-list');list.replaceChildren();const rows=editor.rows();$('project-count').textContent=`${rows.length} 件作品 · ${rows.filter(row=>row.published).length} 件公開`;$('empty').hidden=rows.length>0;
+  // 與公開首頁一致：已公開且編號為純數字的作品依清單順序自動編號。
+  let serial=0;const shownBadge=row=>row.published&&/^\d+$/.test(row.badge.trim())?String(++serial).padStart(2,'0'):row.badge;
   rows.forEach((row,index)=>{
    const item=document.createElement('li');if(row.id===selectedId)item.className='selected';
    const heading=document.createElement('div');heading.className='row-title';
-   const title=document.createElement('strong');title.textContent=(row.badge?row.badge+'　':'')+row.title;heading.append(title);
+   const label=shownBadge(row);const title=document.createElement('strong');title.textContent=(label?label+'　':'')+row.title;heading.append(title);
    const badge=document.createElement('span');badge.className='badge';badge.textContent=row.published?'已公開':'未公開';heading.append(badge);
    const description=document.createElement('p');description.className='row-description';description.textContent=row.description.length>100?row.description.slice(0,100)+'…':row.description;
    const buttons=document.createElement('div');buttons.className='row-actions';
