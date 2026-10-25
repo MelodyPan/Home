@@ -3,6 +3,19 @@
  const $=id=>document.getElementById(id),form=$('project-form');
  let token='',editor=null,etag='',selectedId=null,formDirty=false,busy=false,clientId='';
  let statusTimer=0;
+ // 登入狀態暫存在本分頁：重新整理可延續，閒置 10 分鐘自動登出，操作會重新計時。Google 憑證本身約 1 小時到期，到期後仍需重新登入。
+ const IDLE_MS=10*60*1000,SESSION_KEY='admin-session';let lastActive=0,lastSaved=0;
+ const store=()=>{try{return globalThis.sessionStorage||null;}catch{return null;}};
+ function saveSession(){if(token)store()?.setItem(SESSION_KEY,JSON.stringify({token,last:lastActive}));}
+ function clearSession(){store()?.removeItem(SESSION_KEY);}
+ function touch(force=false){if(!token)return;lastActive=Date.now();if(force||lastActive-lastSaved>5000){lastSaved=lastActive;saveSession();}}
+ function showLoggedOut(){token='';clearSession();$('login-panel').hidden=false;$('workspace').hidden=true;$('logout').hidden=true;$('session-tools').hidden=true;$('account-name').textContent='';globalThis.google?.accounts.id.disableAutoSelect();updateState();}
+ function idleCheck(){if(token&&Date.now()-lastActive>=IDLE_MS){showLoggedOut();status('閒置超過 10 分鐘，已自動登出。',false,true);}setTimeout(idleCheck,15000);}
+ function restoreSession(){
+  try{const saved=JSON.parse(store()?.getItem(SESSION_KEY)||'null');if(saved?.token&&Date.now()-saved.last<IDLE_MS){lastActive=saved.last;signIn(saved.token,true);return true;}}catch{}
+  clearSession();return false;
+ }
+ for(const name of ['pointerdown','keydown','input','scroll'])addEventListener(name,()=>touch(),{passive:true,capture:true});
  const status=(message,error=false,toastOnly=false)=>{for(const id of toastOnly?['status']:['status','form-status']){const node=$(id);if(node){node.textContent=message;node.className=error?'save-feedback error':'save-feedback';}}clearTimeout(statusTimer);statusTimer=setTimeout(()=>{const node=$('status');if(node){node.textContent='';node.className='';}},5000);};
  function changed(){return Boolean(editor?.dirty||formDirty);}
  function updateState(){$('save-state').textContent=changed()?'有未儲存變更':token?'已同步':'尚未登入';$('save-state').classList.toggle('dirty',changed());}
@@ -12,7 +25,7 @@
   const response=await fetch('../api/admin/'+route,{...options,headers:{Authorization:'Bearer '+token,...options.headers},cache:'no-store'});
   const body=await response.json();
   if(!response.ok){
-   if(response.status===401){token='';$('login-panel').hidden=false;$('workspace').hidden=true;$('logout').hidden=true;$('session-tools').hidden=true;$('account-name').textContent='';}
+   if(response.status===401){showLoggedOut();}
    throw new Error(body.error||'操作失敗，請重試。');
   }
   return {body,response};
@@ -69,13 +82,13 @@
   }catch(error){status(error.message+' 目前草稿仍保留，可先下載草稿。',true);}finally{setBusy(false);}
  }
  async function load(){const {body,response}=await api('projects');editor=new ProjectEditor(body);etag=response.headers.get('etag');resetForm(null);render();}
- async function signIn(credential){
+ async function signIn(credential,restored=false){
   if(busy)return;setBusy(true);const previous=token;token=credential;
   try{
    const {body:user}=await api('me');$('account-name').textContent=user.email;$('logout').hidden=false;$('session-tools').hidden=false;
-   if(editor&&changed()&&previous!==credential){status('已重新登入，草稿已保留。',false,true);}else{await load();status('已登入。選擇作品編輯，或新增作品。',false,true);}
-   $('login-panel').hidden=true;$('workspace').hidden=false;updateState();
-  }catch(error){token='';$('login-panel').hidden=false;$('workspace').hidden=true;status(error.message,true,true);}finally{setBusy(false);}
+   if(editor&&changed()&&previous!==credential){status('已重新登入，草稿已保留。',false,true);}else{await load();if(!restored)status('已登入。選擇作品編輯，或新增作品。',false,true);}
+   $('login-panel').hidden=true;$('workspace').hidden=false;touch(true);updateState();
+  }catch(error){token='';clearSession();$('login-panel').hidden=false;$('workspace').hidden=true;if(!restored)status(error.message,true,true);}finally{setBusy(false);}
  }
  form.addEventListener('input',()=>{formDirty=true;updateState();});
  form.addEventListener('submit',async event=>{event.preventDefault();await saveChanges(true);});
@@ -85,7 +98,7 @@
  $('reload').addEventListener('click',async()=>{if(!guard())return;setBusy(true);try{await load();status('已載入最新作品。',false,true);}catch(error){status(error.message,true,true);}finally{setBusy(false);}});
  $('save-all').addEventListener('click',()=>saveChanges());
  $('export').addEventListener('click',()=>{if(formDirty&&!applyForm())return;const url=URL.createObjectURL(new Blob([JSON.stringify(editor.snapshot(),null,2)],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='projects-draft.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
- $('logout').addEventListener('click',()=>{if(!guard())return;token='';editor=null;etag='';selectedId=null;formDirty=false;form.reset();$('project-list').replaceChildren();$('account-name').textContent='';$('workspace').hidden=true;$('logout').hidden=true;$('session-tools').hidden=true;$('login-panel').hidden=false;globalThis.google?.accounts.id.disableAutoSelect();updateState();status('已登出。',false,true);});
+ $('logout').addEventListener('click',()=>{if(!guard())return;editor=null;etag='';selectedId=null;formDirty=false;form.reset();$('project-list').replaceChildren();showLoggedOut();status('已登出。',false,true);});
  $('info-open').addEventListener('click',()=>$('info-dialog').showModal());
  $('info-close').addEventListener('click',()=>$('info-dialog').close());
  $('info-dialog').addEventListener('click',event=>{if(event.target===$('info-dialog'))$('info-dialog').close();});
@@ -98,10 +111,11 @@
    const response=await fetch('../api/admin/config',{cache:'no-store'});if(!response.ok)throw Error('無法載入後台設定。');const config=await response.json();
    if(!config.configured){$('login-note').textContent='Google 登入尚未設定。請完成 Google Client ID 與管理員帳號設定後，再重新整理。';return;}
    clientId=config.googleClientId;$('login-note').textContent='請選擇授權的 Google 帳號。';
+   if(restoreSession())$('login-note').textContent='正在還原登入狀態…';
    const script=document.createElement('script');script.src='https://accounts.google.com/gsi/client';script.async=true;
    script.onload=()=>{google.accounts.id.initialize({client_id:clientId,callback:result=>signIn(result.credential),auto_select:false});google.accounts.id.renderButton($('google-button'),{theme:'outline',size:'large',text:'signin_with',locale:'zh_TW'});};
    script.onerror=()=>{$('login-note').textContent='無法載入 Google 登入，請確認網路後重試。';};document.head.append(script);
   }catch(error){$('login-note').textContent=error.message;}
  }
- init();
+ init();setTimeout(idleCheck,15000);
 })();
