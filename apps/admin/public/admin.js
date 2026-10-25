@@ -57,7 +57,7 @@
    button('編輯',()=>{if(!guardForm())return;resetForm(row);render();form.elements.title.focus();});
    button('↑ 上移',()=>{if(!guardForm())return;editor.move(row.id,-1);resetForm(null);render();},index===0||rows[index-1].published!==row.published||rows[index-1].featured!==row.featured);
    button('↓ 下移',()=>{if(!guardForm())return;editor.move(row.id,1);resetForm(null);render();},index===rows.length-1||rows[index+1].published!==row.published||rows[index+1].featured!==row.featured);
-   button('刪除',()=>{if(!guardForm()||!confirm(`確定刪除「${row.title}」？儲存所有變更後才會生效。`))return;editor.remove(row.id);resetForm(null);render();},false,'danger');
+   button('刪除',()=>{if(!guardForm()||!confirm(`確定刪除「${row.title}」？按「儲存清單變更」後才會生效。`))return;editor.remove(row.id);resetForm(null);render();},false,'danger');
    item.append(heading,description,buttons);list.append(item);
   });updateState();
  }

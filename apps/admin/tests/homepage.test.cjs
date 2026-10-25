@@ -2,14 +2,15 @@ const {test}=require('node:test'),assert=require('node:assert/strict'),fs=requir
 const model=require('../public/project-model.js');
 async function homepage(response,remote=''){
  const notices=[];
+ const responses=Array.isArray(response)?[...response]:[response],requests=[];
  class Element{constructor(){this.children=[];this.hidden=false;this.textContent='';}setAttribute(){}append(...nodes){this.children.push(...nodes);}replaceChildren(...nodes){this.children=nodes;}before(node){notices.push(node);}set innerHTML(value){throw Error('不得將作品資料當 HTML 插入');}querySelectorAll(){return this.children.flatMap(child=>child.children?.filter(node=>node.className==='project-index')||[]);}}
  const grid=new Element();grid.children=['原有靜態作品'];
- const context={URL,AbortSignal,location:{protocol:'https:'},PortfolioConfig:{apiBaseUrl:remote},ProjectModel:model,document:{currentScript:{src:'https://home.test/Home/portfolio/projects.js'},querySelector:()=>grid,createElement:()=>new Element()},fetch:async()=>{if(response instanceof Error)throw response;return response;}};
- vm.runInNewContext(fs.readFileSync(require.resolve('../public/projects.js'),'utf8'),context);await new Promise(setImmediate);return {grid,notice:notices[0]};
+ const context={URL,AbortSignal,location:{protocol:'https:'},PortfolioConfig:{apiBaseUrl:remote},ProjectModel:model,document:{currentScript:{src:'https://home.test/Home/portfolio/projects.js'},querySelector:()=>grid,createElement:()=>new Element()},fetch:async(url)=>{requests.push(String(url));const next=responses.shift();if(next instanceof Error)throw next;return next;}};
+ vm.runInNewContext(fs.readFileSync(require.resolve('../public/projects.js'),'utf8'),context);await new Promise(setImmediate);return {grid,notice:notices[0],requests};
 }
 test('同源雲端 API 出錯時不顯示可能已下架的舊作品，只有未設定 API 的靜態 404 可回退',async()=>{
  for(const response of [new Response('',{status:503}),new Error('offline'),new Response('broken',{status:200})]){const {grid,notice}=await homepage(response);assert.equal(grid.hidden,true);assert.match(notice.textContent,/無法載入/);}
- const staticPage=await homepage(new Response('',{status:404}));assert.equal(staticPage.grid.hidden,false);
+ const staticPage=await homepage([new Response('',{status:404}),Response.json({schemaVersion:1,updatedAt:null,projects:[]})]);assert.equal(staticPage.grid.hidden,false);assert.deepEqual(staticPage.grid.children,[]);assert.equal(staticPage.requests[1],'https://home.test/Home/portfolio/projects.json');
  const remote=await homepage(new Response('',{status:404}),'https://api.test/');assert.equal(remote.grid.hidden,true);
 });
 test('公開 API 回傳空清單時清除舊作品，作品文字以安全 DOM 顯示',async()=>{

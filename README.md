@@ -12,6 +12,7 @@ home
 - 共用程式：`apps/shared/`；兩站由同一個 Home 服務啟動。
 - 本機資料：由 `.home-local.json` 指定，該檔與私人資料不加入 Git。
 - 測試：`npm test`；公開建置：`npm run build`。GitHub Pages 只發布 `dist/`。
+- 作品清單以本機 `data/portfolio/projects.json` 為主；執行 `npm run build` 會同步產生只含公開作品的 `apps/admin/projects.public.json`，供 GitHub Pages 建置使用。作品資料更新後，請先執行建置，再提交這個快照；未公開作品不會放入快照。
 - 公開站目前為唯讀預覽，雲端登入、照片上傳與儲存須待選定服務後接上。
 - 不要把孩子資料、照片或原始私人書籤複製到公開目錄。
 

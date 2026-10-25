@@ -19,8 +19,9 @@
  }
  const endpoint=remote?new URL('api/projects',remote.endsWith('/')?remote:remote+'/').href:new URL('api/projects',base).href;
  fetch(endpoint,{cache:'no-store',signal:AbortSignal.timeout(15000)}).then(response=>{
-  // GitHub Pages 沒有同源 API，只有這個明確情況可保留原清單。
-  if(!remote&&response.status===404){renumber();notice.textContent='';grid.hidden=false;return null;}
+  if(!remote&&response.status===404)return fetch(new URL('portfolio/projects.json',base),{cache:'no-store',signal:AbortSignal.timeout(15000)}).then(staticResponse=>{
+   if(!staticResponse.ok)throw Error('作品載入失敗');return staticResponse.json();
+  });
   if(!response.ok)throw Error('作品載入失敗');return response.json();
- }).then(data=>{if(data)render(data);}).catch(()=>{notice.textContent='目前無法載入作品，請稍後重新整理。';});
+ }).then(render).catch(()=>{notice.textContent='目前無法載入作品，請稍後重新整理。';});
 })();

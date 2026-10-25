@@ -1,8 +1,24 @@
 // Home 的公開建置：只複製白名單，從範本建立空白書籤頁，完全不讀取私人書籤／相簿資料。
 const fs=require('node:fs/promises'),path=require('node:path');
+const {publicDocument}=require('../apps/admin/public/project-model.js');
 const BOOKMARK_JS=['bookmark-core.js','bookmark-file.js','home.js'];
 const GROWTH_JS=['growth.js','growth-flipbook.js','growth-metrics.js','growth-reference.js'];
 const GROWTH_CSS=['growth.css','growth-flipbook.css','growth-metrics.css'];
+// The local source is ignored by Git; CI consumes this published-only snapshot.
+async function loadPublicProjects(homeRoot){
+ let raw;
+ try{raw=await fs.readFile(path.join(homeRoot,'data/portfolio/projects.json'),'utf8');}
+ catch(error){if(error.code!=='ENOENT')throw error;raw=await fs.readFile(path.join(homeRoot,'apps/admin/projects.public.json'),'utf8');}
+ return publicDocument(JSON.parse(raw));
+}
+async function syncPublicProjects(homeRoot){
+ let raw;
+ try{raw=await fs.readFile(path.join(homeRoot,'data/portfolio/projects.json'),'utf8');}
+ catch(error){if(error.code==='ENOENT')return false;throw error;}
+ const projects=publicDocument(JSON.parse(raw)),snapshot=path.join(homeRoot,'apps/admin/projects.public.json');
+ await fs.writeFile(snapshot,JSON.stringify(projects,null,2)+'\n');
+ return true;
+}
 async function copyTree(source,destination){
  const stat=await fs.lstat(source);if(stat.isSymbolicLink())throw new Error('公開建置不跟隨符號連結：'+source);
  if(stat.isDirectory()){await fs.mkdir(destination,{recursive:true});for(const item of await fs.readdir(source)){if(/^(\.git|node_modules|\.home-local\.json)$|^\.env(?:\.|$)|\.tmp(?:\.|$)|\.bak$/.test(item))continue;await copyTree(path.join(source,item),path.join(destination,item));}}
@@ -15,6 +31,7 @@ async function emptyBookmarks(appRoot){
 }
 async function buildSite(homeRoot,options={}){
  homeRoot=path.resolve(homeRoot);const appRoot=options.appRoot||path.join(homeRoot,'apps/bookmarks'),output=path.resolve(options.output||path.join(homeRoot,'dist'));
+ const projects=await loadPublicProjects(homeRoot);
  const growthRoot=options.growthRoot||path.join(appRoot,'../growth'),sharedRoot=options.sharedRoot||path.join(appRoot,'../shared');
  // 只清理本工具自己產生的 Home/dist；先檢查絕對位置、目錄型態與標記，不刪除未知資料夾。
  if(output!==path.join(homeRoot,'dist'))throw new Error('公開產物必須位於 Home/dist。');
@@ -29,6 +46,8 @@ async function buildSite(homeRoot,options={}){
  // 公開首頁不列出私人的書籤與成長相簿入口；本機首頁維持原樣。
  const publicIndex=(await fs.readFile(path.join(homeRoot,'index.html'),'utf8')).replace(/[ \t]*<!-- BOOKMARKS_SUBSYSTEM -->\r?\n?/,'').replace(/[ \t]*<article class="project" id="(?:bookmarks|growth)-subsystem">[^]*?<\/article>\r?\n?/g,'');
  await fs.writeFile(path.join(output,'index.html'),publicIndex);
+ await fs.mkdir(path.join(output,'portfolio'),{recursive:true});
+ await fs.writeFile(path.join(output,'portfolio/projects.json'),JSON.stringify(projects));
  // 每個作品使用自己的公開目錄；保留根目錄的舊網址轉址，方便既有收藏繼續使用。
  for(const [site,entry,title] of [['cathflow','cathflow.html','CathFlow'],['dynasty-explorer','DynastyExplorer.html','DynastyExplorer']]){
   const source=path.join(appRoot,'..',site);
@@ -54,5 +73,8 @@ async function buildSite(homeRoot,options={}){
 }
 // 靜態託管無法設定 HTTP 轉址，保留舊入口並提供可點擊連結。
 function redirectPage(url,title){return `<!doctype html><html lang="zh-Hant"><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=${url}"><title>${title}</title><a href="${url}">進入${title}</a></html>`;}
-if(require.main===module)buildSite(path.resolve(__dirname,'..')).then(output=>console.log('公開產物：'+output)).catch(error=>{console.error(error.message);process.exitCode=1;});
-module.exports={buildSite,emptyBookmarks,copyTree};
+if(require.main===module){
+ const root=path.resolve(__dirname,'..');
+ syncPublicProjects(root).then(()=>buildSite(root)).then(output=>console.log('公開產物：'+output)).catch(error=>{console.error(error.message);process.exitCode=1;});
+}
+module.exports={buildSite,emptyBookmarks,copyTree,loadPublicProjects,syncPublicProjects};

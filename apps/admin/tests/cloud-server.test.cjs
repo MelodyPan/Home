@@ -5,6 +5,8 @@ const {buildSite}=require('../../../scripts/home-site-build.cjs');
 test('雲端入口只提供公開產物與作品 API，不暴露本機書籤、相簿或來源程式',async t=>{
  const source=path.resolve(__dirname,'../../..'),root=await fs.mkdtemp(path.join(os.tmpdir(),'cloud-home-'));
  await fs.copyFile(path.join(source,'index.html'),path.join(root,'index.html'));
+ await fs.mkdir(path.join(root,'data/portfolio'),{recursive:true});
+ await fs.copyFile(path.join(source,'data/portfolio/projects.json'),path.join(root,'data/portfolio/projects.json'));
  await buildSite(root,{appRoot:path.join(source,'apps/bookmarks')});
  const config={googleClientId:'',adminSubjects:[],adminEmails:[]};
  const seed=JSON.parse(await fs.readFile(path.join(source,'apps/admin/projects.seed.json'),'utf8'));

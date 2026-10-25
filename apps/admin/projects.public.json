@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-10-25T11:51:20.471Z",
+  "projects": [
+    {
+      "id": "2a7c5470-0733-4dbc-8c6e-6f740e00d8eb",
+      "title": "探索台灣",
+      "description": "Taiwan Explorer 是一個以互動式地圖為核心的台灣旅遊探索網站，結合台灣各地觀光景點、在地美食、住宿推薦及旅遊規劃等主題，讓使用者透過地圖，以更直覺、有趣的方式認識台灣。\n\n從山巒到海岸，從城市到鄉鎮，透過地理資訊與旅遊內容的整合，探索台灣各地獨特的自然景觀與人文風情。\n\n用地圖，開啟你的台灣旅程！",
+      "category": "系統開發 ·2026",
+      "url": "https://melodypan.github.io/TaiwanExplorer/",
+      "linkText": "Open",
+      "badge": "",
+      "sortOrder": 3,
+      "published": true,
+      "featured": true,
+      "newTab": true
+    },
+    {
+      "id": "project-3",
+      "title": "動態幕自動廣播系統（CathFlow）",
+      "description": "醫療場域中的動態幕自動廣播系統，提供資訊展示與自動播放功能。",
+      "category": "系統開發 ·2026",
+      "url": "cathflow/cathflow.html",
+      "linkText": "Demo",
+      "badge": "01",
+      "sortOrder": 4,
+      "published": true,
+      "featured": true,
+      "newTab": true
+    },
+    {
+      "id": "project-5",
+      "title": "慢箋預約系統再造",
+      "description": "將慢性處方箋預約系統改版為 RWD 現代化網站，並延伸整合多項醫療預約流程。",
+      "category": "系統再造 · 2023 — 目前",
+      "url": "",
+      "linkText": "",
+      "badge": "03",
+      "sortOrder": 5,
+      "published": true,
+      "featured": false,
+      "newTab": false
+    },
+    {
+      "id": "project-6",
+      "title": "手術排程系統",
+      "description": "為手術護理站開發排程控台，並支援手術房間流動刷手輸入各項流程時間點。",
+      "category": "系統開發及維護 · 2017 — 目前",
+      "url": "",
+      "linkText": "",
+      "badge": "04",
+      "sortOrder": 6,
+      "published": true,
+      "featured": false,
+      "newTab": false
+    },
+    {
+      "id": "project-7",
+      "title": "醫療儀器管理系統",
+      "description": "管理醫院內與病人相關儀器的完整生命週期，並以 Cordova 開發 Android 與 iOS App。",
+      "category": "系統設計、開發及維護 · 2016 — 目前",
+      "url": "",
+      "linkText": "",
+      "badge": "05",
+      "sortOrder": 7,
+      "published": true,
+      "featured": false,
+      "newTab": false
+    },
+    {
+      "id": "project-8",
+      "title": "院外計畫經費管控系統",
+      "description": "涵蓋計畫核定、預算、執行、核銷、會計串接與經費不足警示，從需求訪談到維護。",
+      "category": "全生命週期開發 · 2015 — 2024",
+      "url": "",
+      "linkText": "",
+      "badge": "06",
+      "sortOrder": 8,
+      "published": true,
+      "featured": false,
+      "newTab": false
+    },
+    {
+      "id": "project-9",
+      "title": "校務與問卷應用",
+      "description": "曾參與校務基本資料庫資訊系統與 DoSurvey 問卷市調網，熟悉會員、題型、資料分析與 Excel 匯出流程。",
+      "category": "Web application · ASP.NET / JavaScript",
+      "url": "",
+      "linkText": "",
+      "badge": "07",
+      "sortOrder": 9,
+      "published": true,
+      "featured": false,
+      "newTab": false
+    }
+  ]
+}

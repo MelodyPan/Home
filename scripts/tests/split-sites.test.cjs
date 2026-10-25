@@ -4,6 +4,10 @@ const fs=require('node:fs/promises'),os=require('node:os'),path=require('node:pa
 const {createHomeServer}=require('../home-site-server.cjs');
 const {buildSite}=require('../home-site-build.cjs');
 const home=path.resolve(__dirname,'../..');
+async function addProjectSource(root){
+ const directory=path.join(root,'data/portfolio');await fs.mkdir(directory,{recursive:true});
+ await fs.copyFile(path.join(home,'data/portfolio/projects.json'),path.join(directory,'projects.json'));
+}
 
 test('兩站有獨立入口、資源與 API，舊相簿轉址且沿用原資料',async t=>{
  const dataRoot=await fs.mkdtemp(path.join(os.tmpdir(),'split-data-'));
@@ -38,6 +42,7 @@ test('兩站有獨立入口、資源與 API，舊相簿轉址且沿用原資料'
 test('公開建置分站、頁面資源完整且不包含私人資料',async t=>{
  const root=await fs.mkdtemp(path.join(os.tmpdir(),'split-build-'));t.after(()=>fs.rm(root,{recursive:true,force:true}));
  await fs.copyFile(path.join(home,'index.html'),path.join(root,'index.html'));
+ await addProjectSource(root);
  const out=await buildSite(root,{appRoot:path.join(home,'apps/bookmarks'),growthRoot:path.join(home,'apps/growth'),sharedRoot:path.join(home,'apps/shared')});
  for(const site of ['bookmarks','growth']){
   const html=await fs.readFile(path.join(out,site,site+'.html'),'utf8');
@@ -48,6 +53,7 @@ test('公開建置分站、頁面資源完整且不包含私人資料',async t=>
  const html=await fs.readFile(path.join(out,'bookmarks/bookmarks.html'),'utf8');assert.deepEqual(JSON.parse(html.match(/id="bookmark-data">([\s\S]*?)<\/script>/)[1]).entries,[]);
  assert.match(await fs.readFile(path.join(out,'bookmarks/growth.html'),'utf8'),/\.\.\/growth\/growth.html/);
  const index=await fs.readFile(path.join(out,'index.html'),'utf8');assert.doesNotMatch(index,/id="(?:bookmarks|growth)-subsystem"|BOOKMARKS_SUBSYSTEM|href="(?:bookmarks|growth)\//);assert.match(index,/CathFlow/);
+ assert.equal(JSON.parse(await fs.readFile(path.join(out,'portfolio/projects.json'),'utf8')).projects.some(project=>project.title==='探索台灣'),true);
 });
 
 test('CathFlow 與 DynastyExplorer 有獨立子站，舊網址轉址且公開產物包含標誌',async t=>{
@@ -62,6 +68,7 @@ test('CathFlow 與 DynastyExplorer 有獨立子站，舊網址轉址且公開產
  }
  const image=await fetch(origin+'/dynasty-explorer/images/logo.png');assert.equal(image.status,200);assert.match(image.headers.get('content-type'),/image\/png/);
  await fs.copyFile(path.join(home,'index.html'),path.join(root,'index.html'));
+ await addProjectSource(root);
  const out=await buildSite(root,{appRoot:path.join(home,'apps/bookmarks')});
  for(const [site,file] of [['cathflow','cathflow.html'],['dynasty-explorer','DynastyExplorer.html']]){
   await fs.access(path.join(out,site,file));assert.match(await fs.readFile(path.join(out,file),'utf8'),new RegExp(site+'/'+file));

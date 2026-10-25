@@ -17,8 +17,8 @@ async function setup(t,saved=null){
   if(route.endsWith('/config'))return Response.json({configured:true,googleClientId:'test-client'});
   if(route.endsWith('/me'))return Response.json({email:'test@example.com'});
   if(options.method==='PUT'){
-   puts++;if(failNext){failNext=false;return Response.json({error:'其他分頁已更新'},{status:409});}
-   const result=await store.write(JSON.parse(options.body),options.headers['If-Match'].replaceAll('"',''));return Response.json(result.document,{headers:{ETag:'"'+result.revision+'"'}});
+   puts++;if(failNext){failNext=false;const latest=await store.read();await store.write({...latest.document,projects:latest.document.projects.map(row=>({...row,description:'其他分頁的新內容'}))},latest.revision);return Response.json({error:'其他分頁已更新'},{status:409});}
+   try{const result=await store.write(JSON.parse(options.body),options.headers['If-Match'].replaceAll('"',''));return Response.json(result.document,{headers:{ETag:'"'+result.revision+'"'}});}catch(error){return Response.json({error:error.message},{status:error.status||503});}
   }
   const result=await store.read();return Response.json(result.document,{headers:{ETag:'"'+result.revision+'"'}});
  }};
@@ -30,13 +30,22 @@ test('取消公開後按一次表單儲存即更新 JSON，表單保留未公開
  assert.equal(page.puts(),1);assert.equal((await page.store.read()).document.projects[0].published,false);assert.equal(ProjectModel.publicDocument((await page.store.read()).document).projects.length,0);
  assert.equal(page.fields.namedItem('published').checked,false);assert.match(page.get('project-list').children[0].className,/unpublished/);assert.match(page.get('form-status').textContent,/已儲存/);assert.equal(page.get('save-state').textContent,'已同步');
 });
-test('儲存衝突保留未公開草稿與就近錯誤提示，重試不重複新增作品',async t=>{
+test('儲存衝突保留未公開草稿與就近錯誤提示，再次提交也不覆蓋其他分頁的新版本',async t=>{
  const page=await setup(t);await page.edit();page.fields.namedItem('published').checked=false;await page.form.fire('input');page.conflict();await page.form.fire('submit');
  assert.equal((await page.store.read()).document.projects[0].published,true);assert.equal(page.fields.namedItem('published').checked,false);assert.match(page.get('form-status').textContent,/其他分頁已更新/);assert.equal(page.get('save-state').textContent,'有未儲存變更');
- await page.form.fire('submit');const saved=await page.store.read();assert.equal(saved.document.projects.length,1);assert.equal(saved.document.projects[0].published,false);
+ await page.form.fire('submit');const saved=await page.store.read();assert.equal(saved.document.projects.length,1);assert.equal(saved.document.projects[0].published,true);assert.equal(saved.document.projects[0].description,'其他分頁的新內容');assert.equal(page.fields.namedItem('published').checked,false);assert.equal(page.get('save-state').textContent,'有未儲存變更');
 });
 test('表單儲存後立即重複按相同按鈕不會重複寫入',async t=>{
  const page=await setup(t);await page.edit();page.fields.namedItem('published').checked=false;await page.form.fire('input');await Promise.all([page.form.fire('submit'),page.form.fire('submit')]);assert.equal(page.puts(),1);
+});
+test('新增作品按一次即可儲存，後續修改同一作品不會重複新增',async t=>{
+ const page=await setup(t);page.fields.title.value='新作品';await page.form.fire('input');await page.form.fire('submit');
+ assert.equal((await page.store.read()).document.projects.length,2);assert.equal(page.fields.title.value,'新作品');
+ page.fields.title.value='更新名稱';await page.form.fire('input');await page.form.fire('submit');const saved=(await page.store.read()).document.projects;assert.equal(saved.length,2);assert.equal(saved.find(row=>row.id!=='bookmarks').title,'更新名稱');
+});
+test('刪除後的清單可從上方儲存，不要求填寫空白新增表單',async t=>{
+ const page=await setup(t);await page.get('project-list').children[0].children[2].children[3].fire('click');await page.get('save-all').fire('click');
+ assert.equal(page.puts(),1);assert.equal((await page.store.read()).document.projects.length,0);
 });
 test('清單可依關鍵字與狀態篩選，編號不受篩選影響',async t=>{
  const page=await setup(t);const items=()=>page.get('project-list').children;
