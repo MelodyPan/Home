@@ -50,3 +50,7 @@ test('頁面訊息顯示五秒後自動清除',async t=>{
  await new Promise(resolve=>realSet(resolve,5100));
  assert.equal(page.get('status').textContent,'');
 });
+test('登入訊息只顯示在右下角提示，不出現在表單內',async t=>{
+ const page=await setup(t);
+ assert.match(page.get('status').textContent,/已登入/);assert.equal(page.get('form-status').textContent,'');
+});

@@ -3,7 +3,7 @@
  const $=id=>document.getElementById(id),form=$('project-form');
  let token='',editor=null,etag='',selectedId=null,formDirty=false,busy=false,clientId='';
  let statusTimer=0;
- const status=(message,error=false)=>{for(const id of ['status','form-status']){const node=$(id);if(node){node.textContent=message;node.className=error?'save-feedback error':'save-feedback';}}clearTimeout(statusTimer);statusTimer=setTimeout(()=>{const node=$('status');if(node){node.textContent='';node.className='';}},5000);};
+ const status=(message,error=false,toastOnly=false)=>{for(const id of toastOnly?['status']:['status','form-status']){const node=$(id);if(node){node.textContent=message;node.className=error?'save-feedback error':'save-feedback';}}clearTimeout(statusTimer);statusTimer=setTimeout(()=>{const node=$('status');if(node){node.textContent='';node.className='';}},5000);};
  function changed(){return Boolean(editor?.dirty||formDirty);}
  function updateState(){$('save-state').textContent=changed()?'有未儲存變更':token?'已同步':'尚未登入';$('save-state').classList.toggle('dirty',changed());}
  function guard(){return !changed()||confirm('有尚未儲存的變更，確定要捨棄嗎？');}
@@ -73,19 +73,19 @@
   if(busy)return;setBusy(true);const previous=token;token=credential;
   try{
    const {body:user}=await api('me');$('account-name').textContent=user.email;$('logout').hidden=false;
-   if(editor&&changed()&&previous!==credential){status('已重新登入，草稿已保留。');}else{await load();status('已登入。選擇作品編輯，或新增作品。');}
+   if(editor&&changed()&&previous!==credential){status('已重新登入，草稿已保留。',false,true);}else{await load();status('已登入。選擇作品編輯，或新增作品。',false,true);}
    $('login-panel').hidden=true;$('workspace').hidden=false;updateState();
-  }catch(error){token='';$('login-panel').hidden=false;$('workspace').hidden=true;status(error.message,true);}finally{setBusy(false);}
+  }catch(error){token='';$('login-panel').hidden=false;$('workspace').hidden=true;status(error.message,true,true);}finally{setBusy(false);}
  }
  form.addEventListener('input',()=>{formDirty=true;updateState();});
  form.addEventListener('submit',async event=>{event.preventDefault();await saveChanges(true);});
  $('add').addEventListener('click',()=>{if(guardForm()){resetForm(null);render();form.elements.title.focus();}});
  for(const id of ['filter-text','filter-status'])$(id).addEventListener('input',()=>{if(editor)render();});
  $('cancel-edit').addEventListener('click',()=>{if(guardForm()){resetForm(null);render();}});
- $('reload').addEventListener('click',async()=>{if(!guard())return;setBusy(true);try{await load();status('已載入最新作品。');}catch(error){status(error.message,true);}finally{setBusy(false);}});
+ $('reload').addEventListener('click',async()=>{if(!guard())return;setBusy(true);try{await load();status('已載入最新作品。',false,true);}catch(error){status(error.message,true,true);}finally{setBusy(false);}});
  $('save-all').addEventListener('click',()=>saveChanges());
  $('export').addEventListener('click',()=>{if(formDirty&&!applyForm())return;const url=URL.createObjectURL(new Blob([JSON.stringify(editor.snapshot(),null,2)],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='projects-draft.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
- $('logout').addEventListener('click',()=>{if(!guard())return;token='';editor=null;etag='';selectedId=null;formDirty=false;form.reset();$('project-list').replaceChildren();$('account-name').textContent='';$('workspace').hidden=true;$('logout').hidden=true;$('login-panel').hidden=false;globalThis.google?.accounts.id.disableAutoSelect();updateState();status('已登出。');});
+ $('logout').addEventListener('click',()=>{if(!guard())return;token='';editor=null;etag='';selectedId=null;formDirty=false;form.reset();$('project-list').replaceChildren();$('account-name').textContent='';$('workspace').hidden=true;$('logout').hidden=true;$('login-panel').hidden=false;globalThis.google?.accounts.id.disableAutoSelect();updateState();status('已登出。',false,true);});
  addEventListener('beforeunload',event=>{if(changed()){event.preventDefault();event.returnValue='';}});
  async function init(){
   const remote=globalThis.PortfolioConfig?.apiBaseUrl;
