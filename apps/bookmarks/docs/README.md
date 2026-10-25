@@ -34,7 +34,6 @@
 Bookmarks/
 ├─ bookmarks.html                         產生的書籤網頁入口
 ├─ growth.html                        成長相簿入口
-├─ start-bookmarks.cmd                Windows 一鍵啟動入口
 ├─ README.md                          使用者操作說明
 ├─ Javascript/                       瀏覽器載入的程式
 │  ├─ home.js                         書籤畫面、事件與自動存檔
@@ -44,7 +43,6 @@ Bookmarks/
 ├─ scripts/                          本機服務與開發工具
 │  ├─ server.cjs                      HTTP、檔案讀寫與停止服務 API
 │  ├─ growth-store.cjs                相簿資料驗證、照片與存檔
-│  ├─ start-bookmarks.cjs             版本檢查、啟動服務與開啟瀏覽器
 │  ├─ server-version.cjs              計算服務與共用模組的版本指紋
 │  ├─ build-home.cjs                  由範本及原始資料產生首頁
 │  ├─ check-bookmarks.cjs             重新檢查網址並產生報告
@@ -73,7 +71,6 @@ Bookmarks/
 │  ├─ bookmark-export.test.cjs        Chrome 書籤 HTML 匯出與還原驗證
 │  ├─ bookmark-home.test.cjs          解析、分類、篩選與異動測試
 │  ├─ bookmark-file.test.cjs          JSON 格式及還原測試
-│  ├─ bookmark-launcher.test.cjs      啟動與版本處理測試
 │  ├─ bookmark-server.test.cjs        HTTP、存檔、衝突與停止測試
 │  ├─ url-checker.test.cjs            自動檢查、DNS 與時間記錄測試
 │  └─ url-check-api.test.cjs          背景進度、取消與資料合併測試
@@ -88,7 +85,7 @@ Bookmarks/
 
 ### 整體架構
 
-瀏覽器從 `http://127.0.0.1:4178/bookmarks.html` 載入首頁及三個 JavaScript 檔，透過同來源 Fetch 請求與 Node.js 服務溝通。服務僅綁定本機位址，負責讀寫資料檔；分類、搜尋及畫面呈現主要在瀏覽器完成。
+瀏覽器從 `http://127.0.0.1:4179/bookmarks/bookmarks.html` 載入首頁及三個 JavaScript 檔，透過同來源 Fetch 請求與 Node.js 服務溝通。服務僅綁定本機位址，負責讀寫資料檔；分類、搜尋及畫面呈現主要在瀏覽器完成。
 
 ```mermaid
 flowchart LR
@@ -106,7 +103,7 @@ flowchart LR
 | [bookmark-core.js](../Javascript/bookmark-core.js) | `parseBookmarks()` 解析原始書籤；`classify()` 判斷分類；`selectBookmarks()` 組合篩選；`mergeLibrary()` 套用新增、刪除、分類與狀態異動；`createChromeBookmarkHtml()` 輸出 Chrome 可匯入的 Netscape 書籤格式 |
 | [bookmark-file.js](../Javascript/bookmark-file.js) | `createDataFile()` 建立完整快照；`readDataFile()` 驗證格式、識別碼、分類與收藏關聯，供前後端共用 |
 | [server.cjs](../scripts/server.cjs) | 提供指定靜態資源與 API；驗證主機、寫入來源及資料格式；排隊存檔、檢查版本衝突並關閉服務 |
-| [start-bookmarks.cjs](../scripts/start-bookmarks.cjs) | `ensureBookmarkServer()` 檢查服務身分、專案路徑及版本；沿用相同版本，必要時停止舊版並啟動新版 |
+| [Home 啟動程式](../../../scripts/home-site-start.cjs) | `ensureHomeServer()` 檢查服務身分、專案路徑及版本；沿用相同版本，必要時停止舊版並啟動新版 |
 | [server-version.cjs](../scripts/server-version.cjs) | 對服務、網址檢查器、書籤共用模組與相簿儲存模組計算 SHA-256 指紋，供啟動器判斷版本 |
 | [build-home.cjs](../scripts/build-home.cjs) | 合併原始匯出檔與檢查結果，將 CSS、Logo 與初始資料嵌入 HTML；保留 `Javascript/` 的外部程式引用 |
 | [url-checker.cjs](../scripts/url-checker.cjs) | 背景檢查目前未刪除的書籤，去除重複網址，以 HEAD／必要時 GET 檢查，驗證 DNS 與重新導向位址，將結果合併到最新資料 |
@@ -166,20 +163,20 @@ flowchart LR
 ### 環境需求與啟動
 
 - Windows、Node.js 22 以上及 Chrome 等現代瀏覽器；一鍵啟動使用 PowerShell 開啟預設瀏覽器。
-- 專案使用 Node.js 內建模組，**不需要執行 `npm install`**。
-- 請保留專案目錄結構，並確保 `assets/` 可寫入及本機 4178 埠可用。
+- Home 首次使用請在根目錄執行 `npm install`，安裝 Google 登入所需套件。
+- 請保留專案目錄結構，並確保 `assets/` 可寫入及本機 4179 埠可用。
 
 在專案根目錄開啟 PowerShell：
 
 ```powershell
 node --version
-.\start-bookmarks.cmd
+.\start-home.cmd
 ```
 
-啟動器會開啟 `http://127.0.0.1:4178/bookmarks.html`。開發時若需要直接查看服務輸出，可執行：
+啟動器會開啟 Home 首頁 `http://127.0.0.1:4179/`，再從首頁進入書籤工作台。開發時若需要直接查看服務輸出，可執行：
 
 ```powershell
-node scripts/server.cjs
+node scripts/home-site-server.cjs
 ```
 
 直接執行服務時可按 `Ctrl+C` 停止；Home 整合版可在 `/admin/` 右上角使用「停止服務」，不需登入。關閉分頁不會停止服務，完全停止後需再執行啟動檔。

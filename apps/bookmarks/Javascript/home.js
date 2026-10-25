@@ -22,7 +22,7 @@
  let fileReady=false,fileRevision='',fileError='',fileConflict=false,saveQueue=Promise.resolve(),pendingSaves=0;
  // 正常模式以 assets 的 JSON 與 ETag 為準；載入失敗才使用初始資料／快取並禁止新異動。
  let initialFile;
- try{if(preview)throw new Error('雲端儲存尚未設定，目前可預覽網站介面。');if(!['http:','https:'].includes(location.protocol))throw new Error('請雙擊 start-bookmarks.cmd 開啟，才能自動讀寫 assets/bookmarks-data.txt。');const response=await appFetch('/assets/bookmarks-data.txt',{cache:'no-store'});if(!response.ok)throw new Error('讀取資料檔失敗，請檢查 assets/bookmarks-data.txt 後重新整理。');initialFile=readDataFile(await response.text());fileRevision=response.headers.get('ETag');if(!fileRevision)throw new Error('請透過 start-bookmarks.cmd 開啟本機服務。');baseEntries=initialFile.baseEntries;checkedAt=initialFile.checkedAt;fileReady=true;}catch(error){fileError=error.message;}
+ try{if(preview)throw new Error('雲端儲存尚未設定，目前可預覽網站介面。');if(!['http:','https:'].includes(location.protocol))throw new Error('請雙擊 start-home.cmd 開啟，才能自動讀寫 assets/bookmarks-data.txt。');const response=await appFetch('/assets/bookmarks-data.txt',{cache:'no-store'});if(!response.ok)throw new Error('讀取資料檔失敗，請檢查 assets/bookmarks-data.txt 後重新整理。');initialFile=readDataFile(await response.text());fileRevision=response.headers.get('ETag');if(!fileRevision)throw new Error('請透過 start-home.cmd 開啟本機服務。');baseEntries=initialFile.baseEntries;checkedAt=initialFile.checkedAt;fileReady=true;}catch(error){fileError=error.message;}
  const librarySaved=initialFile?{changes:initialFile.changes,warning:false}:loadLibraryChanges(storage);
  let changes=librarySaved.changes;
  let entries=mergeLibrary(baseEntries,changes);
@@ -252,7 +252,7 @@
  // 以工作 ID 避免重複套用結果；只有完整完成的工作才更新最後檢查時間與資料。
  async function pollUrlCheck(){
   if(!fileReady||checkStatusRequest)return;checkStatusRequest=true;clearTimeout(checkPollTimer);
-  try{const response=await appFetch('/api/url-check',{cache:'no-store'});if(!response.ok)throw new Error(response.status===404?'請重新執行 start-bookmarks.cmd，以載入支援網址檢查的新版服務。':'無法取得檢查進度，請稍後重新開啟此視窗。');const job=await response.json();$('recheck-message').dataset.tone='';setCheckBusy(job.state==='running'||(job.state==='completed'&&appliedCheckId!==job.id));$('recheck-progress').hidden=job.state!=='running';
+  try{const response=await appFetch('/api/url-check',{cache:'no-store'});if(!response.ok)throw new Error(response.status===404?'請重新執行 start-home.cmd，以載入支援網址檢查的新版服務。':'無法取得檢查進度，請稍後重新開啟此視窗。');const job=await response.json();$('recheck-message').dataset.tone='';setCheckBusy(job.state==='running'||(job.state==='completed'&&appliedCheckId!==job.id));$('recheck-progress').hidden=job.state!=='running';
    if(job.state==='running'){$('recheck-message').textContent='已檢查 '+job.checked+' / '+job.total+' 個不同網址'+(job.checked===job.total?'，正在儲存結果…':'，請稍候…');$('recheck-progress').max=Math.max(1,job.total);$('recheck-progress').value=job.checked;checkPollTimer=setTimeout(pollUrlCheck,1200);}
    else if(job.state==='completed'){if(appliedCheckId!==job.id){await saveQueue;await reloadCheckedData();appliedCheckId=job.id;}setCheckBusy(false);$('recheck-message').textContent='已完成 '+job.total+' 個不同網址的檢查，結果與完成時間已儲存。';}
    else if(job.state==='failed'||job.state==='cancelled'){$('recheck-message').textContent=job.error||'檢查未完成，最後完成時間維持不變。';}
@@ -261,9 +261,9 @@
  function showCheckAvailability(){
   if(preview){$('recheck-urls').disabled=true;$('open-local-checker').hidden=true;$('recheck-message').textContent='雲端版本尚未啟用網址檢查。';return;}
   $('recheck-urls').disabled=!fileReady||checkingUrls;$('open-local-checker').hidden=fileReady;
-  if(!fileReady){$('recheck-urls').textContent='請先開啟本機版';$('recheck-message').textContent=(fileError||'尚未連線到本機服務。')+' 請先雙擊 start-bookmarks.cmd 啟動，再按「開啟本機版」。';$('recheck-message').dataset.tone='error';}
+  if(!fileReady){$('recheck-urls').textContent='請先開啟本機版';$('recheck-message').textContent=(fileError||'尚未連線到本機服務。')+' 請先雙擊 start-home.cmd 啟動，再按「開啟本機版」。';$('recheck-message').dataset.tone='error';}
  }
- $('open-local-checker').addEventListener('click',event=>{if(location.origin==='http://127.0.0.1:4178'){event.preventDefault();history.replaceState(null,'','#url-check');location.reload();}});
+ $('open-local-checker').addEventListener('click',event=>{if(location.origin==='http://127.0.0.1:4179'){event.preventDefault();history.replaceState(null,'','#url-check');location.reload();}});
  showCheckAvailability();
  $('recheck-urls').addEventListener('click',async()=>{
   if(!fileReady||checkingUrls)return;setCheckBusy(true);$('recheck-message').dataset.tone='';$('recheck-message').textContent='正在準備檢查…';

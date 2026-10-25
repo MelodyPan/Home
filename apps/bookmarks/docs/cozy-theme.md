@@ -61,8 +61,8 @@ node scripts/build-home.cjs
 node --test
 ```
 
-單獨修改 `cozy-theme.css` 後重新整理即可，不需要重建相簿或重啟服務。修改首頁範本後需重建 `bookmarks.html`；修改服務路由後重新執行 `start-bookmarks.cmd`，讓啟動器更新版本。
+單獨修改 `cozy-theme.css` 後重新整理即可，不需要重建相簿或重啟服務。修改首頁範本後需重建 `bookmarks.html`；修改服務路由後重新執行 `start-home.cmd`，讓啟動器更新版本。
 
-正常啟動後，共用樣式網址為 `http://127.0.0.1:4178/src/cozy-theme.css`。直接以 `file://` 開啟首頁時，無法使用這個本機 HTTP 樣式路徑，請以啟動檔開啟正式介面。
+正常啟動後，共用樣式網址為 `http://127.0.0.1:4179/bookmarks/src/cozy-theme.css`。直接以 `file://` 開啟首頁時，無法使用這個本機 HTTP 樣式路徑，請以啟動檔開啟正式介面。
 
 自動驗證涵蓋既有功能測試、靜態資源回應、DOM 識別碼及樣式區塊結構。這些檢查不等同真實瀏覽器的視覺驗收；目前瀏覽器操作受工具權限限制，尚未完成新版畫面的實際截圖驗證。

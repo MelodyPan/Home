@@ -143,7 +143,7 @@ function flip(delta){const next=state.page+delta;if(next<0||next>=records().leng
 // 統一處理連線、JSON 解析與 HTTP 錯誤，將本機服務回報的錯誤顯示在表單。
 async function jsonRequest(url,options={}){
  if(preview)throw new Error('雲端儲存尚未設定，目前為網站預覽。');
- let response;try{response=await fetch(globalThis.BookmarksRuntime?.url(url)||url,options);}catch{throw new Error('無法連線到本機服務。請重新執行 start-bookmarks.cmd，保留此表單後再試一次。');}
+ let response;try{response=await fetch(globalThis.BookmarksRuntime?.url(url)||url,options);}catch{throw new Error('無法連線到本機服務。請重新執行 start-home.cmd，保留此表單後再試一次。');}
  let body;try{body=await response.json();}catch{throw new Error('本機服務回應異常，請確認已用啟動檔開啟最新版。');}
  if(!response.ok)throw new Error(body.error||'儲存失敗，請稍後再試。');return {response,body};
 }
@@ -336,7 +336,7 @@ window.addEventListener('beforeunload',event=>{if(state.busy||state.dirty){event
 // 初次開啟從本機 API 載入資料及版本；file:// 無法存檔，因此提示使用啟動檔。
 (async()=>{
  if(preview){state.data={schemaVersion:1,children:[],records:[]};render();return;}
- if(location.protocol==='file:'){status('請先執行 start-bookmarks.cmd，再從書籤首頁開啟「成長相簿」。',true);return;}
+ if(location.protocol==='file:'){status('請先執行 start-home.cmd，再從書籤首頁開啟「成長相簿」。',true);return;}
  try{const {response,body}=await jsonRequest('/api/growth');state.data=body;state.revision=response.headers.get('etag');status(body.updatedAt?'已從本機載入 · 最後儲存 '+new Date(body.updatedAt).toLocaleString('zh-TW',{hour12:false}):'本機相簿準備好了 · 新增第一位孩子，開始收藏成長故事');render();}
  catch(error){status(error.message,true);}
 })();

@@ -139,7 +139,7 @@
 | [scripts/growth-store.cjs](../scripts/growth-store.cjs) | 資料驗證、照片上傳、JSON 讀寫、備份與衝突檢查 |
 | [scripts/server.cjs](../scripts/server.cjs) | 共用本機服務，將相簿路由交給儲存模組，提供指定靜態資源 |
 | [scripts/server-version.cjs](../scripts/server-version.cjs) | 計算服務版本指紋，包含相簿儲存模組 |
-| [scripts/start-bookmarks.cjs](../scripts/start-bookmarks.cjs) | 確認服務身分、專案路徑及版本，必要時重啟同專案舊服務 |
+| [Home 啟動程式](../../../scripts/home-site-start.cjs) | 確認服務身分、專案路徑及版本，必要時重啟同專案舊服務 |
 
 相簿直接使用 `growth.html`，不由首頁建置工具產生。修改 HTML、CSS 或前端 JS 後重新整理即可；修改服務程式後，重新執行啟動檔更新執行版本。首頁範本仍由 `scripts/build-home.cjs` 產生 `bookmarks.html`。
 

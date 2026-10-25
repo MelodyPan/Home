@@ -61,5 +61,5 @@
 - [畫面與事件處理](../Javascript/home.js)：搜尋、收藏、分類編輯、存檔與檢查進度。
 - [共用核心](../Javascript/bookmark-core.js)：資料合併、分類、排序與匯出。
 - [介面範本](../src/home.html)：現有操作入口及表單欄位。
-- [本機服務](../scripts/server.cjs)、[網址檢查器](../scripts/url-checker.cjs)、[啟動器](../scripts/start-bookmarks.cjs)。
+- [本機服務](../scripts/server.cjs)、[網址檢查器](../scripts/url-checker.cjs)、[啟動器](../../../scripts/home-site-start.cjs)。
 - [中文操作指南](user-guide.md)、[架構與開發指南](README.md)。
