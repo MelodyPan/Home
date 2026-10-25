@@ -673,7 +673,7 @@
             <div class="hero-links"><a class="button" href="#works">查看作品</a></div>
           </div>
         </div>
-        <aside class="hero-note"><strong>12+</strong>
+        <aside class="hero-note"><strong><span id="experience-years">12</span>+</strong>
           <p>年軟體開發經驗<br />目前於臺中榮民總醫院服務</p>
         </aside>
       </section>
@@ -828,6 +828,18 @@
     <div class="shell">© <span id="year"></span> Melody Pan · Taichung, Taiwan · <a href="admin/">作品管理</a></div>
   </footer>
   <script>document.getElementById("year").textContent = new Date().getFullYear();</script>
+  <script>
+    (function () {
+      var starts = [].map.call(document.querySelectorAll("#experience .date"), function (el) {
+        var m = /(\d{4})\.(\d{1,2})/.exec(el.textContent);
+        return m ? Number(m[1]) * 12 + Number(m[2]) - 1 : null;
+      }).filter(function (v) { return v !== null; });
+      if (!starts.length) return;
+      var now = new Date();
+      var years = Math.floor((now.getFullYear() * 12 + now.getMonth() - Math.min.apply(null, starts)) / 12);
+      if (years > 0) document.getElementById("experience-years").textContent = years;
+    })();
+  </script>
   <script src="portfolio/config.js"></script>
   <script src="portfolio/project-model.js"></script>
   <script src="portfolio/projects.js"></script>
