@@ -19,7 +19,7 @@ test('公開建置只使用白名單，清除 HTML 內嵌個人書籤，不發�
  await fs.mkdir(path.join(root,'apps/bookmarks'),{recursive:true});
  await fs.writeFile(path.join(root,'index.html'),'<html>HOME</html>');
  await fs.mkdir(path.join(root,'data/portfolio'),{recursive:true});
- await fs.copyFile(path.resolve(__dirname,'../../../data/portfolio/projects.json'),path.join(root,'data/portfolio/projects.json'));
+ await fs.copyFile(path.resolve(__dirname,'../../admin/projects.public.json'),path.join(root,'data/portfolio/projects.json'));
  // 將實際專案當成來源，但不把個人資料複製到任何產物。
  const out=await buildSite(root,{appRoot:path.resolve('.'),output:path.join(root,'dist')});
  const html=await fs.readFile(path.join(out,'bookmarks/bookmarks.html'),'utf8');
