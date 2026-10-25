@@ -245,20 +245,22 @@
       color: var(--muted);
     }
 
+    .hero-main {
+      display: flex;
+      align-items: center;
+      gap: 40px;
+    }
+
     .hero-photo {
+      flex: none;
       display: block;
-      width: 168px;
-      height: 168px;
-      margin: 0 auto 22px;
+      width: 200px;
+      height: 200px;
       border: 4px solid #fff;
       border-radius: 50%;
       box-shadow: 0 10px 26px rgba(23, 32, 51, .16);
       object-fit: cover;
       object-position: center 30%;
-    }
-
-    .hero-note {
-      text-align: center;
     }
 
     section {
@@ -575,6 +577,17 @@
         font-size: clamp(3.2rem, 17vw, 5.5rem);
       }
 
+      .hero-main {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 28px;
+      }
+
+      .hero-photo {
+        width: 140px;
+        height: 140px;
+      }
+
       section {
         padding: 68px 0;
       }
@@ -652,14 +665,15 @@
   <main id="top">
     <div class="shell">
       <section class="hero">
-        <div>
-          <div class="hero-subtitle">把複雜流程，做成好用的系統。</div>
-          <p class="intro">我是Melody，專注於醫療資訊系統、網頁應用與跨平台 App 開發。從需求訪談、系統規畫到上線維護，持續把第一線工作者的需求轉化成可靠、清楚的數位工具。</p>
-          <div class="hero-links"><a class="button" href="#works">查看作品</a></div>
-        </div>
-        <aside class="hero-note">
+        <div class="hero-main">
           <img class="hero-photo" src="images/melody.jpg" alt="Melody Pan" width="992" height="992" loading="eager" />
-          <strong>12+</strong>
+          <div>
+            <div class="hero-subtitle">把複雜流程，做成好用的系統。</div>
+            <p class="intro">我是Melody，專注於醫療資訊系統、網頁應用與跨平台 App 開發。從需求訪談、系統規畫到上線維護，持續把第一線工作者的需求轉化成可靠、清楚的數位工具。</p>
+            <div class="hero-links"><a class="button" href="#works">查看作品</a></div>
+          </div>
+        </div>
+        <aside class="hero-note"><strong>12+</strong>
           <p>年軟體開發經驗<br />目前於臺中榮民總醫院服務</p>
         </aside>
       </section>
