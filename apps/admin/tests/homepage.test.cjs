@@ -17,8 +17,8 @@ test('公開 API 回傳空清單時清除舊作品，作品文字以安全 DOM �
  const row={id:'a',title:'<script>alert(1)</script>',description:'文字',category:'',url:'https://example.com/',linkText:'查看',badge:'01',sortOrder:0,published:true,featured:false,newTab:true};
  const page=await homepage(Response.json({schemaVersion:1,updatedAt:null,projects:[row]}));assert.equal(page.grid.children[0].children[1].textContent,row.title);assert.equal(page.grid.children[0].children[4].rel,'noopener noreferrer');
 });
-test('數字編號依公開清單順序重排，符號編號維持原樣',async()=>{
+test('所有公開作品依清單順序自動編號',async()=>{
  const make=(id,badge)=>({id,title:id,description:'',category:'',url:'',linkText:'',badge,sortOrder:0,published:true,featured:false,newTab:false});
  const page=await homepage(Response.json({schemaVersion:1,updatedAt:null,projects:[make('a','♡'),make('b','03'),make('c','07')]}));
- assert.deepEqual(page.grid.children.map(article=>article.children[0].textContent),['♡','01','02']);
+ assert.deepEqual(page.grid.children.map(article=>article.children[0].textContent),['01','02','03']);
 });

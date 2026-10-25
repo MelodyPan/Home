@@ -19,13 +19,13 @@
   <section id="workspace" hidden>
    <div class="toolbar"><div><strong id="project-count"></strong><span class="muted">　排序、刪除後，請儲存清單變更。</span></div><div class="actions"><button id="export" class="quiet">下載草稿</button><button id="reload" class="quiet">重新載入</button><button id="save-all" class="primary">儲存清單變更</button></div></div>
    <div class="editor-grid">
-    <section class="panel"><div class="panel-title"><h2>作品清單</h2><button id="add" class="outline">＋ 新增作品</button></div><ol id="project-list" class="project-list"></ol><p id="empty" class="muted" hidden>還沒有作品，從新增第一筆開始。</p></section>
+    <section class="panel"><div class="panel-title"><h2>作品清單</h2><button id="add" class="outline">＋ 新增作品</button></div><div class="list-filters"><input id="filter-text" type="search" placeholder="搜尋標題、說明或分類" aria-label="搜尋作品"><select id="filter-status" aria-label="篩選狀態"><option value="">全部狀態</option><option value="published">已公開</option><option value="hidden">未公開</option><option value="featured">精選</option></select></div><ol id="project-list" class="project-list"></ol><p id="empty" class="muted" hidden>還沒有作品，從新增第一筆開始。</p></section>
     <section class="panel form-panel"><div class="panel-title"><h2 id="form-title">新增作品</h2><span class="muted">* 必填</span></div>
      <form id="project-form">
       <label>作品名稱 *<input name="title" required maxlength="160" autocomplete="off"></label>
       <label>作品說明<textarea name="description" rows="4" maxlength="5000"></textarea></label>
       <label>分類／補充文字<input name="category" maxlength="160" placeholder="例如：系統開發 · 2026"></label>
-      <div class="form-row"><label>顯示編號／符號<input name="badge" maxlength="20" placeholder="數字會依公開順序自動編號；符號如 ♡ 則原樣顯示"></label><label>按鈕文字<input name="linkText" maxlength="60" placeholder="例如：開啟作品"></label></div>
+      <label>按鈕文字<input name="linkText" maxlength="60" placeholder="例如：開啟作品"></label>
       <label>作品連結<input name="url" maxlength="2000" placeholder="https://… 或 cathflow/cathflow.html"></label>
       <p class="field-help">未填連結時，首頁只顯示作品介紹。</p>
       <div class="checkboxes"><label><input type="checkbox" name="published" checked> 公開顯示</label><label><input type="checkbox" name="featured"> 精選作品</label><label><input type="checkbox" name="newTab"> 在新分頁開啟</label></div>

@@ -5,8 +5,8 @@
  const base=new URL('../',document.currentScript.src),remote=globalThis.PortfolioConfig?.apiBaseUrl;
  if(location.protocol==='file:'&&!remote)return;
  const notice=document.createElement('p');notice.setAttribute('role','status');notice.textContent='正在載入作品…';grid.before(notice);grid.hidden=true;
- // 純數字的編號依目前實際顯示的順序重排；符號（如 ♡）維持原樣。
- function renumber(){let n=0;for(const node of grid.querySelectorAll('.project-index'))if(/^\d+$/.test(node.textContent.trim()))node.textContent=String(++n).padStart(2,'0');}
+ // 所有顯示的作品依順序自動編號，不使用符號編號。
+ function renumber(){let n=0;for(const node of grid.querySelectorAll('.project-index'))node.textContent=String(++n).padStart(2,'0');}
  function render(data){
   const rows=ProjectModel.publicDocument(data).projects;grid.replaceChildren();
   for(const row of rows){

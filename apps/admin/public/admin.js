@@ -2,7 +2,8 @@
  'use strict';
  const $=id=>document.getElementById(id),form=$('project-form');
  let token='',editor=null,etag='',selectedId=null,formDirty=false,busy=false,clientId='';
- const status=(message,error=false)=>{for(const id of ['status','form-status']){const node=$(id);if(node){node.textContent=message;node.className=error?'save-feedback error':'save-feedback';}}};
+ let statusTimer=0;
+ const status=(message,error=false)=>{for(const id of ['status','form-status']){const node=$(id);if(node){node.textContent=message;node.className=error?'save-feedback error':'save-feedback';}}clearTimeout(statusTimer);statusTimer=setTimeout(()=>{const node=$('status');if(node){node.textContent='';node.className='';}},5000);};
  function changed(){return Boolean(editor?.dirty||formDirty);}
  function updateState(){$('save-state').textContent=changed()?'有未儲存變更':token?'已同步':'尚未登入';$('save-state').classList.toggle('dirty',changed());}
  function guard(){return !changed()||confirm('有尚未儲存的變更，確定要捨棄嗎？');}
@@ -18,17 +19,22 @@
  }
  function resetForm(row){
   form.reset();selectedId=row?.id||null;
-  if(row)for(const key of ['title','description','category','badge','linkText','url','published','featured','newTab']){const input=form.elements.namedItem(key);if(input.type==='checkbox')input.checked=row[key];else input.value=row[key];}
+  if(row)for(const key of ['title','description','category','linkText','url','published','featured','newTab']){const input=form.elements.namedItem(key);if(input.type==='checkbox')input.checked=row[key];else input.value=row[key];}
   $('form-title').textContent=row?'編輯作品':'新增作品';$('form-error').textContent='';formDirty=false;updateState();
  }
  function render(){
-  const list=$('project-list');list.replaceChildren();const rows=editor.rows();$('project-count').textContent=`${rows.length} 件作品 · ${rows.filter(row=>row.published).length} 件公開`;$('empty').hidden=rows.length>0;
-  // 與公開首頁一致：已公開且編號為純數字的作品依清單順序自動編號。
-  let serial=0;const shownBadge=row=>row.published&&/^\d+$/.test(row.badge.trim())?String(++serial).padStart(2,'0'):row.badge;
+  const list=$('project-list');list.replaceChildren();const rows=editor.rows();
+  const keyword=($('filter-text').value||'').trim().toLowerCase(),status=$('filter-status').value||'';
+  const matches=row=>(!status||(status==='published'?row.published:status==='hidden'?!row.published:row.featured))&&(!keyword||[row.title,row.description,row.category].some(text=>String(text||'').toLowerCase().includes(keyword)));
+  const shown=rows.filter(matches);
+  $('project-count').textContent=`${rows.length} 件作品 · ${rows.filter(row=>row.published).length} 件公開`+(shown.length!==rows.length?` · 符合 ${shown.length} 件`:'');$('empty').hidden=shown.length>0;$('empty').textContent=rows.length?'沒有符合條件的作品。':'還沒有作品，從新增第一筆開始。';
+  // 所有公開作品一律依完整清單順序自動編號，篩選不影響編號。
+  let serial=0;const shownBadge=row=>row.published?String(++serial).padStart(2,'0'):'';
   rows.forEach((row,index)=>{
+   const label=shownBadge(row);if(!matches(row))return;
    const item=document.createElement('li');if(row.id===selectedId)item.className='selected';
    const heading=document.createElement('div');heading.className='row-title';
-   const label=shownBadge(row);const title=document.createElement('strong');title.textContent=(label?label+'　':'')+row.title;heading.append(title);
+   const title=document.createElement('strong');title.textContent=(label?label+'　':'')+row.title;heading.append(title);
    const badge=document.createElement('span');badge.className='badge';badge.textContent=row.published?'已公開':'未公開';heading.append(badge);
    const description=document.createElement('p');description.className='row-description';description.textContent=row.description.length>100?row.description.slice(0,100)+'…':row.description;
    const buttons=document.createElement('div');buttons.className='row-actions';
@@ -42,8 +48,8 @@
  }
  function applyForm(){
   if(!form.reportValidity())return false;
-  const existing=editor.document.projects.find(row=>row.id===selectedId),row={id:selectedId||crypto.randomUUID(),sortOrder:existing?.sortOrder??Math.max(-1,...editor.rows().map(item=>item.sortOrder))+1};
-  for(const key of ['title','description','category','badge','linkText','url','published','featured','newTab']){const input=form.elements.namedItem(key);row[key]=input.type==='checkbox'?input.checked:input.value;}
+  const existing=editor.document.projects.find(row=>row.id===selectedId),row={id:selectedId||crypto.randomUUID(),badge:existing?.badge??'',sortOrder:existing?.sortOrder??Math.max(-1,...editor.rows().map(item=>item.sortOrder))+1};
+  for(const key of ['title','description','category','linkText','url','published','featured','newTab']){const input=form.elements.namedItem(key);row[key]=input.type==='checkbox'?input.checked:input.value;}
   try{editor.upsert(row);resetForm(editor.document.projects.find(item=>item.id===row.id));render();return true;}catch(error){$('form-error').textContent=error.message;return false;}
  }
  function setBusy(value){busy=value;for(const id of ['save-all','reload','add','export','logout'])$(id).disabled=value;for(const input of form.elements)input.disabled=value;$('save-all').textContent=value?'儲存中…':'儲存清單變更';const submit=$('save-project');if(submit)submit.textContent=value?'儲存中…':'儲存並更新首頁';}
@@ -74,6 +80,7 @@
  form.addEventListener('input',()=>{formDirty=true;updateState();});
  form.addEventListener('submit',async event=>{event.preventDefault();await saveChanges(true);});
  $('add').addEventListener('click',()=>{if(guardForm()){resetForm(null);render();form.elements.title.focus();}});
+ for(const id of ['filter-text','filter-status'])$(id).addEventListener('input',()=>{if(editor)render();});
  $('cancel-edit').addEventListener('click',()=>{if(guardForm()){resetForm(null);render();}});
  $('reload').addEventListener('click',async()=>{if(!guard())return;setBusy(true);try{await load();status('已載入最新作品。');}catch(error){status(error.message,true);}finally{setBusy(false);}});
  $('save-all').addEventListener('click',()=>saveChanges());

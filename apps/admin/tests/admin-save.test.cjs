@@ -12,7 +12,7 @@ async function setup(t){
  const get=id=>{if(!nodes.has(id))nodes.set(id,new Element());return nodes.get(id);},form=get('project-form');
  const fields=['title','description','category','badge','linkText','url','published','featured','newTab'].map(name=>{const node=new Element();node.name=name;node.type=['published','featured','newTab'].includes(name)?'checkbox':'text';return node;});
  fields.namedItem=name=>fields.find(field=>field.name===name);fields.title=fields.namedItem('title');form.elements=fields;form.reset=()=>{for(const field of fields){field.value='';field.checked=field.name==='published';}};form.reportValidity=()=>Boolean(fields.title.value.trim());
- const context={URL,Blob,crypto:{randomUUID},structuredClone,ProjectModel,ProjectEditor,location:{origin:'http://127.0.0.1:4179',protocol:'http:'},confirm:()=>true,addEventListener(){},setTimeout,document:{getElementById:get,createElement:()=>new Element(),head:{append(script){script.onload();}}},google:{accounts:{id:{initialize(options){callback=options.callback;},renderButton(){},disableAutoSelect(){}}}},fetch:async(route,options={})=>{
+ const context={URL,Blob,crypto:{randomUUID},structuredClone,ProjectModel,ProjectEditor,location:{origin:'http://127.0.0.1:4179',protocol:'http:'},confirm:()=>true,addEventListener(){},setTimeout:(fn,ms)=>setTimeout(fn,ms).unref(),clearTimeout,document:{getElementById:get,createElement:()=>new Element(),head:{append(script){script.onload();}}},google:{accounts:{id:{initialize(options){callback=options.callback;},renderButton(){},disableAutoSelect(){}}}},fetch:async(route,options={})=>{
   if(route.endsWith('/config'))return Response.json({configured:true,googleClientId:'test-client'});
   if(route.endsWith('/me'))return Response.json({email:'test@example.com'});
   if(options.method==='PUT'){
@@ -36,4 +36,17 @@ test('儲存衝突保留未公開草稿與就近錯誤提示，重試不重複�
 });
 test('表單儲存後立即重複按相同按鈕不會重複寫入',async t=>{
  const page=await setup(t);await page.edit();page.fields.namedItem('published').checked=false;await page.form.fire('input');await Promise.all([page.form.fire('submit'),page.form.fire('submit')]);assert.equal(page.puts(),1);
+});
+test('清單可依關鍵字與狀態篩選，編號不受篩選影響',async t=>{
+ const page=await setup(t);const items=()=>page.get('project-list').children;
+ assert.equal(items().length,1);
+ page.get('filter-status').value='hidden';await page.get('filter-status').fire('input');assert.equal(items().length,0);assert.match(page.get('empty').textContent,/沒有符合/);
+ page.get('filter-status').value='';page.get('filter-text').value='書籤';await page.get('filter-text').fire('input');assert.equal(items().length,1);assert.match(items()[0].children[0].children[0].textContent,/^01/);
+ page.get('filter-text').value='不存在';await page.get('filter-text').fire('input');assert.equal(items().length,0);
+});
+test('頁面訊息顯示五秒後自動清除',async t=>{
+ const page=await setup(t);const realSet=globalThis.setTimeout;
+ assert.match(page.get('status').textContent,/已登入/);
+ await new Promise(resolve=>realSet(resolve,5100));
+ assert.equal(page.get('status').textContent,'');
 });
