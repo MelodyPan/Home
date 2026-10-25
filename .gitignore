@@ -1,6 +1,6 @@
 
 # 個人資料與建置產物不加入 Git
-data/
+/data/
 dist/
 node_modules/
 .home-local.json
