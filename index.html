@@ -704,7 +704,7 @@
             </div>
           </article>
           <article class="timeline-item">
-            <div class="date">2012.08 — 2013.05</div>
+            <div class="date" data-no-count>2012.08 — 2013.05</div>
             <div>
               <h3>點通行銷股份有限公司</h3>
               <div class="role">網頁程式設計</div>
@@ -830,7 +830,7 @@
   <script>document.getElementById("year").textContent = new Date().getFullYear();</script>
   <script>
     (function () {
-      var starts = [].map.call(document.querySelectorAll("#experience .date"), function (el) {
+      var starts = [].map.call(document.querySelectorAll("#experience .date:not([data-no-count])"), function (el) {
         var m = /(\d{4})\.(\d{1,2})/.exec(el.textContent);
         return m ? Number(m[1]) * 12 + Number(m[2]) - 1 : null;
       }).filter(function (v) { return v !== null; });
