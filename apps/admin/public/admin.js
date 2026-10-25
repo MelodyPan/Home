@@ -2,7 +2,7 @@
  'use strict';
  const $=id=>document.getElementById(id),form=$('project-form');
  let token='',editor=null,etag='',selectedId=null,formDirty=false,busy=false,clientId='';
- let statusTimer=0;
+ let statusTimer=0,canShutdown=false;
  // 登入狀態暫存在本分頁：重新整理可延續，閒置 10 分鐘自動登出，操作會重新計時。Google 憑證本身約 1 小時到期，到期後仍需重新登入。
  const IDLE_MS=10*60*1000,SESSION_KEY='admin-session';let lastActive=0,lastSaved=0;
  const store=()=>{try{return globalThis.sessionStorage||null;}catch{return null;}};
@@ -67,7 +67,20 @@
   for(const key of ['title','description','category','linkText','url','published','featured','newTab']){const input=form.elements.namedItem(key);row[key]=input.type==='checkbox'?input.checked:input.value;}
   try{editor.upsert(row);resetForm(editor.document.projects.find(item=>item.id===row.id));render();return true;}catch(error){$('form-error').textContent=error.message;return false;}
  }
- function setBusy(value){busy=value;for(const id of ['save-all','reload','add','export','logout'])$(id).disabled=value;for(const input of form.elements)input.disabled=value;$('save-all').textContent=value?'儲存中…':'儲存清單變更';const submit=$('save-project');if(submit)submit.textContent=value?'儲存中…':'儲存並更新首頁';}
+ function setBusy(value){busy=value;for(const id of ['save-all','reload','add','export','logout','stop-service'])$(id).disabled=value;for(const input of form.elements)input.disabled=value;$('save-all').textContent=value?'儲存中…':'儲存清單變更';const submit=$('save-project');if(submit)submit.textContent=value?'儲存中…':'儲存並更新首頁';}
+ // 停止的是整個 Home 本機服務。先擋下未儲存作品，再交由既有 API 等待已接受的資料寫入。
+ $('stop-service').addEventListener('click',async()=>{
+  if(!canShutdown||busy)return;
+  if(changed()){status('請先儲存作品變更，再停止服務。',true);return;}
+  if(!confirm('確定停止整個 Home 本機服務？書籤與成長相簿也會停止。請先確認其他分頁已完成儲存；進行中的網址檢查將取消。'))return;
+  const button=$('stop-service');setBusy(true);button.textContent='正在停止…';
+  try{
+   const response=await fetch('../api/shutdown',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+   const result=await response.json();if(!response.ok)throw Error(result.error||'停止失敗，請稍後再試。');
+   if(result.stopped!==true)throw Error('無法確認服務是否已停止。');
+   showLoggedOut();$('login-panel').hidden=true;$('service-stopped').hidden=false;button.textContent='服務已停止';
+  }catch(error){setBusy(false);button.textContent='停止服務';status(error.message,true);}
+ });
  // 兩個儲存入口共用同一流程：驗證表單、更新草稿、條件存檔，成功後才標記為已同步。
  async function saveChanges(fromForm=false){
   if(busy||!editor)return;
@@ -108,6 +121,7 @@
   if(location.protocol==='file:'){$('login-note').textContent='請透過 npm start 的網站網址開啟後台。';return;}
   try{
    const response=await fetch('../api/admin/config',{cache:'no-store'});if(!response.ok)throw Error('無法載入後台設定。');const config=await response.json();
+   canShutdown=config.canShutdown===true;$('stop-service').hidden=!canShutdown;
    if(!config.configured){$('login-note').textContent='Google 登入尚未設定。請完成 Google Client ID 與管理員帳號設定後，再重新整理。';return;}
    clientId=config.googleClientId;$('login-note').textContent='請選擇授權的 Google 帳號。';
    if(restoreSession())$('login-note').textContent='正在還原登入狀態…';

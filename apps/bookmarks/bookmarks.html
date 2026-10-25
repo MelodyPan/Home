@@ -44,7 +44,6 @@ dialog{width:calc(100% - 36px);max-width:460px;max-height:calc(100vh - 36px);ove
 #file-storage-bar{margin:24px 0 20px}
 .edit-status-button{border:1px solid currentColor;border-radius:6px;min-height:30px;padding:4px 7px;font:inherit;font-size:10px;cursor:pointer;background:#ffffffb3}.edit-status-button:hover{box-shadow:0 0 0 2px #87a9cb45;background:#fff}#edit-status-bookmark{overflow-wrap:anywhere}
 .topbar-right{margin-left:auto}
-.file-storage-bar .stop-service-button{border-color:#d7a9ad;color:#a34751;background:#fff}.file-storage-bar .stop-service-button:hover:not(:disabled){background:#fff1f2;border-color:#ba6a73}.file-storage-bar .stop-service-button:disabled{opacity:.55;cursor:default}
 .recheck-box{padding:14px;margin:0 0 16px;border:1px solid #c4daf0;border-radius:10px;background:#f5faff}.recheck-box .primary-button{width:100%}.recheck-box .dialog-note{margin:10px 0 0;font-size:12px}.recheck-box progress{display:block;width:100%;height:9px;margin-top:12px;accent-color:#287bd2}.recheck-box button:disabled{opacity:.6;cursor:default}#info-dialog{max-height:calc(100dvh - 40px);overflow-y:auto}#checked-date{font-size:12px;line-height:1.8}
 #recheck-message[data-tone=error]{color:#ae344b}#open-local-checker{margin-bottom:9px;text-decoration:none}#recheck-urls:disabled{cursor:not-allowed}
 
@@ -113,7 +112,7 @@ dialog{width:calc(100% - 36px);max-width:460px;max-height:calc(100vh - 36px);ove
     </div>
     <p id="screen-reader-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
    </section>
-   <div class="file-storage-bar" id="file-storage-bar" role="status" aria-live="polite"><div><strong>書籤資料檔</strong><span id="file-status">正在讀取 assets/bookmarks-data.txt…</span></div><div><button id="retry-file" class="soft-button" hidden>重試儲存</button><button id="export-data" class="soft-button" title="匯出所有未刪除書籤，依目前用途與分類整理，供 Chrome 匯入">匯出 Chrome 書籤</button><button id="export-json" class="soft-button" title="保留收藏、網址狀態與所有異動紀錄的完整 JSON 備份">備份 JSON</button><button id="stop-service" class="soft-button stop-service-button" type="button" disabled>停止服務</button></div></div>
+   <div class="file-storage-bar" id="file-storage-bar" role="status" aria-live="polite"><div><strong>書籤資料檔</strong><span id="file-status">正在讀取 assets/bookmarks-data.txt…</span></div><div><button id="retry-file" class="soft-button" hidden>重試儲存</button><button id="export-data" class="soft-button" title="匯出所有未刪除書籤，依目前用途與分類整理，供 Chrome 匯入">匯出 Chrome 書籤</button><button id="export-json" class="soft-button" title="保留收藏、網址狀態與所有異動紀錄的完整 JSON 備份">備份 JSON</button></div></div>
    <footer class="page-footer" id="page-footer" hidden><span>Melody Pan <span class="footer-dot">·</span> 留一點空間，給喜歡的日常。</span><button id="back-top">回到頂端 <span aria-hidden="true">↑</span></button></footer>
   </main>
  </div>

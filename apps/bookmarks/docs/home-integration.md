@@ -9,7 +9,7 @@
 - 書籤：`http://127.0.0.1:4179/bookmarks/bookmarks.html`
 - 成長相簿：`http://127.0.0.1:4179/growth/growth.html`
 
-兩個子網站頁面都能返回 Home，書籤與成長相簿目錄入口分別為 `/bookmarks/` 和 `/growth/`。舊 `/bookmarks/growth.html` 會轉址至新相簿網址；舊相簿 API 與照片路徑使用保留方法的 307 轉址。原獨立 Bookmarks 的 4178 埠仍可使用，不會被 Home 啟動器任意關閉。整合版的「停止服務」會停止同一個 Home 本機服務。
+兩個子網站頁面都能返回 Home，書籤與成長相簿目錄入口分別為 `/bookmarks/` 和 `/growth/`。舊 `/bookmarks/growth.html` 會轉址至新相簿網址；舊相簿 API 與照片路徑使用保留方法的 307 轉址。原獨立 Bookmarks 的 4178 埠仍可使用，不會被 Home 啟動器任意關閉。整合版的「停止服務」已移到 `/admin/` 右上角、登入狀態左側（不需登入），會停止同一個 Home 本機服務；書籤頁不再提供停止入口。停止前請確認各分頁已儲存資料。
 
 ## 程式與個人資料分開
 

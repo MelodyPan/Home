@@ -2,10 +2,10 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs/promises'),os=require('node:os'),path=require('node:path'),vm=require('node:vm'),{randomUUID}=require('node:crypto');
 const ProjectModel=require('../public/project-model.js'),ProjectEditor=require('../public/editor-state.js'),{createLocalStore}=require('../server/store.cjs');
 const seed={schemaVersion:1,updatedAt:null,projects:[{id:'bookmarks',title:'書籤工作台',description:'常用網站',category:'工具',url:'bookmarks/bookmarks.html',linkText:'開啟',badge:'01',sortOrder:0,published:true,featured:false,newTab:false}]};
-async function setup(t,saved=null){
+async function setup(t,saved=null,settings={}){
  const root=await fs.mkdtemp(path.join(os.tmpdir(),'admin-save-'));t.after(()=>fs.rm(root,{recursive:true,force:true}));
  const memory=new Map(saved?Object.entries(saved):[]),sessionStorage={getItem:key=>memory.has(key)?memory.get(key):null,setItem:(key,value)=>memory.set(key,String(value)),removeItem:key=>memory.delete(key)};
- const filename=path.join(root,'projects.json'),store=createLocalStore(filename,seed),nodes=new Map();let callback,failNext=false,puts=0;
+ const filename=path.join(root,'projects.json'),store=createLocalStore(filename,seed),nodes=new Map();let callback,failNext=false,puts=0,stops=0;const confirmations=[];
  class Element{
   constructor(){this.listeners={};this.children=[];this.hidden=false;this.disabled=false;this.textContent='';this.value='';this.checked=false;this.classList={toggle(){}};}
   addEventListener(name,fn){this.listeners[name]=fn;}async fire(name){return this.listeners[name]?.({preventDefault(){}});}append(...children){this.children.push(...children);}replaceChildren(...children){this.children=children;}focus(){}
@@ -14,7 +14,8 @@ async function setup(t,saved=null){
  const fields=['title','description','category','badge','linkText','url','published','featured','newTab'].map(name=>{const node=new Element();node.name=name;node.type=['published','featured','newTab'].includes(name)?'checkbox':'text';return node;});
  fields.namedItem=name=>fields.find(field=>field.name===name);fields.title=fields.namedItem('title');form.elements=fields;form.reset=()=>{for(const field of fields){field.value='';field.checked=field.name==='published';}};form.reportValidity=()=>Boolean(fields.title.value.trim());
  const context={sessionStorage,URL,Blob,crypto:{randomUUID},structuredClone,ProjectModel,ProjectEditor,location:{origin:'http://127.0.0.1:4179',protocol:'http:'},confirm:()=>true,addEventListener(){},setTimeout:(fn,ms)=>setTimeout(fn,ms).unref(),clearTimeout,document:{getElementById:get,createElement:()=>new Element(),head:{append(script){script.onload();}}},google:{accounts:{id:{initialize(options){callback=options.callback;},renderButton(){},disableAutoSelect(){}}}},fetch:async(route,options={})=>{
-  if(route.endsWith('/config'))return Response.json({configured:true,googleClientId:'test-client'});
+  if(route.endsWith('/config'))return Response.json({configured:true,googleClientId:'test-client',canShutdown:settings.local!==false});
+  if(route.endsWith('/shutdown')){stops++;assert.equal(route,'../api/shutdown');assert.equal(options.method,'POST');assert.equal(options.headers['Content-Type'],'application/json');return settings.fail?Response.json({error:'停止失敗'},{status:503}):Response.json({stopped:true});}
   if(route.endsWith('/me'))return Response.json({email:'test@example.com'});
   if(options.method==='PUT'){
    puts++;if(failNext){failNext=false;const latest=await store.read();await store.write({...latest.document,projects:latest.document.projects.map(row=>({...row,description:'其他分頁的新內容'}))},latest.revision);return Response.json({error:'其他分頁已更新'},{status:409});}
@@ -22,9 +23,38 @@ async function setup(t,saved=null){
   }
   const result=await store.read();return Response.json(result.document,{headers:{ETag:'"'+result.revision+'"'}});
  }};
+ context.confirm=message=>{confirmations.push(message);return settings.confirm!==false;};
  vm.runInNewContext(await fs.readFile(path.join(__dirname,'../public/admin.js'),'utf8'),context);await new Promise(setImmediate);if(!saved){await callback({credential:'test-only-token'});}await new Promise(setImmediate);await new Promise(setImmediate);
- return {memory,get,form,fields,store,filename,puts:()=>puts,conflict:()=>{failNext=true;},edit:()=>get('project-list').children[0].children[2].children[0].fire('click')};
+ return {memory,get,form,fields,store,filename,confirmations,stops:()=>stops,puts:()=>puts,conflict:()=>{failNext=true;},edit:()=>get('project-list').children[0].children[2].children[0].fire('click')};
 }
+
+test('本機後台停止成功後清除登入狀態並停用編輯，雲端不顯示停止入口',async t=>{
+ const page=await setup(t);assert.equal(page.get('stop-service').hidden,false);
+ await page.get('stop-service').fire('click');assert.equal(page.stops(),1);assert.match(page.confirmations[0],/Home/);
+ assert.equal(page.memory.has('admin-session'),false);assert.equal(page.get('workspace').hidden,true);assert.equal(page.get('service-stopped').hidden,false);assert.equal(page.get('stop-service').disabled,true);
+ const cloud=await setup(t,null,{local:false});assert.equal(cloud.get('stop-service').hidden,true);await cloud.get('stop-service').fire('click');assert.equal(cloud.stops(),0);
+});
+
+test('尚未登入也能從右上角登入狀態左側停止本機服務',async t=>{
+ const page=await setup(t,{});assert.equal(page.memory.has('admin-session'),false);assert.equal(page.get('stop-service').hidden,false);
+ await page.get('stop-service').fire('click');assert.equal(page.stops(),1);assert.equal(page.get('service-stopped').hidden,false);
+ const html=await fs.readFile(path.join(__dirname,'../public/index.html'),'utf8');
+ assert.match(html,/<div class="account"><button id="stop-service"[^>]*>停止服務<\/button><span id="account-name"><\/span><span id="save-state"/);
+ assert.doesNotMatch(html,/<div id="session-tools"[^>]*>[^]*?id="stop-service"[^]*?<\/div>/);
+});
+
+test('停止入口僅放在後台，書籤範本與產物不再包含停止按鈕或停止流程',async()=>{
+ const source=path.resolve(__dirname,'../..');
+ const admin=await fs.readFile(path.join(source,'admin/public/index.html'),'utf8');
+ assert.match(admin,/<button id="stop-service"[^>]*hidden>停止服務/);assert.match(admin,/id="service-stopped"[^>]*hidden/);
+ for(const file of ['bookmarks/src/home.html','bookmarks/bookmarks.html','bookmarks/Javascript/home.js'])assert.doesNotMatch(await fs.readFile(path.join(source,file),'utf8'),/stop-service|api\/shutdown|stoppingService/);
+});
+
+test('尚未儲存作品或取消確認不停止服務，停止失敗保留登入與編輯能力',async t=>{
+ const dirty=await setup(t);await dirty.edit();dirty.fields.title.value='未儲存';await dirty.form.fire('input');await dirty.get('stop-service').fire('click');assert.equal(dirty.stops(),0);assert.match(dirty.get('status').textContent,/先儲存/);
+ const cancel=await setup(t,null,{confirm:false});await cancel.get('stop-service').fire('click');assert.equal(cancel.stops(),0);
+ const fail=await setup(t,null,{fail:true});await fail.get('stop-service').fire('click');assert.equal(fail.stops(),1);assert.equal(fail.get('stop-service').disabled,false);assert.equal(fail.get('workspace').hidden,false);assert.equal(fail.memory.has('admin-session'),true);assert.match(fail.get('status').textContent,/停止失敗/);
+});
 test('取消公開後按一次表單儲存即更新 JSON，表單保留未公開狀態且顯示就近提示',async t=>{
  const page=await setup(t);await page.edit();page.fields.namedItem('published').checked=false;await page.form.fire('input');await page.form.fire('submit');
  assert.equal(page.puts(),1);assert.equal((await page.store.read()).document.projects[0].published,false);assert.equal(ProjectModel.publicDocument((await page.store.read()).document).projects.length,0);

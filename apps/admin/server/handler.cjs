@@ -5,7 +5,7 @@ const {publicDocument,validateDocument}=require('../public/project-model.js');
 const {loadConfig}=require('./config.cjs');
 const {publicConfigScript}=require('./public-config.cjs');
 const STATIC={'/admin/':['index.html','text/html'],'/admin/index.html':['index.html','text/html'],'/admin/admin.js':['admin.js','application/javascript'],'/admin/admin.css':['admin.css','text/css'],'/admin/project-model.js':['project-model.js','application/javascript'],'/portfolio/project-model.js':['project-model.js','application/javascript'],'/portfolio/projects.js':['projects.js','application/javascript']};
-async function createAdminHandler({root,config,store,verifyToken}={}){
+async function createAdminHandler({root,config,store,verifyToken,canShutdown=false}={}){
  root=root||path.resolve(__dirname,'../../..');config=config||await loadConfig(root);
  if(!store){const seed=JSON.parse(await fs.readFile(path.join(root,'apps/admin/projects.seed.json'),'utf8'));store=config.storageBucket?createGcsStore({bucket:config.storageBucket,object:config.storageObject,seed}):createLocalStore(config.localFile,seed);}
  const configured=Boolean(config.googleClientId&&((config.adminSubjects||[]).length||(config.adminEmails||[]).length));
@@ -19,7 +19,7 @@ async function createAdminHandler({root,config,store,verifyToken}={}){
    if(req.method==='GET'&&pathname==='/admin/editor-state.js'){send(200,await fs.readFile(path.join(root,'apps/admin/public/editor-state.js')),'application/javascript');return true;}
    if(pathname==='/admin'&&req.method==='GET'){send(302,'','text/html',{Location:'/admin/'});return true;}
    if(req.method==='GET'&&Object.hasOwn(STATIC,pathname)){const [file,type]=STATIC[pathname];send(200,await fs.readFile(path.join(root,'apps/admin/public',file)),type,{'Content-Security-Policy':"frame-ancestors 'none'",'Cross-Origin-Opener-Policy':'same-origin-allow-popups'});return true;}
-   if(pathname==='/api/admin/config'&&req.method==='GET'){send(200,{configured,googleClientId:configured?config.googleClientId:''});return true;}
+   if(pathname==='/api/admin/config'&&req.method==='GET'){send(200,{configured,googleClientId:configured?config.googleClientId:'',canShutdown});return true;}
    if(pathname==='/api/projects'&&req.method==='GET'){const data=await store.read();send(200,publicDocument(data.document),'application/json',{'Access-Control-Allow-Origin':'*'});return true;}
    if(!pathname.startsWith('/api/admin/')){send(405,{error:'不支援這個操作。'});return true;}
    if(!configured){send(503,{error:'尚未設定 Google 登入與管理員帳號。'});return true;}

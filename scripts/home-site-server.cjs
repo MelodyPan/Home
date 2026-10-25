@@ -20,7 +20,7 @@ async function createHomeServer(homeRoot,options={}){
  try{await fs.writeFile(path.join(dataRoot,'assets/bookmarks-data.txt'),JSON.stringify(createDataFile([],{added:[],deletedIds:[]},[],'1970-01-01T00:00:00.000Z')),{flag:'wx'});}catch(e){if(e.code!=='EEXIST')throw e;}
  const {createBookmarkServer}=require(path.join(appRoot,'scripts/server.cjs'));
  const {createAdminHandler}=require(path.join(homeRoot,'apps/admin/server/handler.cjs'));
- const portfolio=await createAdminHandler({root:homeRoot,...options.portfolio});
+ const portfolio=await createAdminHandler({root:homeRoot,...options.portfolio,canShutdown:true});
  return createBookmarkServer(appRoot,{version:await getHomeVersion(homeRoot,appRoot),dataRoot,basePath:'/bookmarks',flush:growth.flush,runtimeConfig:{mode:'local',homeUrl:'../index.html'},handleAdditional:legacyGrowth,serveRoot:async(req,res,state)=>{
   if(await growth.handle(req,res,state))return;
   if(await portfolio(req,res))return;

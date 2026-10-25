@@ -18,7 +18,7 @@
  document.querySelectorAll('[data-icon]').forEach(n=>n.replaceWith(icon(n.dataset.icon)));
  let storage;try{storage=preview?{getItem(){return null;},setItem(){}}:window.localStorage;}catch{storage={getItem(){throw new Error('unavailable');},setItem(){throw new Error('unavailable');}};}
  const {createDataFile,readDataFile}=BookmarkFile;
- let stoppingService=false,checkingUrls=false,checkPollTimer,checkStatusRequest=false,appliedCheckId=null;
+ let checkingUrls=false,checkPollTimer,checkStatusRequest=false,appliedCheckId=null;
  let fileReady=false,fileRevision='',fileError='',fileConflict=false,saveQueue=Promise.resolve(),pendingSaves=0;
  // 正常模式以 assets 的 JSON 與 ETag 為準；載入失敗才使用初始資料／快取並禁止新異動。
  let initialFile;
@@ -32,7 +32,7 @@
  let favorites=new Set(saved.ids.filter(id=>knownIds.has(id)));
  let storageWarning=saved.warning||librarySaved.warning;
  // 首頁與清單同步顯示存檔結果；版本衝突不直接重試覆寫，先提供下載保留目前資料。
- function showFileStatus(message,tone=''){$('save-summary').textContent=message;$('save-indicator').dataset.tone=tone;$('retry-save-list').hidden=tone!=='error'||fileConflict||!fileReady||stoppingService;$('backup-unsaved').hidden=tone!=='error';const bar=$('file-status');bar.textContent=message;bar.dataset.tone=tone;if(tone==='error'&&$('home-overview').hidden)toast(message+'；請回書籤首頁重試儲存或匯出資料。');}
+ function showFileStatus(message,tone=''){$('save-summary').textContent=message;$('save-indicator').dataset.tone=tone;$('retry-save-list').hidden=tone!=='error'||fileConflict||!fileReady;$('backup-unsaved').hidden=tone!=='error';const bar=$('file-status');bar.textContent=message;bar.dataset.tone=tone;if(tone==='error'&&$('home-overview').hidden)toast(message+'；請回書籤首頁重試儲存或匯出資料。');}
  // 每次寫入都建立完整快照，讓備份、匯出及服務端驗證使用同一種資料結構。
  function snapshot(){return createDataFile(baseEntries,changes,[...favorites],checkedAt);}
  // 先擷取本次快照，再依操作順序送出；每次使用上一筆成功回傳的新版本。
@@ -44,17 +44,11 @@
  }
  $('retry-file').addEventListener('click',()=>{fileError='';queueFileSave();});
  $('retry-save-list').addEventListener('click',()=>$('retry-file').click());$('backup-unsaved').addEventListener('click',()=>$('export-json').click());
- $('stop-service').disabled=!fileReady;
- // 停止前先等待存檔佇列；若尚未成功保存就保留服務，讓使用者重試或下載資料。
- $('stop-service').addEventListener('click',async()=>{
-  const button=$('stop-service');if(!fileReady||stoppingService||checkingUrls)return;stoppingService=true;button.disabled=true;button.textContent='正在停止…';
-  try{await saveQueue;if(fileError)throw new Error('資料尚未存檔，請先重試儲存或匯出資料。');showFileStatus('正在停止本機服務…');const response=await appFetch('/api/shutdown',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});if(!response.ok){let detail='';try{detail=(await response.json()).error||'';}catch{}if(response.status===404)throw new Error('目前執行的是不支援停止功能的舊版服務（HTTP 404），請先停止舊服務再執行 start-bookmarks.cmd。');throw new Error('停止失敗（HTTP '+response.status+'）'+(detail?'：'+detail:'，請稍後再試。'));}const result=await response.json();if(result.stopped!==true)throw new Error('無法確認服務是否已停止。');fileReady=false;fileError='本機服務已停止；請雙擊 start-bookmarks.cmd 重新啟動。';button.textContent='服務已停止';$('retry-file').hidden=true;showFileStatus('本機服務已停止，資料已儲存。下次請雙擊 start-bookmarks.cmd 開啟。','saved');toast('本機服務已停止，可以關閉這個分頁。');}catch(error){stoppingService=false;button.disabled=false;button.textContent='停止服務';showFileStatus(error.message,'error');}
- });
  function downloadData(contents,type,filename){const url=URL.createObjectURL(new Blob([contents],{type}));const link=el('a');link.href=url;link.download=filename;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
  $('export-data').addEventListener('click',()=>{downloadData(createChromeBookmarkHtml(entries),'text/html;charset=utf-8','bookmarks-chrome.html');toast('已匯出 '+entries.length+' 個書籤，可在 Chrome 書籤管理員選擇「匯入書籤」。');});
  $('export-json').addEventListener('click',()=>downloadData(JSON.stringify(snapshot(),null,2)+'\n','text/plain;charset=utf-8','bookmarks-data.txt'));
  // 在事件擷取階段阻擋異動入口，避免未載入、存檔出錯或檢查中仍修改資料。
- document.addEventListener('click',event=>{if((!fileReady||fileError||stoppingService||checkingUrls)&&event.target.closest('#add-bookmark,#undo-delete,.favorite-button,.delete-button,.edit-category-button,.edit-status-button,.edit-details-button,#batch-category,.bookmark-select,#select-results,.manage-work-subcategories,.work-subcategory-mutation,.category-order-mutation,#manage-category-order,#confirm-delete')){event.preventDefault();event.stopImmediatePropagation();toast(checkingUrls?'網址檢查進行中，完成後即可修改書籤。':stoppingService?'本機服務正在停止，暫時無法修改書籤。':fileError||'請先讀取書籤資料檔。');}},true);
+ document.addEventListener('click',event=>{if((!fileReady||fileError||checkingUrls)&&event.target.closest('#add-bookmark,#undo-delete,.favorite-button,.delete-button,.edit-category-button,.edit-status-button,.edit-details-button,#batch-category,.bookmark-select,#select-results,.manage-work-subcategories,.work-subcategory-mutation,.category-order-mutation,#manage-category-order,#confirm-delete')){event.preventDefault();event.stopImmediatePropagation();toast(checkingUrls?'網址檢查進行中，完成後即可修改書籤。':fileError||'請先讀取書籤資料檔。');}},true);
  window.addEventListener('beforeunload',event=>{if(pendingSaves||(fileReady&&fileError)){event.preventDefault();event.returnValue='';}});
  showFileStatus(fileReady?'已從 assets/bookmarks-data.txt 載入 '+entries.length+' 個書籤':fileError,fileReady?'saved':preview?'':'error');
  const layoutKey='melody-pan-bookmark-layout';let savedLayout='grid';try{if(storage.getItem(layoutKey)==='list')savedLayout='list';}catch{}
@@ -252,7 +246,7 @@
  for(const [key,count] of Object.entries(counts)){const status=STATUS[key]||STATUS.unknown;const row=el('button');row.type='button';row.setAttribute('aria-label','篩選'+status.label+'，'+count+' 筆');row.append(el('span','connection '+status.tone,status.label),el('b','',count+' 筆'));row.addEventListener('click',()=>{$('info-dialog').close();applyStatus(key);$('library-title').focus({preventScroll:true});$('library-title').scrollIntoView({block:'start'});});$('status-summary').append(row);}
  }
  // 檢查期間暫停目前分頁的編輯入口；關閉說明視窗不會終止背景工作。
- function setCheckBusy(value){checkingUrls=value;$('recheck-urls').disabled=!fileReady||value||stoppingService;$('recheck-urls').textContent=value?'正在檢查…':'重新檢查網址';$('stop-service').disabled=!fileReady||value||stoppingService;}
+ function setCheckBusy(value){checkingUrls=value;$('recheck-urls').disabled=!fileReady||value;$('recheck-urls').textContent=value?'正在檢查…':'重新檢查網址';}
  // 檢查完成後重新讀取正式檔案與版本，避免只更新狀態而留下過期的存檔 ETag。
  async function reloadCheckedData(){const response=await appFetch('/assets/bookmarks-data.txt',{cache:'no-store'});if(!response.ok)throw new Error('檢查已完成，但讀取新資料失敗，請重新整理。');const loaded=readDataFile(await response.text());const nextRevision=response.headers.get('ETag');if(!nextRevision)throw new Error('缺少資料版本，請重新整理。');baseEntries=loaded.baseEntries;changes=loaded.changes;favorites=new Set(loaded.favorites);checkedAt=loaded.checkedAt;fileRevision=nextRevision;fileError='';fileConflict=false;try{storage.setItem(LIBRARY_KEY,JSON.stringify(changes));storage.setItem(FAVORITES_KEY,JSON.stringify([...favorites]));}catch{}refreshLibrary();showFileStatus('最新網址檢查結果已儲存至 assets/bookmarks-data.txt','saved');}
  // 以工作 ID 避免重複套用結果；只有完整完成的工作才更新最後檢查時間與資料。
@@ -266,16 +260,16 @@
  }
  function showCheckAvailability(){
   if(preview){$('recheck-urls').disabled=true;$('open-local-checker').hidden=true;$('recheck-message').textContent='雲端版本尚未啟用網址檢查。';return;}
-  $('recheck-urls').disabled=!fileReady||checkingUrls||stoppingService;$('open-local-checker').hidden=fileReady;
+  $('recheck-urls').disabled=!fileReady||checkingUrls;$('open-local-checker').hidden=fileReady;
   if(!fileReady){$('recheck-urls').textContent='請先開啟本機版';$('recheck-message').textContent=(fileError||'尚未連線到本機服務。')+' 請先雙擊 start-bookmarks.cmd 啟動，再按「開啟本機版」。';$('recheck-message').dataset.tone='error';}
  }
  $('open-local-checker').addEventListener('click',event=>{if(location.origin==='http://127.0.0.1:4178'){event.preventDefault();history.replaceState(null,'','#url-check');location.reload();}});
  showCheckAvailability();
  $('recheck-urls').addEventListener('click',async()=>{
-  if(!fileReady||checkingUrls||stoppingService)return;setCheckBusy(true);$('recheck-message').dataset.tone='';$('recheck-message').textContent='正在準備檢查…';
+  if(!fileReady||checkingUrls)return;setCheckBusy(true);$('recheck-message').dataset.tone='';$('recheck-message').textContent='正在準備檢查…';
   try{await saveQueue;if(fileError)throw new Error('請先處理存檔錯誤後再重新檢查。');const response=await appFetch('/api/url-check',{method:'POST',headers:{'Content-Type':'application/json','If-Match':fileRevision},body:'{}'});const result=await response.json();if(!response.ok)throw new Error(result.error||'無法開始網址檢查。');await pollUrlCheck();}catch(error){setCheckBusy(false);$('recheck-message').textContent=error.message;}
  });
- document.addEventListener('submit',event=>{if((checkingUrls||stoppingService||!fileReady||fileError)&&event.target.matches('#edit-details-form,#batch-form,#add-form,#edit-category-form,#edit-status-form,#work-subcategory-form,.work-subcategory-row')){event.preventDefault();event.stopImmediatePropagation();toast(checkingUrls?'網址檢查進行中，完成後即可修改書籤。':fileError||'服務暫時無法存檔。');}},true);
+ document.addEventListener('submit',event=>{if((checkingUrls||!fileReady||fileError)&&event.target.matches('#edit-details-form,#batch-form,#add-form,#edit-category-form,#edit-status-form,#work-subcategory-form,.work-subcategory-row')){event.preventDefault();event.stopImmediatePropagation();toast(checkingUrls?'網址檢查進行中，完成後即可修改書籤。':fileError||'服務暫時無法存檔。');}},true);
  $('check-info').addEventListener('click',()=>{$('info-dialog').showModal();showCheckAvailability();if(fileReady)pollUrlCheck();});
  for(const id of ['close-dialog','dialog-done'])$(id).addEventListener('click',()=>$('info-dialog').close());
  $('info-dialog').addEventListener('click',e=>{if(e.target===$('info-dialog')){const rect=e.target.getBoundingClientRect();if(e.clientX<rect.left||e.clientX>rect.right||e.clientY<rect.top||e.clientY>rect.bottom)e.target.close();}});

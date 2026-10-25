@@ -13,7 +13,7 @@ test('Home 提供 Google 後台資源，未設定時維護 API 保持鎖定，�
  t.after(async()=>{await new Promise(r=>server.close(r));await fs.rm(dataRoot,{recursive:true,force:true});});const origin='http://127.0.0.1:'+server.address().port;
  const page=await fetch(origin+'/admin/');assert.equal(page.status,200);assert.match(await page.text(),/使用 Google 帳號登入/);
  for(const file of ['/admin/admin.css','/admin/admin.js','/admin/editor-state.js','/admin/project-model.js','/portfolio/projects.js','/portfolio/config.js'])assert.equal((await fetch(origin+file)).status,200,file);
- assert.equal((await(await fetch(origin+'/api/admin/config')).json()).configured,false);assert.equal((await fetch(origin+'/api/admin/projects')).status,503);
+ const config=await(await fetch(origin+'/api/admin/config')).json();assert.equal(config.configured,false);assert.equal(config.canShutdown,true);assert.equal((await fetch(origin+'/api/admin/projects')).status,503);
  assert.equal((await(await fetch(origin+'/api/projects')).json()).projects.length,9);
  for(const file of ['/.home-portfolio.json','/data/portfolio/projects.json','/admin/server/config.cjs'])assert.equal((await fetch(origin+file)).status,404);
 });
