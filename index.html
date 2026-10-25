@@ -245,6 +245,16 @@
       color: var(--muted);
     }
 
+    .hero-photo {
+      display: block;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      margin-bottom: 24px;
+      border-radius: 12px;
+      object-fit: cover;
+      object-position: center;
+    }
+
     section {
       padding: 92px 0;
       scroll-margin-top: 88px;
@@ -641,7 +651,9 @@
           <p class="intro">我是Melody，專注於醫療資訊系統、網頁應用與跨平台 App 開發。從需求訪談、系統規畫到上線維護，持續把第一線工作者的需求轉化成可靠、清楚的數位工具。</p>
           <div class="hero-links"><a class="button" href="#works">查看作品</a></div>
         </div>
-        <aside class="hero-note"><strong>12+</strong>
+        <aside class="hero-note">
+          <img class="hero-photo" src="images/melody.jpg" alt="Melody Pan" width="992" height="992" loading="eager" />
+          <strong>12+</strong>
           <p>年軟體開發經驗<br />目前於臺中榮民總醫院服務</p>
         </aside>
       </section>
