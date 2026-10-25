@@ -5,6 +5,8 @@
  const base=new URL('../',document.currentScript.src),remote=globalThis.PortfolioConfig?.apiBaseUrl;
  if(location.protocol==='file:'&&!remote)return;
  const notice=document.createElement('p');notice.setAttribute('role','status');notice.textContent='正在載入作品…';grid.before(notice);grid.hidden=true;
+ // 純數字的編號依目前實際顯示的順序重排；符號（如 ♡）維持原樣。
+ function renumber(){let n=0;for(const node of grid.querySelectorAll('.project-index'))if(/^\d+$/.test(node.textContent.trim()))node.textContent=String(++n).padStart(2,'0');}
  function render(data){
   const rows=ProjectModel.publicDocument(data).projects;grid.replaceChildren();
   for(const row of rows){
@@ -13,12 +15,12 @@
    if(row.url){const link=document.createElement('a');link.className='project-link';link.href=new URL(row.url,base).href;link.textContent=row.linkText||'開啟作品';if(row.newTab){link.target='_blank';link.rel='noopener noreferrer';}article.append(link);}
    grid.append(article);
   }
-  notice.textContent=rows.length?'':'目前尚無公開作品。';grid.hidden=false;
+  renumber();notice.textContent=rows.length?'':'目前尚無公開作品。';grid.hidden=false;
  }
  const endpoint=remote?new URL('api/projects',remote.endsWith('/')?remote:remote+'/').href:new URL('api/projects',base).href;
  fetch(endpoint,{cache:'no-store',signal:AbortSignal.timeout(15000)}).then(response=>{
   // GitHub Pages 沒有同源 API，只有這個明確情況可保留原清單。
-  if(!remote&&response.status===404){notice.textContent='';grid.hidden=false;return null;}
+  if(!remote&&response.status===404){renumber();notice.textContent='';grid.hidden=false;return null;}
   if(!response.ok)throw Error('作品載入失敗');return response.json();
  }).then(data=>{if(data)render(data);}).catch(()=>{notice.textContent='目前無法載入作品，請稍後重新整理。';});
 })();
