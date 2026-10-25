@@ -12,7 +12,7 @@
   const response=await fetch('../api/admin/'+route,{...options,headers:{Authorization:'Bearer '+token,...options.headers},cache:'no-store'});
   const body=await response.json();
   if(!response.ok){
-   if(response.status===401){token='';$('login-panel').hidden=false;$('workspace').hidden=true;$('logout').hidden=true;$('account-name').textContent='';}
+   if(response.status===401){token='';$('login-panel').hidden=false;$('workspace').hidden=true;$('logout').hidden=true;$('info-open').hidden=true;$('account-name').textContent='';}
    throw new Error(body.error||'操作失敗，請重試。');
   }
   return {body,response};
@@ -72,7 +72,7 @@
  async function signIn(credential){
   if(busy)return;setBusy(true);const previous=token;token=credential;
   try{
-   const {body:user}=await api('me');$('account-name').textContent=user.email;$('logout').hidden=false;
+   const {body:user}=await api('me');$('account-name').textContent=user.email;$('logout').hidden=false;$('info-open').hidden=false;
    if(editor&&changed()&&previous!==credential){status('已重新登入，草稿已保留。',false,true);}else{await load();status('已登入。選擇作品編輯，或新增作品。',false,true);}
    $('login-panel').hidden=true;$('workspace').hidden=false;updateState();
   }catch(error){token='';$('login-panel').hidden=false;$('workspace').hidden=true;status(error.message,true,true);}finally{setBusy(false);}
@@ -85,7 +85,10 @@
  $('reload').addEventListener('click',async()=>{if(!guard())return;setBusy(true);try{await load();status('已載入最新作品。',false,true);}catch(error){status(error.message,true,true);}finally{setBusy(false);}});
  $('save-all').addEventListener('click',()=>saveChanges());
  $('export').addEventListener('click',()=>{if(formDirty&&!applyForm())return;const url=URL.createObjectURL(new Blob([JSON.stringify(editor.snapshot(),null,2)],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='projects-draft.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
- $('logout').addEventListener('click',()=>{if(!guard())return;token='';editor=null;etag='';selectedId=null;formDirty=false;form.reset();$('project-list').replaceChildren();$('account-name').textContent='';$('workspace').hidden=true;$('logout').hidden=true;$('login-panel').hidden=false;globalThis.google?.accounts.id.disableAutoSelect();updateState();status('已登出。',false,true);});
+ $('logout').addEventListener('click',()=>{if(!guard())return;token='';editor=null;etag='';selectedId=null;formDirty=false;form.reset();$('project-list').replaceChildren();$('account-name').textContent='';$('workspace').hidden=true;$('logout').hidden=true;$('info-open').hidden=true;$('login-panel').hidden=false;globalThis.google?.accounts.id.disableAutoSelect();updateState();status('已登出。',false,true);});
+ $('info-open').addEventListener('click',()=>$('info-dialog').showModal());
+ $('info-close').addEventListener('click',()=>$('info-dialog').close());
+ $('info-dialog').addEventListener('click',event=>{if(event.target===$('info-dialog'))$('info-dialog').close();});
  addEventListener('beforeunload',event=>{if(changed()){event.preventDefault();event.returnValue='';}});
  async function init(){
   const remote=globalThis.PortfolioConfig?.apiBaseUrl;
