@@ -215,6 +215,73 @@
     .button.secondary {
       color: var(--teal-dark);
       background: transparent;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 800;
+      box-shadow: none;
+    }
+
+    .contact-dialog {
+      width: min(92vw, 460px);
+      padding: 26px;
+      border: 0;
+      border-radius: 16px;
+      color: var(--ink);
+      box-shadow: 0 24px 60px rgba(23, 32, 51, .3);
+    }
+
+    .contact-dialog::backdrop {
+      background: rgba(23, 32, 51, .45);
+    }
+
+    .contact-dialog h3 {
+      margin: 0 0 16px;
+    }
+
+    .contact-dialog label {
+      display: block;
+      margin-bottom: 12px;
+      font-size: .88rem;
+      font-weight: 700;
+    }
+
+    .contact-dialog input,
+    .contact-dialog textarea {
+      display: block;
+      width: 100%;
+      margin-top: 5px;
+      padding: 9px 11px;
+      border: 1px solid #cfd6e4;
+      border-radius: 8px;
+      font: inherit;
+      box-sizing: border-box;
+    }
+
+    .contact-dialog textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    .contact-hp {
+      position: absolute;
+      left: -9999px;
+    }
+
+    .contact-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .contact-actions button {
+      cursor: pointer;
+      font: inherit;
+    }
+
+    #contact-status {
+      margin-right: auto;
+      font-size: .85rem;
     }
 
     .button:hover {
@@ -692,7 +759,7 @@
           <div>
             <div class="hero-subtitle">把複雜流程，做成好用的系統。</div>
             <p class="intro">我是Melody，專注於醫療資訊系統、網頁應用與跨平台 App 開發。從需求訪談、系統規畫到上線維護，持續把第一線工作者的需求轉化成可靠、清楚的數位工具。</p>
-            <div class="hero-links"><a class="button" href="#works">查看作品</a></div>
+            <div class="hero-links"><a class="button" href="#works">查看作品</a><button class="button secondary" id="contact-open" type="button">與我聯絡</button></div>
           </div>
         </div>
         <aside class="hero-note"><strong><span id="experience-years">12</span>+</strong>
@@ -849,6 +916,59 @@
   <footer>
     <div class="shell">© <span id="year"></span> Melody Pan · Taichung, Taiwan</div>
   </footer>
+  <dialog id="contact-dialog" class="contact-dialog">
+    <form id="contact-form" method="dialog">
+      <h3>與我聯絡</h3>
+      <label>您的姓名<input name="name" required maxlength="80" autocomplete="name" /></label>
+      <label>您的 Email<input name="email" type="email" required maxlength="120" autocomplete="email" /></label>
+      <label>訊息內容<textarea name="message" required maxlength="2000"></textarea></label>
+      <input class="contact-hp" name="_honey" tabindex="-1" autocomplete="off" aria-hidden="true" />
+      <div class="contact-actions">
+        <span id="contact-status" role="status"></span>
+        <button class="button secondary" id="contact-close" type="button">關閉</button>
+        <button class="button" id="contact-send" type="submit">送出</button>
+      </div>
+    </form>
+  </dialog>
+  <script>
+    (function () {
+      var dialog = document.getElementById("contact-dialog");
+      var form = document.getElementById("contact-form");
+      var statusEl = document.getElementById("contact-status");
+      var send = document.getElementById("contact-send");
+      document.getElementById("contact-open").addEventListener("click", function () {
+        statusEl.textContent = "";
+        dialog.showModal();
+      });
+      document.getElementById("contact-close").addEventListener("click", function () { dialog.close(); });
+      form.addEventListener("submit", function (event) {
+        event.preventDefault();
+        var data = new FormData(form);
+        data.append("_subject", "Home 網站聯絡訊息");
+        data.append("_captcha", "false");
+        send.disabled = true;
+        statusEl.style.color = "";
+        statusEl.textContent = "送出中…";
+        fetch("https://formsubmit.co/ajax/anny90556@gmail.com", {
+          method: "POST",
+          headers: { Accept: "application/json" },
+          body: data
+        })
+          .then(function (r) { return r.json().then(function (d) { return { ok: r.ok && d.success !== "false", d: d }; }); })
+          .then(function (res) {
+            if (!res.ok) throw new Error(res.d && res.d.message);
+            statusEl.textContent = "已送出，謝謝您！";
+            form.reset();
+            setTimeout(function () { dialog.close(); }, 1800);
+          })
+          .catch(function () {
+            statusEl.style.color = "#b42318";
+            statusEl.textContent = "送出失敗，請稍後再試。";
+          })
+          .then(function () { send.disabled = false; });
+      });
+    })();
+  </script>
   <div id="visit-counter" class="visit-counter" hidden>瀏覽人次 <strong id="visit-count">0</strong></div>
   <script>
     (function () {
