@@ -38,3 +38,9 @@ main{max-width:1240px;padding:26px 24px 48px}
 .form-save-bar{position:sticky;bottom:0;background:#fff;margin-bottom:-6px;padding-bottom:6px}
 footer{padding:8px 24px 28px}
 @media(max-width:850px){.form-panel{position:static}.project-list{max-height:none}.session-tools{border-left:0;padding-left:0;flex-wrap:wrap}.topbar{position:static}}
+/* 左側清單高度跟隨右側表單，清單內容在區塊內捲動。 */
+.editor-grid{align-items:stretch}
+.editor-grid>.panel:first-child{display:flex;flex-direction:column;contain:size}
+.editor-grid>.panel:first-child .project-list{flex:1;min-height:0;max-height:none}
+.form-panel{position:static}
+@media(max-width:850px){.editor-grid>.panel:first-child{contain:none}.editor-grid>.panel:first-child .project-list{max-height:none;overflow:visible}}
