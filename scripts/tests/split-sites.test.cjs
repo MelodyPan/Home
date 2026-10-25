@@ -6,7 +6,7 @@ const {buildSite}=require('../home-site-build.cjs');
 const home=path.resolve(__dirname,'../..');
 async function addProjectSource(root){
  const directory=path.join(root,'data/portfolio');await fs.mkdir(directory,{recursive:true});
- await fs.copyFile(path.join(home,'data/portfolio/projects.json'),path.join(directory,'projects.json'));
+ await fs.copyFile(path.join(home,'apps/admin/projects.public.json'),path.join(directory,'projects.json'));
 }
 
 test('兩站有獨立入口、資源與 API，舊相簿轉址且沿用原資料',async t=>{

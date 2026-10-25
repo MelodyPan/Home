@@ -6,7 +6,8 @@ test('雲端入口只提供公開產物與作品 API，不暴露本機書籤、�
  const source=path.resolve(__dirname,'../../..'),root=await fs.mkdtemp(path.join(os.tmpdir(),'cloud-home-'));
  await fs.copyFile(path.join(source,'index.html'),path.join(root,'index.html'));
  await fs.mkdir(path.join(root,'data/portfolio'),{recursive:true});
- await fs.copyFile(path.join(source,'data/portfolio/projects.json'),path.join(root,'data/portfolio/projects.json'));
+ // 使用已追蹤的公開快照；GitHub runner 沒有本機私人 JSON。
+ await fs.copyFile(path.join(source,'apps/admin/projects.public.json'),path.join(root,'data/portfolio/projects.json'));
  await buildSite(root,{appRoot:path.join(source,'apps/bookmarks')});
  const config={googleClientId:'',adminSubjects:[],adminEmails:[]};
  const seed=JSON.parse(await fs.readFile(path.join(source,'apps/admin/projects.seed.json'),'utf8'));

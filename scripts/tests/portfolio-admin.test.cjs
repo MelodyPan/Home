@@ -5,7 +5,7 @@ const {buildSite,syncPublicProjects}=require('../home-site-build.cjs');
 const home=path.resolve(__dirname,'../..');
 async function addProjectSource(root){
  const directory=path.join(root,'data/portfolio');await fs.mkdir(directory,{recursive:true});
- await fs.copyFile(path.join(home,'data/portfolio/projects.json'),path.join(directory,'projects.json'));
+ await fs.copyFile(path.join(home,'apps/admin/projects.public.json'),path.join(directory,'projects.json'));
 }
 test('Home 提供 Google 後台資源，未設定時維護 API 保持鎖定，公開作品保留原九筆',async t=>{
  const dataRoot=await fs.mkdtemp(path.join(os.tmpdir(),'admin-home-'));
