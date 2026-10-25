@@ -961,9 +961,9 @@
             form.reset();
             setTimeout(function () { dialog.close(); }, 1800);
           })
-          .catch(function () {
+          .catch(function (err) {
             statusEl.style.color = "#b42318";
-            statusEl.textContent = "送出失敗，請稍後再試。";
+            statusEl.textContent = (err && err.message) || "送出失敗，請稍後再試。";
           })
           .then(function () { send.disabled = false; });
       });
