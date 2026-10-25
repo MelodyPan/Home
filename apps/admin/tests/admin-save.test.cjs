@@ -28,7 +28,7 @@ async function setup(t,saved=null){
 test('取消公開後按一次表單儲存即更新 JSON，表單保留未公開狀態且顯示就近提示',async t=>{
  const page=await setup(t);await page.edit();page.fields.namedItem('published').checked=false;await page.form.fire('input');await page.form.fire('submit');
  assert.equal(page.puts(),1);assert.equal((await page.store.read()).document.projects[0].published,false);assert.equal(ProjectModel.publicDocument((await page.store.read()).document).projects.length,0);
- assert.equal(page.fields.namedItem('published').checked,false);assert.match(page.get('form-status').textContent,/已儲存/);assert.equal(page.get('save-state').textContent,'已同步');
+ assert.equal(page.fields.namedItem('published').checked,false);assert.match(page.get('project-list').children[0].className,/unpublished/);assert.match(page.get('form-status').textContent,/已儲存/);assert.equal(page.get('save-state').textContent,'已同步');
 });
 test('儲存衝突保留未公開草稿與就近錯誤提示，重試不重複新增作品',async t=>{
  const page=await setup(t);await page.edit();page.fields.namedItem('published').checked=false;await page.form.fire('input');page.conflict();await page.form.fire('submit');
@@ -64,4 +64,3 @@ test('登入後暫存於分頁，重新整理在 10 分鐘內免重新登入，�
  assert.equal(expired.get('account-name').textContent,'');assert.equal(expired.memory.has('admin-session'),false);
  await first.get('logout').fire('click');assert.equal(first.memory.has('admin-session'),false);
 });
-

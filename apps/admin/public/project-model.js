@@ -27,6 +27,6 @@
   if(value.updatedAt!==null&&(typeof value.updatedAt!=='string'||!Number.isFinite(Date.parse(value.updatedAt))))fail('作品更新時間格式不正確。');
   return {schemaVersion:1,updatedAt:value.updatedAt,projects};
  }
- function publicDocument(value){const document=validateDocument(value);return {...document,projects:document.projects.filter(row=>row.published).sort((a,b)=>a.sortOrder-b.sortOrder||a.id.localeCompare(b.id))};}
+ function publicDocument(value){const document=validateDocument(value);return {...document,projects:document.projects.filter(row=>row.published).sort((a,b)=>Number(b.featured)-Number(a.featured)||a.sortOrder-b.sortOrder||a.id.localeCompare(b.id))};}
  return {safeUrl,validateDocument,publicDocument};
 });

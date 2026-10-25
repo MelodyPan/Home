@@ -40,21 +40,23 @@
   const keyword=($('filter-text').value||'').trim().toLowerCase(),status=$('filter-status').value||'';
   const matches=row=>(!status||(status==='published'?row.published:status==='hidden'?!row.published:row.featured))&&(!keyword||[row.title,row.description,row.category].some(text=>String(text||'').toLowerCase().includes(keyword)));
   const shown=rows.filter(matches);
-  $('project-count').textContent=`${rows.length} 件作品 · ${rows.filter(row=>row.published).length} 件公開`+(shown.length!==rows.length?` · 符合 ${shown.length} 件`:'');$('empty').hidden=shown.length>0;$('empty').textContent=rows.length?'沒有符合條件的作品。':'還沒有作品，從新增第一筆開始。';
+  $('empty').hidden=shown.length>0;$('empty').textContent=rows.length?'沒有符合條件的作品。':'還沒有作品，從新增第一筆開始。';
   // 所有公開作品一律依完整清單順序自動編號，篩選不影響編號。
   let serial=0;const shownBadge=row=>row.published?String(++serial).padStart(2,'0'):'';
   rows.forEach((row,index)=>{
    const label=shownBadge(row);if(!matches(row))return;
-   const item=document.createElement('li');if(row.id===selectedId)item.className='selected';
+   const item=document.createElement('li');item.className=[!row.published?'unpublished':'',row.id===selectedId?'selected':''].filter(Boolean).join(' ');
    const heading=document.createElement('div');heading.className='row-title';
-   const title=document.createElement('strong');title.textContent=(label?label+'　':'')+row.title;heading.append(title);
+   const title=document.createElement('strong');title.textContent=(label?label+'　':'')+row.title;
+   if(row.url){try{const link=document.createElement('a');link.href=new URL(row.url,new URL('../',location.href)).href;link.target='_blank';link.rel='noopener noreferrer';link.className='row-link';link.title='另開視窗開啟連結';link.append(...title.childNodes);title.append(link);}catch{}}
+   heading.append(title);
    const badge=document.createElement('span');badge.className='badge';badge.textContent=row.published?'已公開':'未公開';heading.append(badge);
    const description=document.createElement('p');description.className='row-description';description.textContent=row.description.length>100?row.description.slice(0,100)+'…':row.description;
    const buttons=document.createElement('div');buttons.className='row-actions';
    const button=(label,action,disabled=false,kind='quiet')=>{const b=document.createElement('button');b.type='button';b.textContent=label;b.className=kind;b.disabled=disabled;b.addEventListener('click',()=>{if(busy)return;action();});buttons.append(b);};
    button('編輯',()=>{if(!guardForm())return;resetForm(row);render();form.elements.title.focus();});
-   button('↑ 上移',()=>{if(!guardForm())return;editor.move(row.id,-1);resetForm(null);render();},index===0);
-   button('↓ 下移',()=>{if(!guardForm())return;editor.move(row.id,1);resetForm(null);render();},index===rows.length-1);
+   button('↑ 上移',()=>{if(!guardForm())return;editor.move(row.id,-1);resetForm(null);render();},index===0||rows[index-1].published!==row.published||rows[index-1].featured!==row.featured);
+   button('↓ 下移',()=>{if(!guardForm())return;editor.move(row.id,1);resetForm(null);render();},index===rows.length-1||rows[index+1].published!==row.published||rows[index+1].featured!==row.featured);
    button('刪除',()=>{if(!guardForm()||!confirm(`確定刪除「${row.title}」？儲存所有變更後才會生效。`))return;editor.remove(row.id);resetForm(null);render();},false,'danger');
    item.append(heading,description,buttons);list.append(item);
   });updateState();
@@ -99,9 +101,6 @@
  $('save-all').addEventListener('click',()=>saveChanges());
  $('export').addEventListener('click',()=>{if(formDirty&&!applyForm())return;const url=URL.createObjectURL(new Blob([JSON.stringify(editor.snapshot(),null,2)],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='projects-draft.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
  $('logout').addEventListener('click',()=>{if(!guard())return;editor=null;etag='';selectedId=null;formDirty=false;form.reset();$('project-list').replaceChildren();showLoggedOut();status('已登出。',false,true);});
- $('info-open').addEventListener('click',()=>$('info-dialog').showModal());
- $('info-close').addEventListener('click',()=>$('info-dialog').close());
- $('info-dialog').addEventListener('click',event=>{if(event.target===$('info-dialog'))$('info-dialog').close();});
  addEventListener('beforeunload',event=>{if(changed()){event.preventDefault();event.returnValue='';}});
  async function init(){
   const remote=globalThis.PortfolioConfig?.apiBaseUrl;

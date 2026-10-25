@@ -22,3 +22,9 @@ test('所有公開作品依清單順序自動編號',async()=>{
  const page=await homepage(Response.json({schemaVersion:1,updatedAt:null,projects:[make('a','♡'),make('b','03'),make('c','07')]}));
  assert.deepEqual(page.grid.children.map(article=>article.children[0].textContent),['01','02','03']);
 });
+test('精選作品在首頁清單置頂，且其餘作品保留原有排序',async()=>{
+ const make=(id,sortOrder,featured)=>({id,title:id,description:'',category:'',url:'',linkText:'',badge:'',sortOrder,published:true,featured,newTab:false});
+ const page=await homepage(Response.json({schemaVersion:1,updatedAt:null,projects:[make('normal-first',0,false),make('featured-later',5,true),make('normal-later',2,false)]}));
+ assert.deepEqual(page.grid.children.map(article=>article.children[1].textContent),['featured-later','normal-first','normal-later']);
+ assert.match(page.grid.children[0].className,/\bfeatured\b/);
+});
