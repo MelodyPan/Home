@@ -1,0 +1,17 @@
+.git
+node_modules
+dist
+data
+.home-local.json
+.home-portfolio.json
+.env
+.env.*
+google-service-account*.json
+*.tmp
+apps/bookmarks/assets/*
+!apps/bookmarks/assets/home-logo.png
+apps/growth/assets/*
+!apps/growth/assets/home-logo.png
+**/*.bak
+**/*.lock
+!package-lock.json

@@ -4,9 +4,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="潘姿均 Melody Pan 的個人網站，分享醫療資訊系統、網頁應用與軟體開發經驗。" />
-  <title>潘姿均 Melody Pan｜醫療資訊系統開發</title>
+  <meta name="description" content="Melody Pan 的個人網站，分享生活點滴。" />
+  <title>Melody Pan｜個人網站</title>
   <style>
+    [hidden] { display: none !important; }
     :root {
       --ink: #172033;
       --muted: #697386;
@@ -690,17 +691,30 @@
           <p class="section-description">以實際使用情境為起點，讓系統能被理解、被使用，也能長久運作。</p>
         </div>
         <div class="project-grid">
+          <!-- BOOKMARKS_SUBSYSTEM -->
+          <article class="project" id="bookmarks-subsystem">
+            <div class="project-index">＋</div>
+            <h3>書籤工作台</h3>
+            <p>整理常用網站，依分類快速找到日常工作與生活需要的連結。</p><small>生活工具 · 網站收藏</small>
+            <a class="project-link" href="bookmarks/bookmarks.html">開啟書籤</a>
+          </article>
+          <article class="project" id="growth-subsystem">
+            <div class="project-index">♡</div>
+            <h3>成長相簿</h3>
+            <p>收藏孩子從孕期開始的成長故事、照片與每一點長大。</p><small>家庭時光 · 成長紀錄</small>
+            <a class="project-link" href="growth/growth.html">開啟相簿</a>
+          </article>
           <article class="project featured">
             <div class="project-index">01</div>
             <h3>動態幕自動廣播系統（CathFlow）</h3>
-            <p>醫療場域中的動態幕自動廣播系統，提供資訊展示與自動播放功能。</p><small>系統開發</small><a class="project-link" href="cathflow.html"
+            <p>醫療場域中的動態幕自動廣播系統，提供資訊展示與自動播放功能。</p><small>系統開發</small><a class="project-link" href="cathflow/cathflow.html"
               target="_blank" rel="noopener noreferrer">Demo</a>
           </article>
           <article class="project">
             <div class="project-index">02</div>
             <h3>互動式中國年史表</h3>
             <p>以互動時間軸整理中國歷代朝代與重要時期，點選朝代即可查看年代與歷史摘要。</p><small>系統開發</small><a class="project-link"
-              href="DynastyExplorer.html" target="_blank" rel="noopener noreferrer">Demo</a>
+              href="dynasty-explorer/DynastyExplorer.html" target="_blank" rel="noopener noreferrer">Demo</a>
           </article>
           <article class="project">
             <div class="project-index">03</div>
@@ -779,9 +793,12 @@
     </section>
   </main>
   <footer>
-    <div class="shell">© <span id="year"></span> Melody Pan · Taichung, Taiwan</div>
+    <div class="shell">© <span id="year"></span> Melody Pan · Taichung, Taiwan · <a href="admin/">作品管理</a></div>
   </footer>
   <script>document.getElementById("year").textContent = new Date().getFullYear();</script>
+  <script src="portfolio/config.js"></script>
+  <script src="portfolio/project-model.js"></script>
+  <script src="portfolio/projects.js"></script>
 </body>
 
 </html>

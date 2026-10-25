@@ -1,0 +1,1 @@
+const fs=require('node:fs/promises'),path=require('node:path');const {emptyBookmarks}=require('./home-site-build.cjs');emptyBookmarks(path.resolve(__dirname,'..')).then(html=>fs.writeFile(path.join(__dirname,'../bookmarks.html'),html)).catch(e=>{console.error(e);process.exitCode=1;});

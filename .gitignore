@@ -1,0 +1,25 @@
+
+# 個人資料與建置產物不加入 Git
+data/
+dist/
+node_modules/
+.home-local.json
+.home-portfolio.json
+google-service-account*.json
+.env
+.env.*
+!.env.example
+apps/bookmarks/assets/bookmarks-data.txt*
+apps/bookmarks/assets/growth-data.json*
+apps/bookmarks/assets/growth-photos/
+apps/growth/assets/growth-data.json*
+apps/growth/assets/growth-photos/
+apps/bookmarks/assets/source/
+apps/bookmarks/assets/reports/
+*.tmp
+
+# 個人資料與建置產物不加入 Git
+
+
+# 個人資料與建置產物不加入 Git
+

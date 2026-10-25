@@ -1,0 +1,17 @@
+{
+  "name": "melody-home",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node scripts/home-site-start.cjs",
+    "start:cloud": "node scripts/portfolio-server.cjs",
+    "build": "node scripts/home-site-build.cjs",
+    "test": "node scripts/test.cjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "google-auth-library": "11.3.1"
+  }
+}

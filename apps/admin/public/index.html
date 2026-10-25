@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+ <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+ <meta name="robots" content="noindex,nofollow"><title>作品管理 · Melody Pan</title>
+ <link rel="stylesheet" href="admin.css">
+ <script src="../portfolio/config.js" defer></script>
+ <script src="project-model.js" defer></script><script src="editor-state.js" defer></script><script src="admin.js" defer></script>
+</head>
+<body>
+ <header class="topbar"><a class="brand wordmark" href="../index.html" aria-label="回到首頁"><img class="wordmark-logo" src="../images/logo.png" alt=""><span class="wordmark-name">Melody <em>Pan</em></span><small>作品管理</small></a><div class="account"><span id="account-name"></span><span id="save-state" class="pill">尚未登入</span><button id="logout" class="quiet" hidden>登出</button><a href="../index.html">返回首頁 ↗</a></div></header>
+ <main>
+  <p id="status" role="status" aria-live="polite"></p>
+  <section id="login-panel" class="login-panel">
+   <span class="login-symbol" aria-hidden="true">✦</span><h2>使用 Google 帳號登入</h2>
+   <p>僅限授權的管理員維護作品清單。</p><div id="google-button"></div>
+   <p id="login-note" class="muted">正在確認登入設定…</p>
+  </section>
+  <section id="workspace" hidden>
+   <div class="toolbar"><div><strong id="project-count"></strong><span class="muted">　排序、刪除後，請儲存清單變更。</span></div><div class="actions"><button id="export" class="quiet">下載草稿</button><button id="reload" class="quiet">重新載入</button><button id="save-all" class="primary">儲存清單變更</button></div></div>
+   <div class="editor-grid">
+    <section class="panel"><div class="panel-title"><h2>作品清單</h2><button id="add" class="outline">＋ 新增作品</button></div><ol id="project-list" class="project-list"></ol><p id="empty" class="muted" hidden>還沒有作品，從新增第一筆開始。</p></section>
+    <section class="panel form-panel"><div class="panel-title"><h2 id="form-title">新增作品</h2><span class="muted">* 必填</span></div>
+     <form id="project-form">
+      <label>作品名稱 *<input name="title" required maxlength="160" autocomplete="off"></label>
+      <label>作品說明<textarea name="description" rows="4" maxlength="5000"></textarea></label>
+      <label>分類／補充文字<input name="category" maxlength="160" placeholder="例如：系統開發 · 2026"></label>
+      <div class="form-row"><label>顯示編號／符號<input name="badge" maxlength="20" placeholder="例如：01、♡"></label><label>按鈕文字<input name="linkText" maxlength="60" placeholder="例如：開啟作品"></label></div>
+      <label>作品連結<input name="url" maxlength="2000" placeholder="https://… 或 cathflow/cathflow.html"></label>
+      <p class="field-help">未填連結時，首頁只顯示作品介紹。</p>
+      <div class="checkboxes"><label><input type="checkbox" name="published" checked> 公開顯示</label><label><input type="checkbox" name="featured"> 精選作品</label><label><input type="checkbox" name="newTab"> 在新分頁開啟</label></div>
+      <p id="form-error" role="alert" class="error"></p>
+      <div class="form-save-bar"><p class="field-help">按一次即可儲存，並同時保存清單中的排序與刪除變更。</p><p id="form-status" role="status" aria-live="polite" class="save-feedback"></p><div class="actions"><button type="button" id="cancel-edit" class="quiet">清空表單</button><button id="save-project" type="submit" class="primary">儲存並更新首頁</button></div></div>
+     </form>
+    </section>
+   </div>
+  </section>
+ </main>
+ <footer>Google 帳號驗證</footer>
+</body></html>

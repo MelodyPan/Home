@@ -1,0 +1,197 @@
+/* 全站溫馨可愛主題。保留原版型與互動，只統一色彩、表面、留白及狀態。 */
+:root{
+ --cozy-bg:#fff8f3;--cozy-paper:#fffdfa;--cozy-ink:#554450;
+ --cozy-muted:#806e79;--cozy-line:#eddddF;--cozy-pink:#a45f7a;
+ --cozy-plum:#876598;--cozy-peach:#fce9de;--cozy-lilac:#f1e9f8;
+ --cozy-shadow:0 6px 24px #81586c09;
+}
+body[data-page]{color:var(--cozy-ink);background:radial-gradient(ellipse at 90% 0,#fbe6ec80,transparent 38%),radial-gradient(ellipse at 5% 70%,#f4eafa70,transparent 40%),var(--cozy-bg)}
+body[data-page] button,body[data-page] a,body[data-page] input,body[data-page] select,body[data-page] textarea{outline-offset:4px}
+body[data-page] :is(button,a,input,select,textarea):focus-visible{outline:3px solid #a68bb7}
+body[data-page] :is(input,select,textarea){accent-color:var(--cozy-plum)}
+body[data-page] :is(.add-button,.primary-button){background:linear-gradient(125deg,#a05d76,#86639b);border-color:#95617f;color:#fff;border-radius:14px;box-shadow:0 4px 12px #a2687c20;min-height:42px}
+body[data-page] :is(.add-button,.primary-button):hover:enabled{background:linear-gradient(125deg,#92506a,#78568e);box-shadow:0 6px 17px #a2687c28}
+body[data-page] :is(.outline-button,.soft-button,.more-filters){background:var(--cozy-paper);border-color:#dfcddf;color:#7c607f;border-radius:12px}
+body[data-page] :is(.outline-button,.soft-button,.more-filters):hover:enabled{background:#f7eff7;border-color:#c9aecf}
+body[data-page] :is(.danger-button){background:#fff0eb;border-color:#e8bfb6;color:#a34f4c;border-radius:12px}
+body[data-page] dialog{border:1px solid #ead6e1;border-radius:25px;background:var(--cozy-paper);color:var(--cozy-ink);box-shadow:0 24px 90px #68475a33}
+body[data-page] dialog::backdrop{background:#644a5c60;backdrop-filter:blur(5px)}
+body[data-page] :is(.dialog-intro,.dialog-note,.form-note){color:var(--cozy-muted);line-height:1.85}
+body[data-page] :is(.form-field input,.form-field select,dialog input,dialog textarea,dialog select){background:#fffaf7;border:1px solid #e8d9e2;border-radius:12px;color:var(--cozy-ink)}
+body[data-page] :is(.form-field input,.form-field select,dialog input,dialog textarea,dialog select):focus{border-color:#b897c7}
+body[data-page] :is(.dialog-heading h2,dialog h2){color:#795570}
+body[data-page] :is(.icon-button,.close-button){color:#84667d;border-radius:10px}
+body[data-page] :is(.icon-button,.close-button):hover{background:#f8eaf1}
+body[data-page] .page-footer{border-color:var(--cozy-line);color:var(--cozy-muted)}
+/* 書籤工作台：工作維持淡藍、生活維持奶油白，不以裝飾取代用途辨識。 */
+body[data-page=bookmarks]{--bg:var(--cozy-bg);--paper:var(--cozy-paper);--ink:var(--cozy-ink);--muted:var(--cozy-muted);--line:var(--cozy-line);--blue:#876598;--blue-dark:#725080;--work-bg:#eff6ff;--work-border:#d3e1f2;--work-accent:#7199bf;--personal-bg:#fffdfa;--personal-border:#e9dce2;--personal-accent:#c49aab}
+body[data-page=bookmarks] .sidebar{background:linear-gradient(180deg,#fffaf6,#fff6f2);border-color:var(--cozy-line);padding-top:30px}
+body[data-page=bookmarks] .sidebar .brand{padding-bottom:22px;border-bottom:1px dashed #e7d5df;margin-bottom:22px}
+body[data-page=bookmarks] .nav-label{color:#82657b;font-size:11px;letter-spacing:1.2px}
+body[data-page=bookmarks] .nav-button{border-radius:13px;color:#7c657b;min-height:43px}
+body[data-page=bookmarks] .nav-button:hover{background:#f4e8f0;border-color:#e8d5e5}
+body[data-page=bookmarks] .nav-primary .nav-button.active{background:linear-gradient(115deg,#94607e,#806294);color:#fff;box-shadow:0 4px 12px #8f647d20}
+body[data-page=bookmarks] .nav-button .count{background:#fffaf7;color:#81697e;border-radius:7px}
+body[data-page=bookmarks] .nav-button[data-purpose=work]{background:#edf4fd;border-color:#d7e3f2;color:#4f7296}
+body[data-page=bookmarks] .nav-button[data-purpose=personal]{background:#fffdfa;border-color:#ecdee5;color:#836678}
+body[data-page=bookmarks] .nav-button[data-purpose=work].active{background:#57789a;border-color:#57789a;color:#fff;box-shadow:none}
+body[data-page=bookmarks] .nav-button[data-purpose=personal].active{background:#9d647f;border-color:#9d647f;color:#fff;box-shadow:none}
+body[data-page=bookmarks] .nav-button.active .count{background:#ffffff2b;color:#fff}
+body[data-page=bookmarks] .sidebar-note{background:#f8edf2;border-color:#eddae5;border-radius:17px}
+body[data-page=bookmarks] .sidebar-note strong,body[data-page=bookmarks] .sidebar-footer{color:#87667f}
+body[data-page=bookmarks] .topbar{background:#fffcf8;border-color:var(--cozy-line);height:70px}
+body[data-page=bookmarks] :is(.topbar p,.home-breadcrumb){color:#84697d}
+body[data-page=bookmarks] .saved-badge{background:#f2eee5;border:1px solid #e5dfd0;border-radius:20px;color:#74705a}
+body[data-page=bookmarks] .help-button{background:#fff4ed;color:#866874;border-color:#ead7dc;border-radius:10px}
+body[data-page=bookmarks] .growth-shortcut{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#916177;background:#fff0f2;border:1px solid #f0d8e1;border-radius:20px;padding:7px 11px;white-space:nowrap}
+body[data-page=bookmarks] main{padding-top:28px}
+/* 首頁歡迎區只在原本的精簡首頁顯示，進入書籤清單時由既有邏輯一併隱藏。 */
+.cozy-welcome{position:relative;display:flex;align-items:center;justify-content:space-between;gap:24px;padding:27px 30px;margin-bottom:27px;border:1px solid #eddae1;border-radius:24px;background:linear-gradient(115deg,#fff5e9,#fbeef3 65%,#f2eefa);overflow:hidden;box-shadow:var(--cozy-shadow)}
+.cozy-welcome-copy{position:relative;z-index:1;min-width:0}.cozy-eyebrow{font-size:10px;letter-spacing:2px;color:#86677c;margin:0 0 11px}
+.cozy-welcome h1{font-size:27px;line-height:1.6;font-weight:650;letter-spacing:.5px;color:#775269;margin:0}
+.cozy-welcome-copy>p:last-child{font-size:12px;color:#816879;line-height:1.9;margin:9px 0 0}
+.cozy-welcome-art{position:relative;display:grid;place-items:center;width:104px;height:112px;flex-shrink:0;margin:0 20px 0 8px;background:#fffdf7;border:1px solid #ead6d7;border-radius:12px 22px 17px 9px;transform:rotate(8deg);box-shadow:5px 6px 0 #eacfd966,0 6px 16px #ab849717;color:#906275}
+.cozy-welcome-art:before{content:"";position:absolute;top:-8px;left:29px;width:48px;height:18px;background:#e9c997a8;transform:rotate(-12deg)}
+.cozy-welcome-art span{font-size:43px;font-family:Georgia,serif;line-height:1}.cozy-welcome-art small{position:absolute;bottom:16px;font-size:8px;letter-spacing:2px;color:#806776}
+body[data-page=bookmarks] .section-caption h2{color:#806079;font-size:17px}
+body[data-page=bookmarks] .section-caption>span{color:#7d6b75}
+body[data-page=bookmarks] .quick-grid{gap:14px}
+body[data-page=bookmarks] .quick-link{border-radius:18px;box-shadow:var(--cozy-shadow);min-height:83px}
+body[data-page=bookmarks] .quick-link[data-purpose=work]{background:#eff5fe;border-color:#d7e3f2;color:#537293}
+body[data-page=bookmarks] .quick-link[data-purpose=personal]{background:#fffdfa;border-color:#ecdee5;color:#85657b}
+body[data-page=bookmarks] .quick-link:hover{transform:translateY(-3px);box-shadow:0 9px 20px #8b6b7c15}
+body[data-page=bookmarks] .quick-symbol{border-radius:13px}
+body[data-page=bookmarks] .quick-link[data-purpose=personal] .quick-symbol{background:#f9e9ef;color:#90657a}
+body[data-page=bookmarks] :is(.library-actions-start>span,.library-toolbar p,.load-more-wrap p){color:#7d6977}
+body[data-page=bookmarks] .search-wrap{background:#fffdfa;border-color:#e3cfdf;border-radius:18px;min-height:61px;box-shadow:0 4px 18px #92677e0a}
+body[data-page=bookmarks] .search-wrap:focus-within{border-color:#b990c7;box-shadow:0 0 0 4px #efdfF760}
+body[data-page=bookmarks] .search-wrap>.icon{color:#84667e}
+body[data-page=bookmarks] .search-wrap input{color:#685462}
+body[data-page=bookmarks] .search-wrap input::placeholder{color:#7b6975}
+body[data-page=bookmarks] .search-wrap kbd{background:#f9f0f3;color:#7c6975;border-color:#eadce3;border-radius:6px}
+body[data-page=bookmarks] .advanced-filters{background:#fffaf6;border-color:#eadce5;border-radius:18px}
+body[data-page=bookmarks] :is(.status-filter-heading,.original-folder-row>label){color:#80667b}
+body[data-page=bookmarks] :is(.original-folder-row select,.select-wrap){background:#fffdfa;border-color:#e5d5e1;border-radius:11px;color:#81677c}
+body[data-page=bookmarks] :is(.purpose-chip,.status-chip){border-radius:11px;border-color:#e1d4e3}
+body[data-page=bookmarks] .purpose-chip[data-purpose=personal]{background:#fffdfa;color:#84657b}
+body[data-page=bookmarks] .purpose-chip[data-purpose=work]{background:#eff5fe;color:#527395;border-color:#d2e0f1}
+body[data-page=bookmarks] .purpose-chip[aria-pressed=true]{background:#8d6fa1;border-color:#8d6fa1;color:#fff}
+body[data-page=bookmarks] .purpose-chip[data-purpose=work][aria-pressed=true]{background:#57789a;border-color:#57789a}
+body[data-page=bookmarks] .purpose-chip[data-purpose=personal][aria-pressed=true]{background:#9d647f;border-color:#9d647f}
+body[data-page=bookmarks] .purpose-chip .status-count{background:#ffffff80;color:inherit}
+body[data-page=bookmarks] .filter-count{background:#a27bac}
+body[data-page=bookmarks] .layout-switch{background:#fffdfa;border-color:#e6d5e3;border-radius:12px}
+body[data-page=bookmarks] .layout-switch button{border-radius:9px;color:#83697e}
+body[data-page=bookmarks] .layout-switch button[aria-pressed=true]{background:#896194;color:#fff;box-shadow:none}
+body[data-page=bookmarks] .layout-switch button:hover{background:#f4e9f6}
+body[data-page=bookmarks] .layout-switch button[aria-pressed=true]:hover{background:#906b9e}
+body[data-page=bookmarks] .library-toolbar h2{color:#78566e}
+body[data-page=bookmarks] .library-toolbar h2>span{background:#eee3f2;color:#81658d}
+body[data-page=bookmarks] .bookmark-grid{gap:18px}
+body[data-page=bookmarks] .bookmark-card{border-radius:20px;box-shadow:var(--cozy-shadow);border-width:1px;padding:20px 18px 17px}
+body[data-page=bookmarks] .bookmark-card[data-purpose=work]{background:linear-gradient(150deg,#f5f9ff,#edf4fd);border-color:#d5e2f0}
+body[data-page=bookmarks] .bookmark-card[data-purpose=personal]{background:linear-gradient(150deg,#fffefc,#fff9f5);border-color:#eadce2}
+body[data-page=bookmarks] .bookmark-card:hover{transform:translateY(-3px);box-shadow:0 10px 25px #7d5a7114}
+body[data-page=bookmarks] .bookmark-card[data-purpose=work]::before{background:#a1bad5;width:4px}
+body[data-page=bookmarks] .bookmark-card[data-purpose=personal]::before{background:#d6acbb;width:4px}
+body[data-page=bookmarks] .site-symbol{border-radius:13px}
+body[data-page=bookmarks] .bookmark-card[data-purpose=work] .site-symbol{background:#e0eafa;color:#567191}
+body[data-page=bookmarks] .bookmark-card[data-purpose=personal] .site-symbol{background:#f5e7ed;color:#8c647a}
+body[data-page=bookmarks] .bookmark-card[data-purpose=personal] :is(.card-domain,.card-folder){color:#7f6776}
+body[data-page=bookmarks] .bookmark-card[data-purpose=work] :is(.card-domain,.card-folder){color:#5b7187}
+body[data-page=bookmarks] .card-link h3,body[data-page=bookmarks] .disabled-title{color:#695265;line-height:1.8}
+body[data-page=bookmarks] .bookmark-card[data-purpose=work] .card-link h3{color:#536d8a}
+body[data-page=bookmarks] .favorite-button,body[data-page=bookmarks] .delete-button{border-radius:10px}
+body[data-page=bookmarks] .favorite-button:hover{background:#f9e8c9;color:#8d6938}
+body[data-page=bookmarks] .delete-button:hover{background:#fae3e8;color:#9a5e6e}
+body[data-page=bookmarks] .bookmark-card .edit-category-button{border-radius:8px}
+body[data-page=bookmarks] .bookmark-card[data-purpose=personal] .edit-category-button{background:#fbf0f4;color:#83667a;border-color:#dfc8d6!important}
+body[data-page=bookmarks] .bookmark-card[data-purpose=personal] .edit-category-button:hover{background:#f6e1eb!important;color:#8f5776!important}
+body[data-page=bookmarks] .bookmark-card[data-purpose=work] .edit-category-button{background:#edf4fd;color:#59738f;border-color:#bfd1e5!important}
+body[data-page=bookmarks] .bookmark-grid[data-layout=list] .bookmark-card{border-radius:15px;padding:16px 18px}
+body[data-page=bookmarks] :is(.file-storage-bar,.save-indicator){background:#fffcf8;border-color:#ebdde3;border-radius:15px;color:#7f6c79}
+body[data-page=bookmarks] :is(.file-storage-bar strong,.file-storage-bar span){color:#7f6977}
+body[data-page=bookmarks] .file-storage-bar span[data-tone=error]{color:#aa4653}
+body[data-page=bookmarks] .file-storage-bar span[data-tone=saved]{color:#507760}
+body[data-page=bookmarks] .file-storage-bar{margin-top:20px}
+body[data-page=bookmarks] .empty-state{border-color:#ead6e5;border-radius:22px;background:#fffaf7;color:#85687e}
+body[data-page=bookmarks] .active-filters{background:#f6edf8;border-color:#e5d7ed;color:#816390;border-radius:13px}
+body[data-page=bookmarks] .toast{background:#70596c;color:#73706f;border-color:#70596c;border-radius:14px;box-shadow:0 8px 25px #70596c25}
+/* 成長相簿：把既有童趣版型調成更溫暖的蜜桃紙張，沿用大頭貼、封面與時間軸。 */
+body[data-page=growth]{--green:var(--cozy-plum);--muted:var(--cozy-muted);--line:var(--cozy-line);--paper:var(--cozy-paper)}
+body[data-page=growth] .site-header{background:#fffcf8;border-color:var(--cozy-line)}
+body[data-page=growth] .family-sidebar{background:linear-gradient(#fffaf6,#fff5f0);border-color:var(--cozy-line)}
+body[data-page=growth] .sidebar-heading{color:#83657c;letter-spacing:1.8px}
+body[data-page=growth] .child-choice-row{padding:3px 0}
+body[data-page=growth] .child-choice{border-radius:15px;color:#82667d}
+body[data-page=growth] .child-choice[aria-pressed=true]{background:#f3e3ed;border-color:#ead0e0;color:#966080;box-shadow:0 3px 10px #a5798e09}
+body[data-page=growth] .child-choice:hover:enabled{background:#f8eaf0}
+body[data-page=growth] .child-preview{color:#85667a;background:#fff9f5;border:1px solid #eddee6;border-radius:10px;padding:8px 6px}
+body[data-page=growth] .child-avatar{background:#f6dfdf;color:#8d646d}
+body[data-page=growth] .sidebar-note{color:#816978;line-height:2.2}
+body[data-page=growth] .intro{padding-top:36px;padding-bottom:27px}
+body[data-page=growth] .intro h1{color:#765268;font-size:30px;font-weight:600}
+body[data-page=growth] .intro h1 span{color:#916275}
+body[data-page=growth] .intro-copy{color:#7f6b77;font-size:12px}
+body[data-page=growth] .eyebrow{color:#87657e;letter-spacing:2px}
+body[data-page=growth] .intro-sticker{background:#fbe4d5;color:#916549;border:1px solid #efd4bf;padding:10px 16px;box-shadow:3px 3px 0 #f0d7c833}
+body[data-page=growth] .collection-header{border-color:#eadce4;padding-bottom:22px}
+body[data-page=growth] .tab{color:#7f6a7b}
+body[data-page=growth] .tab.active{color:#956183}
+body[data-page=growth] .tab.active:after{background:#c194b0;height:3px}
+body[data-page=growth] .tab span{background:#f2e3ec;color:#83657a}
+body[data-page=growth] .filters p{color:#7f6b77;font-size:12px}
+body[data-page=growth] :is(.filters select,.filters input,.family-bar select){background:#fffaf7;border-color:#e7d6e2;color:#85667f;border-radius:12px}
+body[data-page=growth] .photo-page{background:#fffefa;border-color:#ede0dc;box-shadow:0 10px 30px #936f8115;padding:17px 17px 23px}
+body[data-page=growth] .photo-page:before{background:#e9c995b8;width:112px;height:28px;left:calc(50% - 56px)}
+body[data-page=growth] .photo-frame{background:#faf1ec;border-radius:3px}
+body[data-page=growth] .photo-caption{color:#826777;font-size:12px;line-height:1.7}
+body[data-page=growth] .page-top{color:#7f6b79}
+body[data-page=growth] .story-page{background:linear-gradient(140deg,#fff8e8,#fff3e3);border-color:#f0dfc4;border-radius:10px 24px 24px 24px;box-shadow:0 8px 22px #ab89620a;padding:29px}
+body[data-page=growth] .story-page:before{background:#ecc2cf;right:25px;width:48px;height:22px}
+body[data-page=growth] .story-page h2{color:#826176;font-size:25px;line-height:1.7}
+body[data-page=growth] .story-content{color:#816d5e;line-height:2.2;font-size:14px}
+body[data-page=growth] .milestone{background:#f6dfe6;border-color:#ecc5d3;color:#955f77}
+body[data-page=growth] .story-footer{color:#816a5b}
+body[data-page=growth] .story-footer .text-button{color:#8b657e}
+body[data-page=growth] .photo-thumbs button[aria-pressed=true]{border-color:#c395b2;background:#fff2f6;border-radius:7px}
+body[data-page=growth] .page-arrow{background:#fffaf7;border-color:#e4cddd;border-radius:15px;color:#89667f;box-shadow:0 3px 9px #9b73860a}
+body[data-page=growth] .page-arrow:hover:enabled{background:#f6e5ed}
+body[data-page=growth] .page-navigation p{color:#86657b}
+body[data-page=growth] .page-navigation span{color:#7f6c78}
+body[data-page=growth] .record-card{background:linear-gradient(120deg,#fffdfa,#fff7f3);border-color:#ead7e2;border-radius:19px;box-shadow:var(--cozy-shadow)}
+body[data-page=growth] .record-info h3{color:#88627a}
+body[data-page=growth] .record-info p{color:#7f6976}
+body[data-page=growth] .empty{background:linear-gradient(135deg,#fffaf2,#fff4f8);border-color:#e7cddd;border-radius:24px}
+body[data-page=growth] .empty h2{color:#8e6580}
+body[data-page=growth] .empty p:not(.eyebrow){color:#816a79}
+body[data-page=growth] .empty-art span{background:#f8e0e6;color:#886677;border-color:#fffefa}
+body[data-page=growth] .avatar-editor{background:linear-gradient(120deg,#fff1eb,#f8ecf4);border-color:#ead3df;border-radius:19px}
+body[data-page=growth] .avatar-preview{background:#f0dce8;color:#846579;box-shadow:0 0 0 5px #fffaf880}
+body[data-page=growth] .draft-photo .set-cover{background:#fffaf7;border-color:#e4d2df;color:#87677d;border-radius:10px}
+body[data-page=growth] .draft-photo .set-cover[aria-pressed=true]{background:#f0dfe9;border-color:#d4a8c0;color:#975e81}
+body[data-page=growth] .timeline-heading h2{color:#8b627d}
+body[data-page=growth] .timeline-heading p:not(.eyebrow){color:#7d6976}
+body[data-page=growth] .timeline-list:before{background:linear-gradient(#e1c3d5,#efd8c7)}
+body[data-page=growth] .timeline-date{color:#8d6580}
+body[data-page=growth] .timeline-date:after{background:#c79bb5;border-color:var(--cozy-bg);box-shadow:0 0 0 1px #e2c7d6}
+body[data-page=growth] .timeline-age{color:#7d6a77;font-size:11px}
+body[data-page=growth] .timeline-card{border-color:#e6d3df;border-radius:20px;box-shadow:var(--cozy-shadow)}
+body[data-page=growth] .timeline-card:hover{border-color:#cca2bc;box-shadow:0 9px 25px #90617c15}
+body[data-page=growth] .timeline-cover{background:#f7e7e9;color:#846a78}
+body[data-page=growth] .timeline-card-body{background:linear-gradient(140deg,#fff9ef,#fff3e8)}
+body[data-page=growth] .timeline-card-title{color:#8d617c}
+body[data-page=growth] .timeline-more{color:#88667d}
+/* 小畫面保留完整操作，不讓大標題、卡片圓角及裝飾擠壓內容。 */
+@media(max-width:1150px){.cozy-welcome{padding:24px}.cozy-welcome h1{font-size:24px}.cozy-welcome-art{width:86px;height:96px;margin-right:8px}body[data-page=bookmarks] .quick-link{min-height:76px}}
+@media(max-width:800px){body[data-page=growth] .intro h1{font-size:27px}body[data-page=growth] .family-sidebar{background:#fffaf6}body[data-page=growth] .family-bar select{background:#f9eef4}}
+@media(max-width:740px){body[data-page=bookmarks] .sidebar{padding-top:20px;background:#fffaf6}body[data-page=bookmarks] .sidebar .brand{padding-bottom:0;border:0;margin-bottom:18px}body[data-page=bookmarks] .topbar{height:auto;min-height:53px;padding-top:9px;padding-bottom:9px;flex-wrap:wrap;row-gap:8px}body[data-page=bookmarks] .topbar-right{gap:7px;flex-wrap:wrap}body[data-page=bookmarks] .growth-shortcut{font-size:10px;padding:6px 8px}body[data-page=bookmarks] .saved-badge{font-size:9px}body[data-page=bookmarks] .mobile-toggle{background:#f7e7ef;border-color:#dfc4d5;color:#8b647e;border-radius:12px}body[data-page=bookmarks] main{padding-top:20px}.cozy-welcome{padding:22px 20px;border-radius:20px;gap:12px;margin-bottom:24px}.cozy-welcome h1{font-size:22px}.cozy-welcome-copy>p:last-child{font-size:11px}.cozy-eyebrow{font-size:9px;letter-spacing:1.5px}.cozy-welcome-art{width:66px;height:82px;margin:0 4px 0 0}.cozy-welcome-art span{font-size:33px}.cozy-welcome-art small{font-size:6px;bottom:12px;letter-spacing:1px}.cozy-welcome-art:before{left:16px;width:37px;height:15px}body[data-page=bookmarks] .quick-grid{gap:10px}body[data-page=bookmarks] .quick-link{min-height:87px;padding:13px 8px;border-radius:15px}body[data-page=bookmarks] .bookmark-grid{gap:12px}body[data-page=bookmarks] .bookmark-card{padding:15px 12px;border-radius:17px}body[data-page=bookmarks] .bookmark-grid[data-layout=list] .bookmark-card{padding:14px}body[data-page=bookmarks] .file-storage-bar{gap:12px}body[data-page=bookmarks] .file-storage-bar>div{gap:8px}body[data-page=bookmarks] .file-storage-bar .soft-button{padding:9px 10px;font-size:11px}body[data-page] dialog{border-radius:22px}}
+@media(max-width:560px){body[data-page=growth] .intro h1{font-size:24px}body[data-page=growth] .intro{padding-top:27px;padding-bottom:22px}body[data-page=growth] .intro-copy{font-size:11px}body[data-page=growth] .story-page{padding:25px}body[data-page=growth] .story-page h2{font-size:23px}body[data-page=growth] .story-content{font-size:13px}body[data-page=growth] .photo-page{padding:14px 14px 21px}body[data-page=growth] .filters p{font-size:11px}body[data-page=growth] .timeline-card{border-radius:17px}body[data-page=growth] .avatar-editor{padding:14px}body[data-page=growth] .family-actions{gap:7px}}
+@media(max-width:370px){.cozy-welcome h1{font-size:20px}.cozy-welcome-art{display:none}.cozy-welcome{padding:20px 18px}body[data-page=bookmarks] .topbar-right{gap:5px}body[data-page=bookmarks] .growth-shortcut{padding:5px 7px}body[data-page=bookmarks] .saved-badge{padding:5px 6px}}
+@media(pointer:coarse){body[data-page] :is(input,select,textarea){font-size:16px}body[data-page] :is(.primary-button,.outline-button,.soft-button,.child-preview,.page-arrow){min-height:44px}body[data-page=growth] .draft-photo .set-cover{min-height:40px}}
+
+/* Home 子系統導覽與公開預覽提示；私人資料與本機功能不在預覽模式載入。 */
+.home-system-link{display:inline-block;font-size:12px;color:#8b6b87;text-decoration:none;padding:10px 12px;border:1px solid #e5d6df;border-radius:12px;background:#fffaf7;white-space:nowrap}
+.sidebar>.home-system-link{margin:12px 0 20px}.site-header>.home-system-link{margin-left:12px}.integration-preview{padding:14px 18px;margin:18px 0;border:1px solid #e4d4bd;background:#fff7e9;border-radius:14px;color:#937552;font-size:13px;line-height:1.8}
+@media(max-width:560px){.home-system-link{font-size:10px;padding:8px}.site-header{flex-wrap:wrap;height:auto!important;min-height:70px;gap:10px;padding-top:12px!important;padding-bottom:12px!important}}
+@media(prefers-reduced-motion:reduce){body[data-page] *,body[data-page] *:before,body[data-page] *:after{transition:none!important;animation:none!important}.cozy-welcome-art{transform:none}body[data-page=bookmarks] :is(.bookmark-card,.quick-link):hover{transform:none}}

@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-01-01T00:00:00.000Z",
+  "checkedAt": "2026-01-01T00:00:00.000Z",
+  "baseEntries": [
+    {
+      "id": "fixture-bookmark",
+      "sourceId": 1,
+      "title": "範例網站",
+      "url": "https://example.com/",
+      "folder": "範例",
+      "domain": "example.com",
+      "category": "other",
+      "status": "unknown",
+      "code": 0,
+      "reason": "尚未檢查",
+      "finalUrl": "https://example.com/"
+    }
+  ],
+  "changes": {
+    "added": [],
+    "deletedIds": []
+  },
+  "favorites": [],
+  "entries": [
+    {
+      "id": "fixture-bookmark",
+      "sourceId": 1,
+      "title": "範例網站",
+      "url": "https://example.com/",
+      "folder": "範例",
+      "domain": "example.com",
+      "category": "other",
+      "status": "unknown",
+      "code": 0,
+      "reason": "尚未檢查",
+      "finalUrl": "https://example.com/",
+      "favorite": false
+    }
+  ]
+}

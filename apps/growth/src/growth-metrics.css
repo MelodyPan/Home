@@ -1,0 +1,24 @@
+/* 成長數字延續暖色便條紙風格；身高與體重各有單位和量尺，避免混畫造成誤讀。 */
+.metrics-heading{margin:12px 0 24px}.metrics-heading h2{font-size:1.5rem;color:#795b73;margin:6px 0 10px}.metrics-heading>p:last-child{font-size:.88rem;color:#937b86}
+.metric-charts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.metric-chart-card{border:1px solid #eadce4;border-radius:22px;background:linear-gradient(145deg,#fffdf9,#fff5f1);padding:22px 16px 14px;min-width:0}
+.metric-chart-card:nth-child(2){background:linear-gradient(145deg,#fffdfb,#f5f0fa)}
+.metric-chart-heading{padding:0 8px;min-height:99px}.metric-chart-heading h3{color:#8c6b7d;margin:0 0 8px;font-size:1rem}.metric-latest{color:#a8687d;font-size:1.8rem;margin:0 0 4px;font-weight:600}.metric-chart-heading small{font-size:.75rem;color:#9d8590}
+.metric-chart{display:block;width:100%;height:auto;overflow:visible}.metric-grid{stroke:#e9dce1;stroke-dasharray:3 5;stroke-width:1}.metric-axis{fill:#967b87;font-size:20px;font-family:inherit}.metric-line{fill:none;stroke:#ca8b9b;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}.metric-dot{fill:#fffaf7;stroke:#bb7e90;stroke-width:3}.metric-chart-card:nth-child(2) .metric-line,.metric-chart-card:nth-child(2) .metric-dot{stroke:#a08bc0}
+.metric-chart-empty,.metric-empty{color:#937f8c;line-height:1.9;font-size:.9rem;padding:24px 12px;text-align:center}.metric-chart-hint{color:#9c8190;font-size:.75rem;text-align:center;margin:0 0 8px}
+.metric-table-wrap{overflow-x:auto;margin-top:28px;border:1px solid #eadde5;border-radius:18px;background:#fffdfb}.metric-table{width:100%;border-collapse:collapse;font-size:.86rem;color:#806779;text-align:left}.metric-table caption{text-align:left;padding:18px;color:#8c6a80;font-weight:600}.metric-table th,.metric-table td{padding:12px 16px;border-top:1px solid #efe5eb;overflow-wrap:anywhere}.metric-table th{background:#faf2f7;font-size:.8rem;white-space:nowrap}.metric-table td:nth-child(1){white-space:nowrap}.metric-table td:nth-child(2){min-width:130px;max-width:260px}
+.measurement-fields{border:1px solid #eadde5;border-radius:18px;background:#fff9f4;padding:18px;margin:20px 0}.measurement-fields legend{padding:0 8px;color:#957181;font-size:.85rem}.measurement-fields .form-row{margin:0}.measurement-fields .form-note{margin-bottom:0}
+.story-measurements{color:#9a7186;font-size:.85rem;margin:0 0 14px;line-height:1.8}
+.flipbook-measurements{color:#9a7186;font-size:.8rem;margin:0;flex-shrink:0}
+.collection-header{flex-wrap:wrap}.collection-header .tabs{flex-wrap:wrap}
+@media(max-width:1050px){.metric-charts{grid-template-columns:1fr}.metric-chart{max-width:720px;margin:auto}}
+@media(max-width:560px){.measurement-fields{padding:14px}.metric-chart-card{padding:20px 8px 12px}.metric-table th,.metric-table td{padding:10px}.metric-table-wrap{border-radius:12px}}
+
+/* 年齡百分位圖保留像健康手冊的方格紙；窄螢幕可橫向捲動，不把刻度縮得無法辨讀。 */
+.metric-charts{grid-template-columns:1fr}.metric-chart-card{background:#fffdf1!important}.metric-chart-heading{min-height:0;margin-bottom:20px;display:flex;flex-wrap:wrap;align-items:baseline;gap:12px}.metric-chart-heading h3{flex-basis:100%;padding:10px 18px;background:#df789e;color:#fff;border-radius:18px;font-size:1.1rem}.metric-chart-heading small{margin-left:auto}
+.percentile-scroll{overflow-x:auto;overscroll-behavior-x:contain}.percentile-chart{display:block;width:100%;min-width:760px;height:auto}.percentile-paper{fill:#fffdf5}.percentile-grid-minor{stroke:#ccc9b5;stroke-width:.5}.percentile-grid-major{stroke:#989e8b;stroke-width:1}.percentile-axis{fill:#6f6d59;font:16px sans-serif}.percentile-month{fill:#8b8772;font:12px sans-serif}
+.reference-male .metric-chart-heading h3{background:#79a5c9}
+.percentile-reference{fill:none;stroke-width:2;stroke-linejoin:round}.percentile-reference.outer{stroke:#d75975}.percentile-reference.inner{stroke:#d79b55}.percentile-reference.median{stroke:#65927a}.percentile-label{font:15px sans-serif}.percentile-label.outer{fill:#c34c67}.percentile-label.inner{fill:#b77939}.percentile-label.median{fill:#4d7e65}
+.percentile-child-line{fill:none;stroke:#6b4d92;stroke-width:2.5;stroke-dasharray:5 3}.percentile-child-dot{fill:#6b4d92;stroke:#fff;stroke-width:2;cursor:pointer}.percentile-child-dot:focus{outline:2px solid #70479a;outline-offset:4px}
+.percentile-detail{padding:12px 16px;background:#f0e9f4;border-radius:12px;color:#765683;font-size:.85rem;line-height:1.8;overflow-wrap:anywhere}.percentile-notes{padding:20px 4px;color:#978577;font-size:.8rem;line-height:1.9}.percentile-notes a{color:#8b6ba1;text-decoration:underline}.percentile-notes button{margin-bottom:18px}
+@media(max-width:560px){.metric-chart-heading{padding:0 4px;gap:6px}.metric-chart-heading small{margin-left:0;flex-basis:100%}.percentile-detail{font-size:.8rem}}

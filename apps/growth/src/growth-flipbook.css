@@ -1,0 +1,88 @@
+/* 電子書使用獨立類別，沿用溫馨色彩；書脊、紙張背面與動態投影組成立體翻頁。 */
+.flipbook-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:12px 0 24px}
+.flipbook-heading h2{margin:4px 0 8px;color:#725258;font-size:1.5rem}
+.flipbook-heading p{margin:0;color:#8b7776;font-size:.85rem}
+.flipbook-shell{padding:28px 24px 20px;border-radius:24px;background:radial-gradient(ellipse at top,#fff7e9,#f4e3d9);box-shadow:inset 0 0 0 1px #ead7cd}
+.flipbook-stage{position:relative;isolation:isolate;height:530px;perspective:2000px;touch-action:pan-y;outline-offset:8px;filter:drop-shadow(0 18px 14px #78503e24);border-radius:8px}
+.flipbook-spread{position:absolute;inset:0;display:grid;grid-template-columns:1fr 1fr;border-radius:7px;background:#fffdf7}
+.flipbook-spread:after{content:'';position:absolute;top:0;bottom:0;left:50%;width:26px;transform:translateX(-50%);background:linear-gradient(90deg,transparent,#74553b20 45%,#fff9 52%,transparent);pointer-events:none;z-index:2}
+.flipbook-paper{min-width:0;min-height:0;box-sizing:border-box;height:100%;padding:28px 30px;display:flex;flex-direction:column;gap:12px;background:#fffdf7;overflow:hidden;position:relative;border:1px solid #e9dac8}
+.flipbook-photo{border-radius:7px 0 0 7px;background:linear-gradient(90deg,#fffcf5 90%,#f4ecd9)}
+.flipbook-story{border-radius:0 7px 7px 0;background:linear-gradient(90deg,#f6eddc,#fffdf8 9%)}
+.flipbook-date{font-size:.72rem;color:#a38776;letter-spacing:.12em}
+.flipbook-photo-frame{flex:1;min-height:0;margin:12px 0 0;padding:10px 10px 25px;background:white;box-shadow:0 5px 14px #8258491a;display:flex;flex-direction:column;align-items:center;justify-content:center;transform:rotate(-2deg)}
+.flipbook-image{width:100%;height:100%;object-fit:contain;min-height:0;user-select:none}
+.flipbook-caption{margin:8px 0 0;text-align:center;color:#aa776d;font-size:.85rem}
+.flipbook-no-photo{font-size:5rem;color:#d9b0a2}.flipbook-photo-frame p{font-size:.85rem;color:#9d8580}
+.flipbook-age{font-size:.8rem;color:#b47a73;margin:12px 0 0}
+.flipbook-title{font-size:clamp(1.2rem,2.4vw,1.8rem);line-height:1.5;color:#75585a;margin:0;overflow-wrap:anywhere;flex-shrink:0;max-height:26%;overflow:auto}
+.flipbook-milestone{font-size:.8rem;color:#98704c;margin:0;background:#faecd2;border-radius:12px;padding:5px 10px;overflow:auto;max-height:15%;flex-shrink:0}
+.flipbook-paper p.flipbook-story{margin:0;padding:0;border:0;border-radius:0;background:none;flex:1;min-height:0;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.9;font-size:.95rem;color:#776561;touch-action:pan-y}
+.flipbook-folio{color:#bda395;text-align:right;font-size:.75rem}
+/* 保留 3D 子元素：正反面各自隱藏背面，讓紙張通過書脊時能自然露出下一頁。 */
+.flipbook-leaf{position:absolute;top:0;bottom:0;width:50%;z-index:4;transform-style:preserve-3d;will-change:transform;pointer-events:none}
+.flipbook-leaf.is-forward{left:50%;transform-origin:left center}
+.flipbook-leaf.is-backward{left:0;transform-origin:right center}
+.flipbook-face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:hidden;background:#fffdf7;box-shadow:0 5px 20px #68473125}
+.flipbook-face:after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,#59432c18,transparent 30%,#59432c0d);pointer-events:none}
+.flipbook-back{transform:rotateY(180deg)}
+.flipbook-navigation{display:flex;justify-content:center;align-items:center;gap:20px;margin-top:26px}
+.flipbook-navigation button{border:1px solid #d9bcae;background:#fffaf6;border-radius:50%;width:44px;height:44px;color:#936e61;font-size:1.3rem;cursor:pointer}
+.flipbook-navigation button:disabled{opacity:.35;cursor:default}
+.flipbook-navigation output{color:#8f7369;font-size:.85rem;min-width:120px;text-align:center}
+.flipbook-help{text-align:center;color:#9b8379;font-size:.75rem;margin:16px 0 0}
+.collection-header .tabs{flex-wrap:wrap}
+@media(max-width:1000px){.flipbook-paper{padding:22px 18px}.flipbook-shell{padding:20px 14px}.flipbook-heading{align-items:flex-start}}
+/* 手機將照片與故事疊成一張直式頁；翻頁仍保留紙張正反面，長故事可以獨立捲動。 */
+@media(max-width:650px){
+ .flipbook-heading{flex-direction:column}.flipbook-shell{padding:16px 10px;border-radius:18px}.flipbook-stage{height:660px;perspective:1500px}
+ .flipbook-spread{grid-template-columns:1fr;grid-template-rows:52% 48%}.flipbook-spread:after{display:none}
+ .flipbook-paper{padding:16px 22px;border-radius:0;gap:8px}.flipbook-photo{border-bottom:0;border-radius:6px 6px 0 0}.flipbook-photo-frame{margin:2px 18px 0;padding-bottom:10px}.flipbook-caption{font-size:.75rem}
+ .flipbook-story{border-top:0;border-radius:0 0 6px 6px}.flipbook-story>.flipbook-date{display:none}.flipbook-age{margin:0}.flipbook-title{font-size:1.2rem;max-height:30%}
+ .flipbook-leaf.is-mobile{left:0;width:100%;transform-origin:left center}.flipbook-leaf.is-mobile.is-backward{transform-origin:right center}
+ .flipbook-navigation{gap:14px}.flipbook-help{line-height:1.8}
+}
+@media(prefers-reduced-motion:reduce){.flipbook-leaf{will-change:auto}}
+
+/* 雜誌回憶冊：書封使用大圖與扉頁寄語，內頁保留紙張翻動，照片較多時由 JS 分成續頁。 */
+.magazine-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.book-settings{border:1px solid #e9d9df;border-radius:18px;padding:20px;margin:20px 0;background:#fff9f4;min-width:0}
+.book-settings legend{padding:0 8px;color:#997186}.book-settings>label{display:flex;flex-direction:column;gap:8px;font-size:13px;font-weight:600;margin:14px 0 18px}
+.book-cover-editor{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.book-cover-editor img{width:96px;height:122px;object-fit:cover;border:5px solid #fff;border-radius:6px;box-shadow:0 4px 12px #815e6820}
+.magazine-directory{border:1px solid #ead9d4;border-radius:16px;background:#fffaf5;margin:0 0 20px;padding:14px 20px;color:#92716d}
+.magazine-directory summary{cursor:pointer;font-size:.9rem}.magazine-directory-tools{display:flex;gap:16px;margin:14px 0 8px}
+.magazine-directory [data-book-contents]{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;max-height:290px;overflow:auto}
+.magazine-chapter-button{display:flex;align-items:center;gap:12px;width:100%;border:0;border-bottom:1px solid #eadbd1;background:transparent;padding:16px 4px;text-align:left;color:#876b66;cursor:pointer;font:inherit;min-width:0}
+.magazine-chapter-button:hover,.magazine-chapter-button[aria-current]{background:#f7eee3}.magazine-chapter-button small{margin-left:auto;font-size:.7rem;white-space:nowrap;color:#a78c7c}.magazine-chapter-number{font-family:Georgia,serif;font-size:1.4rem;color:#bc957a}
+.magazine-paper{gap:10px}.magazine-paper .flipbook-folio{margin-top:auto;flex-shrink:0}
+.magazine-cover{padding:0!important;overflow:hidden}
+.magazine-cover-photo{background:linear-gradient(140deg,#ead1bb,#e2bcc2 65%,#c5b8d5);align-items:center;justify-content:center}
+.magazine-cover-image{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;user-select:none}
+.magazine-cover-heart{font-family:Georgia,serif;font-size:10rem;color:#fff8e7}
+.magazine-cover-signature{position:absolute;left:18px;right:18px;bottom:24px;padding:10px;background:#513c354d;color:#fff9ee;letter-spacing:.12em;font-size:.68rem;text-align:center;overflow-wrap:anywhere}
+.magazine-cover-letter{background:linear-gradient(120deg,#f8eedf,#fffaf1 40%,#f4e7dd);align-items:center;justify-content:center;padding:32px!important;text-align:center}
+.magazine-kicker{color:#b28b72;font-size:.65rem;letter-spacing:.14em;line-height:1.8;margin:0;flex-shrink:0}
+.magazine-cover-title{font-family:Georgia,'Noto Serif TC',serif;font-size:clamp(1.6rem,3vw,2.4rem);color:#806454;line-height:1.6;margin:8px 0;max-height:40%;overflow:auto;overflow-wrap:anywhere;flex-shrink:0}
+.magazine-cover-rule{color:#ba9874;font-size:1.6rem}.magazine-dedication{color:#a08575;font-size:.88rem;line-height:2;white-space:pre-wrap;overflow-wrap:anywhere;overflow:auto;min-height:0;margin:6px 0 12px;max-height:40%}
+.magazine-cover-letter .outline-button{flex-shrink:0;font-size:.8rem;margin-top:8px}
+.magazine-contents{background:#fffaf0;justify-content:center}
+.magazine-contents-title{white-space:pre-line;font-size:clamp(1.8rem,3vw,2.7rem);font-weight:400;line-height:1.8;color:#9b785c;margin:12px 0}
+.magazine-contents small{color:#ac927c}.magazine-toc-title{font-size:1.35rem;color:#96765f;margin:12px 0}
+.magazine-toc-list{flex:1;min-height:0;overflow:auto}.magazine-photo-title{font-size:1rem;color:#977b6b;font-weight:500;margin:2px 0;line-height:1.6;overflow-wrap:anywhere;max-height:20%;overflow:auto;flex-shrink:0}
+.magazine-gallery{display:grid;gap:10px;flex:1;min-height:0;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:minmax(0,1fr)}
+.magazine-figure{margin:0;min-width:0;min-height:0;padding:5px;background:#fff;box-shadow:0 4px 10px #7f62551a;overflow:hidden}
+.magazine-image{display:block;width:100%;height:100%;object-fit:contain;user-select:none}
+.magazine-gallery.count-1,.magazine-gallery.layout-full{grid-template-columns:1fr}
+.magazine-gallery.layout-editorial.count-3{grid-template-rows:1.6fr 1fr}.magazine-gallery.layout-editorial.count-3 .magazine-figure:first-child{grid-column:1/-1}
+.magazine-gallery.layout-grid{grid-template-rows:repeat(2,minmax(0,1fr))}.magazine-gallery.layout-grid.count-1,.magazine-gallery.layout-grid.count-2{grid-template-rows:1fr}
+.magazine-gallery.count-0{grid-template-columns:1fr}.magazine-no-photo{display:flex;align-items:center;justify-content:center;text-align:center;background:#f7ebdf;border:1px dashed #d8bfaa;color:#b3977d;font-size:1rem;line-height:2;padding:16px}
+@media(max-width:650px){
+ .magazine-cover-letter{padding:18px!important;gap:5px}.magazine-cover-title{font-size:1.35rem;line-height:1.5;max-height:35%;margin:4px 0}.magazine-cover-rule{font-size:1rem}.magazine-dedication{font-size:.8rem;line-height:1.8;margin:4px 0;max-height:34%}.magazine-kicker{font-size:.55rem}.magazine-cover-letter .outline-button{padding:8px 12px;margin-top:4px}
+ .magazine-contents-title{font-size:1.8rem;line-height:1.5;margin:4px 0}.magazine-contents{gap:5px}.magazine-toc-title{font-size:1.15rem;margin:4px 0}.magazine-chapter-button{padding:12px 4px;font-size:.85rem}.magazine-gallery{gap:6px}.magazine-figure{padding:3px}.magazine-photo-title{font-size:.9rem;margin:0}.magazine-paper .flipbook-caption{margin:0;font-size:.7rem}.magazine-paper .flipbook-folio{font-size:.65rem}
+ .magazine-directory{padding:14px}.magazine-actions{gap:6px}
+ /* 長標題與多個資訊標籤同時出現時，讓故事整頁捲動，避免 flex 把正文擠到零高度。 */
+ .magazine-paper.flipbook-story:not(.magazine-cover):not(.magazine-contents){overflow-y:auto;overscroll-behavior:contain}
+ .magazine-paper>p.flipbook-story{flex:0 0 auto;min-height:100px;overflow:visible}
+ .magazine-paper>.flipbook-title,.magazine-paper>.flipbook-milestone{max-height:none;overflow:visible}
+ .magazine-chapter-button{flex-wrap:wrap;gap:6px}.magazine-chapter-button small{flex-basis:100%;margin-left:30px}
+}
