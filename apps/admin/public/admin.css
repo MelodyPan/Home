@@ -11,3 +11,30 @@
 .list-filters{display:flex;gap:10px;margin:0 0 18px;flex-wrap:wrap}.list-filters input,.list-filters select{margin:0;padding:10px 12px;border:1px solid #cdd8e7;border-radius:8px;background:#fcfdff;color:var(--ink);font:inherit}.list-filters input{flex:1;min-width:160px}
 #status{position:fixed;right:24px;bottom:24px;z-index:50;max-width:min(380px,calc(100vw - 48px));margin:0;box-shadow:0 10px 30px #1e3b6730}#status:empty{display:none}
 .info-button{width:38px;height:38px;padding:0;border-radius:50%;font-size:20px;line-height:1}.info-dialog{border:0;border-radius:16px;padding:26px;max-width:min(420px,calc(100vw - 40px));box-shadow:0 20px 60px #1e3b6740}.info-dialog::backdrop{background:#17203355}.info-dialog .actions{margin-top:20px}
+/* 版面美化：操作按鈕併入頂欄，省下獨立工具列的空間。 */
+body{background:linear-gradient(180deg,#eef4fc 0,#f6f9fd 320px,#f3f7fc 100%);min-height:100vh}
+.topbar{position:sticky;top:0;z-index:20;min-height:64px;padding:10px max(4vw,20px);background:rgba(255,255,255,.88);backdrop-filter:blur(10px);box-shadow:0 2px 14px #1e3b670d}
+.account{flex-wrap:wrap;justify-content:flex-end;gap:10px}.account #account-name{color:var(--muted);font-size:13px}
+.session-tools{display:flex;align-items:center;gap:8px;padding-left:12px;border-left:1px solid var(--line)}.session-tools[hidden]{display:none}
+.session-tools button{padding:8px 13px;font-size:14px;border-radius:999px}.session-tools .info-button{width:34px;height:34px;padding:0;font-size:18px}
+#logout{padding:8px 14px;border-radius:999px;font-size:14px}
+main{max-width:1240px;padding:26px 24px 48px}
+#workspace>.toolbar{display:none}
+.editor-grid{gap:20px;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr)}
+.panel{border-radius:18px;padding:22px 24px;box-shadow:0 8px 30px #1e3b670d;border-color:#e3eaf3}
+.form-panel{position:sticky;top:84px}
+.panel-title{margin-bottom:16px}.panel-title h2{font-size:18px}
+.project-list{max-height:calc(100vh - 290px);overflow-y:auto;margin:0 -8px;padding:0 8px}
+.project-list li{border-radius:12px;padding:14px 12px;margin:2px 0;border-top:0;transition:background .15s}
+.project-list li:first-child{padding-top:14px}.project-list li:hover{background:#f5f8fd}
+.project-list li.selected{background:#eef4ff;border-left:0;box-shadow:inset 3px 0 0 var(--blue);padding-left:14px!important}
+.row-title strong{font-size:16px}.row-title .badge{border-radius:999px;padding:3px 10px}
+.row-description{margin:5px 0 10px}
+.row-actions button{border-radius:999px}
+.list-filters{margin-bottom:12px}.list-filters input,.list-filters select{border-radius:999px;padding:9px 14px}
+.form-panel input:not([type=checkbox]),.form-panel textarea{border-radius:10px}
+.form-panel input:focus,.form-panel textarea:focus,.list-filters input:focus,.list-filters select:focus{outline:2px solid #9db8f0;border-color:var(--blue)}
+.checkboxes{margin:14px 0}
+.form-save-bar{position:sticky;bottom:0;background:#fff;margin-bottom:-6px;padding-bottom:6px}
+footer{padding:8px 24px 28px}
+@media(max-width:850px){.form-panel{position:static}.project-list{max-height:none}.session-tools{border-left:0;padding-left:0;flex-wrap:wrap}.topbar{position:static}}
