@@ -47,7 +47,7 @@ test('公開建置分站、頁面資源完整且不包含私人資料',async t=>
  }
  const html=await fs.readFile(path.join(out,'bookmarks/bookmarks.html'),'utf8');assert.deepEqual(JSON.parse(html.match(/id="bookmark-data">([\s\S]*?)<\/script>/)[1]).entries,[]);
  assert.match(await fs.readFile(path.join(out,'bookmarks/growth.html'),'utf8'),/\.\.\/growth\/growth.html/);
- const index=await fs.readFile(path.join(out,'index.html'),'utf8');assert.match(index,/id="growth-subsystem"/);assert.match(index,/href="growth\/growth.html"/);
+ const index=await fs.readFile(path.join(out,'index.html'),'utf8');assert.doesNotMatch(index,/id="(?:bookmarks|growth)-subsystem"|BOOKMARKS_SUBSYSTEM|href="(?:bookmarks|growth)\//);assert.match(index,/CathFlow/);
 });
 
 test('CathFlow 與 DynastyExplorer 有獨立子站，舊網址轉址且公開產物包含標誌',async t=>{

@@ -26,7 +26,9 @@ async function buildSite(homeRoot,options={}){
   await fs.copyFile(path.join(sharedRoot,'src/cozy-theme.css'),path.join(output,site,'src/cozy-theme.css'));
   await fs.writeFile(path.join(output,site,'Javascript/site-config.js'),'window.BookmarksConfig={mode:"preview",homeUrl:"../index.html"};\n');
  }
- await fs.copyFile(path.join(homeRoot,'index.html'),path.join(output,'index.html'));
+ // 公開首頁不列出私人的書籤與成長相簿入口；本機首頁維持原樣。
+ const publicIndex=(await fs.readFile(path.join(homeRoot,'index.html'),'utf8')).replace(/[ \t]*<!-- BOOKMARKS_SUBSYSTEM -->\r?\n?/,'').replace(/[ \t]*<article class="project" id="(?:bookmarks|growth)-subsystem">[^]*?<\/article>\r?\n?/g,'');
+ await fs.writeFile(path.join(output,'index.html'),publicIndex);
  // 每個作品使用自己的公開目錄；保留根目錄的舊網址轉址，方便既有收藏繼續使用。
  for(const [site,entry,title] of [['cathflow','cathflow.html','CathFlow'],['dynasty-explorer','DynastyExplorer.html','DynastyExplorer']]){
   const source=path.join(appRoot,'..',site);
