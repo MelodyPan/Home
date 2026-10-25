@@ -46,7 +46,9 @@ async function integrateHome(sourceRoot,homeRoot){
  try{await fs.access(app);await fs.access(path.join(app,'.home-subsystem.json'));}catch(error){if(error.code!=='ENOENT')throw error;try{await fs.access(app);throw new Error('既有 apps/bookmarks 不是本工具管理的子系統，未覆蓋。');}catch(e){if(e.code!=='ENOENT')throw e;}}
  await fs.mkdir(app,{recursive:true});
  for(const dir of ['Javascript','src','scripts','tests','docs'])await copyTree(path.join(sourceRoot,dir),path.join(app,dir));
- await fs.mkdir(path.join(app,'assets'),{recursive:true});await fs.copyFile(path.join(sourceRoot,'assets/home-logo.png'),path.join(app,'assets/home-logo.png'));
+ // 新安裝共用 Home 圖片；已有 Logo 時保留使用者的版本。
+ await fs.mkdir(path.join(homeRoot,'images'),{recursive:true});
+ try{await fs.copyFile(path.resolve(sourceRoot,'../../images/logo.png'),path.join(homeRoot,'images/logo.png'),require('node:fs').constants.COPYFILE_EXCL);}catch(error){if(error.code!=='EEXIST')throw error;}
  await fs.writeFile(path.join(app,'bookmarks.html'),await emptyBookmarks(app));
  // Home 中的重建工具永遠只產生空白頁，個人資料由 API 載入，避免內嵌私人書籤。
  await fs.writeFile(path.join(app,'scripts/build-home.cjs'),"const fs=require('node:fs/promises'),path=require('node:path');const {emptyBookmarks}=require('./home-site-build.cjs');emptyBookmarks(path.resolve(__dirname,'..')).then(html=>fs.writeFile(path.join(__dirname,'../bookmarks.html'),html)).catch(e=>{console.error(e);process.exitCode=1;});\n");
@@ -60,7 +62,6 @@ async function integrateHome(sourceRoot,homeRoot){
   }
   if(name==='growth'){
    await fs.copyFile(path.join(source,'growth.html'),path.join(target,'growth.html'));
-   await fs.mkdir(path.join(target,'assets'),{recursive:true});await fs.copyFile(path.join(source,'assets/home-logo.png'),path.join(target,'assets/home-logo.png'));
   }
   if(name==='cathflow')await fs.copyFile(path.join(source,'cathflow.html'),path.join(target,'cathflow.html'));
   if(name==='admin')await fs.copyFile(path.join(source,'projects.seed.json'),path.join(target,'projects.seed.json'));

@@ -35,6 +35,8 @@ function createBookmarkServer(root=path.resolve(__dirname,'..'),options={}){
    if(req.method==='GET'&&req.url==='/Javascript/app-runtime.js'){send(200,await fs.readFile(path.join(__dirname,'../../shared/Javascript/app-runtime.js')),'application/javascript; charset=utf-8');return;}
    if(req.method==='GET'&&req.url==='/src/cozy-theme.css'){send(200,await fs.readFile(path.join(__dirname,'../../shared/src/cozy-theme.css')),'text/css; charset=utf-8');return;}
    if(req.method==='GET'&&req.url==='/api/health'){send(200,JSON.stringify({app:'melody-pan-bookmarks',workspace:path.resolve(root),version,stopping}));return;}
+   // 單站除錯同樣使用 Home Logo，只允許此固定圖片，不開放其他上層檔案。
+   if(!basePath&&req.method==='GET'&&req.url==='/images/logo.png'){send(200,await fs.readFile(path.resolve(__dirname,'../../../images/logo.png')),'image/png');return;}
    if(req.method==='GET'&&['/Javascript/bookmark-core.js','/Javascript/bookmark-file.js','/Javascript/home.js'].includes(req.url)){send(200,await fs.readFile(path.join(root,req.url.slice(1))),'application/javascript; charset=utf-8');return;}
    // 新書籤入口統一讀取 bookmarks.html；舊網址轉址，避免既有瀏覽器書籤失效。
    if(req.method==='GET'&&['/','/index.html'].includes(req.url)){send(302,'','text/html; charset=utf-8',{Location:'/bookmarks.html'});return;}

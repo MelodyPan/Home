@@ -144,7 +144,7 @@ test('growth page and only explicitly allowed assets are served',async t=>{
 // 大頭貼需能與既有孩子資料相容，儲存、替換及移除都不影響其他孩子或故事。
 test('child avatars persist, can be replaced and removed without affecting siblings or records',async t=>{
  const {origin,request,root}=await setup(t);
- const bytes=await fs.readFile('assets/home-logo.png');
+ const bytes=await fs.readFile(path.resolve(__dirname,'../../../images/logo.png'));
  const upload=async()=>{const response=await fetch(origin+'/api/growth/photos',{method:'POST',headers:{Origin:origin,'Content-Type':'image/png'},body:bytes});assert.equal(response.status,201);return (await response.json()).id;};
  const avatar=await upload(),replacement=await upload();
  let response=await request('/api/growth');let tag=response.headers.get('etag');
@@ -171,7 +171,7 @@ test('invalid or missing child avatar files are rejected without altering saved 
 // 指定封面應獨立保存，不改變其餘照片順序；沒有指定的舊紀錄仍可讀取。
 test('record cover photo persists without reordering photos and can be changed or cleared',async t=>{
  const {origin,request}=await setup(t);
- const bytes=await fs.readFile('assets/home-logo.png');
+ const bytes=await fs.readFile(path.resolve(__dirname,'../../../images/logo.png'));
  const upload=async()=>{const response=await fetch(origin+'/api/growth/photos',{method:'POST',headers:{Origin:origin,'Content-Type':'image/png'},body:bytes});return (await response.json()).id;};
  const a=await upload(),b=await upload();let response=await request('/api/growth'),tag=response.headers.get('etag');
  let data={schemaVersion:1,children:[child],records:[{...record,photos:[a,b],coverPhoto:b}]};

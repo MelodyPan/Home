@@ -11,6 +11,8 @@
 
 功能規劃：[功能優化評估](optimization-review.md)，列出目前缺口與建議優先順序。
 
+Logo 統一使用 Home 根目錄的 `images/logo.png`，書籤與成長相簿不保留圖片副本。
+
 ## 1. 專案簡介（Overview）
 
 本專案將 Chrome 匯出的書籤整理成繁體中文的個人工作台，提供用途分類、原始資料夾與網址狀態篩選，以及搜尋與常用收藏。使用者可新增、刪除及復原書籤，手動調整分類與網址狀態；異動透過本機服務存入 JSON 資料檔。
@@ -57,7 +59,6 @@ Bookmarks/
 │  ├─ growth-data.json                孩子與紀錄（首次開啟時建立）
 │  ├─ growth-data.json.bak            相簿上一次存檔前的備份
 │  ├─ growth-photos/                 故事照片與孩子大頭貼
-│  ├─ home-logo.png                   建置使用的 Logo
 │  ├─ source/
 │  │  └─ bookmarks_2026_10_23.html    原始 Chrome 書籤匯出檔
 │  └─ reports/

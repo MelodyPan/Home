@@ -26,7 +26,8 @@ async function copyTree(source,destination){
 }
 async function emptyBookmarks(appRoot){
  let html=await fs.readFile(path.join(appRoot,'src/home.html'),'utf8');
- for(const [placeholder,content] of [['__BRAND_LOGO__',(await fs.readFile(path.join(appRoot,'assets/home-logo.png'))).toString('base64')],['/* HOME_STYLES */',await fs.readFile(path.join(appRoot,'src/home.css'),'utf8')],['/* BOOKMARK_DATA */',JSON.stringify({entries:[],icons:{},checkedAt:'1970-01-01T00:00:00.000Z'})]])html=html.replace(placeholder,()=>content);
+ // Logo 使用相對網址連到 Home/images/logo.png，不再讀取或嵌入子網站的圖片副本。
+ for(const [placeholder,content] of [['/* HOME_STYLES */',await fs.readFile(path.join(appRoot,'src/home.css'),'utf8')],['/* BOOKMARK_DATA */',JSON.stringify({entries:[],icons:{},checkedAt:'1970-01-01T00:00:00.000Z'})]])html=html.replace(placeholder,()=>content);
  return html;
 }
 async function buildSite(homeRoot,options={}){

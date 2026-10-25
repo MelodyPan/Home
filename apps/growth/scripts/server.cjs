@@ -24,6 +24,8 @@ function createGrowthHandler(root=path.resolve(__dirname,'..'),options={}){
   try{
    if(req.method==='GET'&&['/','/index.html'].includes(req.url)){send(302,'','text/html',{Location:basePath+'/growth.html'});return true;}
    if(req.method==='GET'&&req.url==='/Javascript/site-config.js'){send(200,'window.BookmarksConfig='+JSON.stringify(options.runtimeConfig||{mode:'local'})+';','application/javascript');return true;}
+   // Home 掛載時由外層供應圖片；單站除錯也只開放這張共用 Logo。
+   if(!basePath&&req.method==='GET'&&req.url==='/images/logo.png'){send(200,await fs.readFile(path.resolve(__dirname,'../../../images/logo.png')),'image/png');return true;}
    const shared={'/Javascript/app-runtime.js':['Javascript/app-runtime.js','application/javascript'],'/src/cozy-theme.css':['src/cozy-theme.css','text/css']};
    const resource=STATIC[req.url]||shared[req.url];
    if(req.method==='GET'&&resource){send(200,await fs.readFile(path.join(shared[req.url]?sharedRoot:root,resource[0])),resource[1]);return true;}

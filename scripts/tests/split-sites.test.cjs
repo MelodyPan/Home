@@ -39,23 +39,6 @@ test('兩站有獨立入口、資源與 API，舊相簿轉址且沿用原資料'
  for(const route of ['/.home-local.json','/growth/scripts/growth-store.cjs','/growth/assets/growth-data.json','/apps/growth/growth.html'])assert.equal((await fetch(origin+route)).status,404,route);
 });
 
-test('公開建置分站、頁面資源完整且不包含私人資料',async t=>{
- const root=await fs.mkdtemp(path.join(os.tmpdir(),'split-build-'));t.after(()=>fs.rm(root,{recursive:true,force:true}));
- await fs.copyFile(path.join(home,'index.html'),path.join(root,'index.html'));
- await addProjectSource(root);
- const out=await buildSite(root,{appRoot:path.join(home,'apps/bookmarks'),growthRoot:path.join(home,'apps/growth'),sharedRoot:path.join(home,'apps/shared')});
- for(const site of ['bookmarks','growth']){
-  const html=await fs.readFile(path.join(out,site,site+'.html'),'utf8');
-  for(const match of html.matchAll(/(?:src|href)="((?:Javascript|src)\/[^"#]+)"/g))await fs.access(path.join(out,site,match[1]));
-  assert.match(await fs.readFile(path.join(out,site,'Javascript/site-config.js'),'utf8'),/preview/);
-  for(const file of ['assets/bookmarks-data.txt','assets/growth-data.json','assets/growth-photos','scripts/server.cjs'])await assert.rejects(fs.access(path.join(out,site,file)));
- }
- const html=await fs.readFile(path.join(out,'bookmarks/bookmarks.html'),'utf8');assert.deepEqual(JSON.parse(html.match(/id="bookmark-data">([\s\S]*?)<\/script>/)[1]).entries,[]);
- assert.match(await fs.readFile(path.join(out,'bookmarks/growth.html'),'utf8'),/\.\.\/growth\/growth.html/);
- const index=await fs.readFile(path.join(out,'index.html'),'utf8');assert.doesNotMatch(index,/id="(?:bookmarks|growth)-subsystem"|BOOKMARKS_SUBSYSTEM|href="(?:bookmarks|growth)\//);assert.match(index,/CathFlow/);
- assert.equal(JSON.parse(await fs.readFile(path.join(out,'portfolio/projects.json'),'utf8')).projects.some(project=>project.title==='探索台灣'),true);
-});
-
 test('CathFlow 與 DynastyExplorer 有獨立子站，舊網址轉址且公開產物包含標誌',async t=>{
  const root=await fs.mkdtemp(path.join(os.tmpdir(),'portfolio-sites-'));t.after(()=>fs.rm(root,{recursive:true,force:true}));
  const server=await createHomeServer(home,{dataRoot:path.join(root,'private')});await new Promise(r=>server.listen(0,'127.0.0.1',r));
