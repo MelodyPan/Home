@@ -245,6 +245,28 @@
       color: var(--muted);
     }
 
+    .visit-counter {
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      z-index: 20;
+      padding: 7px 14px;
+      border: 1px solid rgba(23, 32, 51, .1);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .92);
+      box-shadow: 0 6px 18px rgba(23, 32, 51, .12);
+      color: var(--muted, #5b6578);
+      font-size: .82rem;
+    }
+
+    .visit-counter[hidden] {
+      display: none;
+    }
+
+    .visit-counter strong {
+      color: #2563eb;
+    }
+
     .hero-main {
       display: flex;
       align-items: center;
@@ -825,8 +847,27 @@
     </section>
   </main>
   <footer>
-    <div class="shell">© <span id="year"></span> Melody Pan · Taichung, Taiwan · <a href="admin/">作品管理</a></div>
+    <div class="shell">© <span id="year"></span> Melody Pan · Taichung, Taiwan</div>
   </footer>
+  <div id="visit-counter" class="visit-counter" hidden>瀏覽人次 <strong id="visit-count">0</strong></div>
+  <script>
+    (function () {
+      var box = document.getElementById("visit-counter");
+      var local = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+      var counted = false;
+      try { counted = sessionStorage.getItem("visit-counted") === "1"; } catch (e) {}
+      var action = local || counted ? "get" : "hit";
+      fetch("https://abacus.jasoncameron.dev/" + action + "/melodypan-github-io-home/visits")
+        .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+        .then(function (d) {
+          if (typeof d.value !== "number") return;
+          document.getElementById("visit-count").textContent = d.value.toLocaleString("en-US");
+          box.hidden = false;
+          if (action === "hit") { try { sessionStorage.setItem("visit-counted", "1"); } catch (e) {} }
+        })
+        .catch(function () {});
+    })();
+  </script>
   <script>document.getElementById("year").textContent = new Date().getFullYear();</script>
   <script>
     (function () {
