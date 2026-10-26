@@ -1,0 +1,1044 @@
+
+> melody-home@1.0.0 test
+> node scripts/test.cjs
+
+TAP version 13
+# Subtest: connect loads the sole cloud library; saves and clean refreshes update memory only
+ok 1 - connect loads the sole cloud library; saves and clean refreshes update memory only
+  ---
+  duration_ms: 3.9275
+  type: 'test'
+  ...
+# Subtest: failed writes keep drafts, refresh cannot discard them and retry uses the failed revision
+ok 2 - failed writes keep drafts, refresh cannot discard them and retry uses the failed revision
+  ---
+  duration_ms: 2.9064
+  type: 'test'
+  ...
+# Subtest: wrong-account reauthorization hides the library and cannot retry the old account draft
+ok 3 - wrong-account reauthorization hides the library and cannot retry the old account draft
+  ---
+  duration_ms: 0.8162
+  type: 'test'
+  ...
+# Subtest: conflict choices only resolve explicitly; saves stay blocked until resolved
+ok 4 - conflict choices only resolve explicitly; saves stay blocked until resolved
+  ---
+  duration_ms: 0.8244
+  type: 'test'
+  ...
+# Subtest: empty and multiple datasets require explicit selection/creation; offline saves are blocked
+ok 5 - empty and multiple datasets require explicit selection/creation; offline saves are blocked
+  ---
+  duration_ms: 0.6529
+  type: 'test'
+  ...
+# Subtest: multiple rapid edits are serialized and reauthorization cannot race a write
+ok 6 - multiple rapid edits are serialized and reauthorization cannot race a write
+  ---
+  duration_ms: 0.9964
+  type: 'test'
+  ...
+# Subtest: a failed explicit conflict resolution retries the chosen version against all conflict parents
+ok 7 - a failed explicit conflict resolution retries the chosen version against all conflict parents
+  ---
+  duration_ms: 0.8709
+  type: 'test'
+  ...
+# Subtest: reconnecting a conflict refreshes cloud choices without discarding the local memory draft
+ok 8 - reconnecting a conflict refreshes cloud choices without discarding the local memory draft
+  ---
+  duration_ms: 0.6042
+  type: 'test'
+  ...
+# Subtest: authorization with an unverified identity cannot retry any previous-account write
+ok 9 - authorization with an unverified identity cannot retry any previous-account write
+  ---
+  duration_ms: 0.9982
+  type: 'test'
+  ...
+# Subtest: reimport replaces the current dataset as a new version and retains drafts on failure
+ok 10 - reimport replaces the current dataset as a new version and retains drafts on failure
+  ---
+  duration_ms: 1.0779
+  type: 'test'
+  ...
+# Subtest: same Taiwan day updates one file and a stale revision is rejected even when the file ID is unchanged
+ok 11 - same Taiwan day updates one file and a stale revision is rejected even when the file ID is unchanged
+  ---
+  duration_ms: 128.4555
+  type: 'test'
+  ...
+# Subtest: conditional daily updates retain the losing draft for explicit conflict resolution
+ok 12 - conditional daily updates retain the losing draft for explicit conflict resolution
+  ---
+  duration_ms: 21.7224
+  type: 'test'
+  ...
+# Subtest: uncertain upload retries the preallocated file ID and does not create another branch
+ok 13 - uncertain upload retries the preallocated file ID and does not create another branch
+  ---
+  duration_ms: 4.9727
+  type: 'test'
+  ...
+# Subtest: missing ancestry, mismatched envelopes and incomplete listing fail closed
+ok 14 - missing ancestry, mismatched envelopes and incomplete listing fail closed
+  ---
+  duration_ms: 6.7782
+  type: 'test'
+  ...
+# Subtest: auth, permission and quota errors are actionable; no unauthenticated request is sent
+ok 15 - auth, permission and quota errors are actionable; no unauthenticated request is sent
+  ---
+  duration_ms: 1.6686
+  type: 'test'
+  ...
+# Subtest: disabled Drive API and insufficient OAuth scope have distinct setup instructions
+ok 16 - disabled Drive API and insufficient OAuth scope have distinct setup instructions
+  ---
+  duration_ms: 1.4711
+  type: 'test'
+  ...
+# Subtest: uncertain first creation advanced by another device can still resolve using its dataset identity
+ok 17 - uncertain first creation advanced by another device can still resolve using its dataset identity
+  ---
+  duration_ms: 10.5181
+  type: 'test'
+  ...
+# Subtest: Taiwan midnight opens one new daily file and preserves the prior day
+ok 18 - Taiwan midnight opens one new daily file and preserves the prior day
+  ---
+  duration_ms: 5.3807
+  type: 'test'
+  ...
+# Subtest: two devices reserve the same new-day file and preserve the losing draft
+ok 19 - two devices reserve the same new-day file and preserve the losing draft
+  ---
+  duration_ms: 5.7967
+  type: 'test'
+  ...
+# Subtest: old immutable files remain readable; first daily save preserves them and later updates reuse its file
+ok 20 - old immutable files remain readable; first daily save preserves them and later updates reuse its file
+  ---
+  duration_ms: 6.2559
+  type: 'test'
+  ...
+# Subtest: missing conditional metadata stops daily updates before sending a write
+ok 21 - missing conditional metadata stops daily updates before sending a write
+  ---
+  duration_ms: 3.9239
+  type: 'test'
+  ...
+# Subtest: new snapshots live inside MelodyHome and reconnect moves legacy snapshots without changing content
+ok 22 - new snapshots live inside MelodyHome and reconnect moves legacy snapshots without changing content
+  ---
+  duration_ms: 3.5095
+  type: 'test'
+  ...
+# Subtest: shared MelodyHome folders are not used for uploads or migration of private snapshots
+ok 23 - shared MelodyHome folders are not used for uploads or migration of private snapshots
+  ---
+  duration_ms: 6.3006
+  type: 'test'
+  ...
+# Subtest: duplicate filter compares exact URLs across the entire live library before other filters
+ok 24 - duplicate filter compares exact URLs across the entire live library before other filters
+  ---
+  duration_ms: 2.4083
+  type: 'test'
+  ...
+# Subtest: deleted bookmarks do not count and edited URLs update duplicate membership without removing entries
+ok 25 - deleted bookmarks do not count and edited URLs update duplicate membership without removing entries
+  ---
+  duration_ms: 6.155
+  type: 'test'
+  ...
+# Subtest: editing titles preserves checks while URL edits invalidate old checks and preserve identity
+ok 26 - editing titles preserves checks while URL edits invalidate old checks and preserve identity
+  ---
+  duration_ms: 14.0451
+  type: 'test'
+  ...
+# Subtest: detail validation rejects unsafe, empty and unknown data while manual additions can be edited
+ok 27 - detail validation rejects unsafe, empty and unknown data while manual additions can be edited
+  ---
+  duration_ms: 0.8542
+  type: 'test'
+  ...
+# Subtest: batch classification moves selected entries atomically and enforces work folder rules
+ok 28 - batch classification moves selected entries atomically and enforces work folder rules
+  ---
+  duration_ms: 1.3659
+  type: 'test'
+  ...
+# Subtest: Chrome export uses Netscape HTML and current purpose/category folders without deleted bookmarks
+ok 29 - Chrome export uses Netscape HTML and current purpose/category folders without deleted bookmarks
+  ---
+  duration_ms: 18.9607
+  type: 'test'
+  ...
+# Subtest: Chrome export escapes titles and URLs, preserves duplicates and supports empty lists
+ok 30 - Chrome export escapes titles and URLs, preserves duplicates and supports empty lists
+  ---
+  duration_ms: 0.7408
+  type: 'test'
+  ...
+# Subtest: JSON file restores full source, additions, deletions, category edits and favorites
+ok 31 - JSON file restores full source, additions, deletions, category edits and favorites
+  ---
+  duration_ms: 4.1643
+  type: 'test'
+  ...
+# Subtest: rejects malformed files and invalid fields without silently discarding saved data
+ok 32 - rejects malformed files and invalid fields without silently discarding saved data
+  ---
+  duration_ms: 0.5738
+  type: 'test'
+  ...
+# Subtest: manual URL status overrides survive reload, compose with category edits and restore checked results
+ok 33 - manual URL status overrides survive reload, compose with category edits and restore checked results
+  ---
+  duration_ms: 4.525
+  type: 'test'
+  ...
+# Subtest: category edits persist for original and manual bookmarks without mutating sources
+ok 34 - category edits persist for original and manual bookmarks without mutating sources
+  ---
+  duration_ms: 1.0143
+  type: 'test'
+  ...
+# Subtest: purpose filters compose with folders, status, search and favorites
+ok 35 - purpose filters compose with folders, status, search and favorites
+  ---
+  duration_ms: 1.1788
+  type: 'test'
+  ...
+# Subtest: original folder filters include descendants but exclude similarly named sibling folders
+ok 36 - original folder filters include descendants but exclude similarly named sibling folders
+  ---
+  duration_ms: 0.4372
+  type: 'test'
+  ...
+# Subtest: original folder options preserve the complete hierarchy and include root and manual additions
+ok 37 - original folder options preserve the complete hierarchy and include root and manual additions
+  ---
+  duration_ms: 0.4617
+  type: 'test'
+  ...
+# Subtest: quick status counts follow category, search and favorites, independently of selected status
+ok 38 - quick status counts follow category, search and favorites, independently of selected status
+  ---
+  duration_ms: 0.4093
+  type: 'test'
+  ...
+# Subtest: manual bookmarks validate input, normalize web URLs and honor selected category
+ok 39 - manual bookmarks validate input, normalize web URLs and honor selected category
+  ---
+  duration_ms: 1.0471
+  type: 'test'
+  ...
+# Subtest: additions and tombstones survive reload, undo restores originals without changing source
+ok 40 - additions and tombstones survive reload, undo restores originals without changing source
+  ---
+  duration_ms: 0.4634
+  type: 'test'
+  ...
+# Subtest: corrupt or unavailable library storage cannot execute unsafe URLs or crash the homepage
+ok 41 - corrupt or unavailable library storage cannot execute unsafe URLs or crash the homepage
+  ---
+  duration_ms: 0.892
+  type: 'test'
+  ...
+# Subtest: preserves 546 synthetic fixture entries, folders, entities and duplicate URLs with stable unique IDs
+ok 42 - preserves 546 synthetic fixture entries, folders, entities and duplicate URLs with stable unique IDs
+  ---
+  duration_ms: 32.8998
+  type: 'test'
+  ...
+# Subtest: classifies by purpose while honoring authoritative 中榮 work folders
+ok 43 - classifies by purpose while honoring authoritative 中榮 work folders
+  ---
+  duration_ms: 4.3282
+  type: 'test'
+  ...
+# Subtest: every original bookmark below 中榮 is work regardless of its topic
+ok 44 - every original bookmark below 中榮 is work regardless of its topic
+  ---
+  duration_ms: 8.5122
+  type: 'test'
+  ...
+# Subtest: combines case insensitive multi-term search, category, status and favorites
+ok 45 - combines case insensitive multi-term search, category, status and favorites
+  ---
+  duration_ms: 0.26
+  type: 'test'
+  ...
+# Subtest: only permits HTTP(S) navigation and handles corrupt or denied favorite storage
+ok 46 - only permits HTTP(S) navigation and handles corrupt or denied favorite storage
+  ---
+  duration_ms: 0.3889
+  type: 'test'
+  ...
+# Subtest: does not treat blog domains ending in .net as developer content
+ok 47 - does not treat blog domains ending in .net as developer content
+  ---
+  duration_ms: 1.6179
+  type: 'test'
+  ...
+# Subtest: recognizes nested language and developer folders with Chrome spacing
+ok 48 - recognizes nested language and developer folders with Chrome spacing
+  ---
+  duration_ms: 1.3114
+  type: 'test'
+  ...
+# Subtest: does not interpret ordinary .html article URLs as HTML development
+ok 49 - does not interpret ordinary .html article URLs as HTML development
+  ---
+  duration_ms: 0.2308
+  type: 'test'
+  ...
+# Subtest: ignores blog branding when distinguishing travel from food
+ok 50 - ignores blog branding when distinguishing travel from food
+  ---
+  duration_ms: 0.1761
+  type: 'test'
+  ...
+# Subtest: offers every status as a selectable option in the homepage
+ok 51 - offers every status as a selectable option in the homepage
+  ---
+  duration_ms: 2.6686
+  type: 'test'
+  ...
+# Subtest: extracts only embedded bitmap icons and preserves escaped bookmark URLs
+ok 52 - extracts only embedded bitmap icons and preserves escaped bookmark URLs
+  ---
+  duration_ms: 1.9788
+  type: 'test'
+  ...
+# Subtest: uses original icon first then the website own favicon without page paths or credentials
+ok 53 - uses original icon first then the website own favicon without page paths or credentials
+  ---
+  duration_ms: 1.0937
+  type: 'test'
+  ...
+# Subtest: reload retains authorization, activity extends idle deadline, expiry cannot revive it
+ok 54 - reload retains authorization, activity extends idle deadline, expiry cannot revive it
+  ---
+  duration_ms: 2.4863
+  type: 'test'
+  ...
+# Subtest: Google expiration, client mismatch, explicit logout and malformed storage clear credentials
+ok 55 - Google expiration, client mismatch, explicit logout and malformed storage clear credentials
+  ---
+  duration_ms: 0.98
+  type: 'test'
+  ...
+# Subtest: bookmarks.html is served as the bookmark page and the old index URL redirects
+ok 56 - bookmarks.html is served as the bookmark page and the old index URL redirects
+  ---
+  duration_ms: 156.2979
+  type: 'test'
+  ...
+# Subtest: bookmark service exposes cloud assets only; private data routes are absent and shutdown stays secure
+ok 57 - bookmark service exposes cloud assets only; private data routes are absent and shutdown stays secure
+  ---
+  duration_ms: 3128.3819
+  type: 'test'
+  ...
+# Subtest: first-level category order moves both ways and persists without changing bookmarks or subcategories
+ok 58 - first-level category order moves both ways and persists without changing bookmarks or subcategories
+  ---
+  duration_ms: 5.6395
+  type: 'test'
+  ...
+# Subtest: old files keep default category order and corrupt category order is rejected
+ok 59 - old files keep default category order and corrupt category order is rejected
+  ---
+  duration_ms: 8.0192
+  type: 'test'
+  ...
+# Subtest: Drive configuration publishes only a validated public Client ID and always selects Drive
+ok 60 - Drive configuration publishes only a validated public Client ID and always selects Drive
+  ---
+  duration_ms: 55.7105
+  type: 'test'
+  ...
+# Subtest: 書籤子路徑與根頁委派彼此隔離，目錄入口轉址正確
+ok 61 - 書籤子路徑與根頁委派彼此隔離，目錄入口轉址正確
+  ---
+  duration_ms: 106.8506
+  type: 'test'
+  ...
+# Subtest: 公開建置只使用白名單，清除 HTML 內嵌個人書籤，不發布資料/API/原始匯出
+ok 62 - 公開建置只使用白名單，清除 HTML 內嵌個人書籤，不發布資料/API/原始匯出
+  ---
+  duration_ms: 609.4377
+  type: 'test'
+  ...
+# Subtest: 兩個獨立程序同時保存同一版本的相簿，只有一筆成功且另一筆回報衝突
+ok 63 - 兩個獨立程序同時保存同一版本的相簿，只有一筆成功且另一筆回報衝突
+  ---
+  duration_ms: 818.9868
+  type: 'test'
+  ...
+# Subtest: cloud-only bookmarks cannot trigger local background URL checks
+ok 64 - cloud-only bookmarks cannot trigger local background URL checks
+  ---
+  duration_ms: 92.6575
+  type: 'test'
+  ...
+# Subtest: HTTP checker pins verified public DNS addresses and skips private DNS results before connecting
+ok 65 - HTTP checker pins verified public DNS addresses and skips private DNS results before connecting
+  ---
+  duration_ms: 15.5267
+  type: 'test'
+  ...
+# Subtest: URL checks classify responses and reject internal, credential and redirected private URLs
+ok 66 - URL checks classify responses and reject internal, credential and redirected private URLs
+  ---
+  duration_ms: 3.2227
+  type: 'test'
+  ...
+# Subtest: checking deduplicates URLs and records progress including skipped URLs
+ok 67 - checking deduplicates URLs and records progress including skipped URLs
+  ---
+  duration_ms: 0.4403
+  type: 'test'
+  ...
+# Subtest: URL checks honor cancellation and timeouts
+ok 68 - URL checks honor cancellation and timeouts
+  ---
+  duration_ms: 23.1449
+  type: 'test'
+  ...
+# Subtest: fresh results survive JSON reload for original and added bookmarks while manual status remains authoritative
+ok 69 - fresh results survive JSON reload for original and added bookmarks while manual status remains authoritative
+  ---
+  duration_ms: 4.1453
+  type: 'test'
+  ...
+# Subtest: keyword search stably puts work-system bookmarks before other categories
+ok 70 - keyword search stably puts work-system bookmarks before other categories
+  ---
+  duration_ms: 1.8211
+  type: 'test'
+  ...
+# Subtest: users can create, rename and delete work subcategories without deleting bookmarks
+ok 71 - users can create, rename and delete work subcategories without deleting bookmarks
+  ---
+  duration_ms: 1.3102
+  type: 'test'
+  ...
+# Subtest: work subcategory settings survive JSON and invalid definitions cannot be saved
+ok 72 - work subcategory settings survive JSON and invalid definitions cannot be saved
+  ---
+  duration_ms: 2.3841
+  type: 'test'
+  ...
+# Subtest: Chrome export includes customized work subcategory folders
+ok 73 - Chrome export includes customized work subcategory folders
+  ---
+  duration_ms: 5.9032
+  type: 'test'
+  ...
+# Subtest: developer subcategories are isolated, sortable, persisted and exported in chosen order
+ok 74 - developer subcategories are isolated, sortable, persisted and exported in chosen order
+  ---
+  duration_ms: 1.2075
+  type: 'test'
+  ...
+# Subtest: work subcategory ordering is independent and older saved definitions still load
+ok 75 - work subcategory ordering is independent and older saved definitions still load
+  ---
+  duration_ms: 0.6061
+  type: 'test'
+  ...
+1..75
+# tests 75
+# suites 0
+# pass 75
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4894.9739
+TAP version 13
+# Subtest: album first displays the selected cover while allowing another photo to be viewed
+ok 1 - album first displays the selected cover while allowing another photo to be viewed
+  ---
+  duration_ms: 7.7165
+  type: 'test'
+  ...
+# Subtest: avatar display uses the photo and falls back to the name when absent or unreadable
+ok 2 - avatar display uses the photo and falls back to the name when absent or unreadable
+  ---
+  duration_ms: 3.3287
+  type: 'test'
+  ...
+# Subtest: closing or replacing avatar drafts releases blob previews but keeps saved photos
+ok 3 - closing or replacing avatar drafts releases blob previews but keeps saved photos
+  ---
+  duration_ms: 2.567
+  type: 'test'
+  ...
+# Subtest: 書封草稿可預覽更換及移除，釋放 blob 而不刪除既有照片
+ok 4 - 書封草稿可預覽更換及移除，釋放 blob 而不刪除既有照片
+  ---
+  duration_ms: 1.6676
+  type: 'test'
+  ...
+# Subtest: choosing a cover preserves photo order and marks the form as unsaved
+ok 5 - choosing a cover preserves photo order and marks the form as unsaved
+  ---
+  duration_ms: 5.0024
+  type: 'test'
+  ...
+# Subtest: removing the cover falls back to the remaining photo and releases only local previews
+ok 6 - removing the cover falls back to the remaining photo and releases only local previews
+  ---
+  duration_ms: 3.4879
+  type: 'test'
+  ...
+# Subtest: saving cannot change the cover or remove photos while an upload is in progress
+ok 7 - saving cannot change the cover or remove photos while an upload is in progress
+  ---
+  duration_ms: 1.9709
+  type: 'test'
+  ...
+# Subtest: 電子書：第一頁不能往前、最後一頁不能往後，翻完才更新頁碼
+ok 8 - 電子書：第一頁不能往前、最後一頁不能往後，翻完才更新頁碼
+  ---
+  duration_ms: 1.325
+  type: 'test'
+  ...
+# Subtest: 電子書：拖曳進度限制在紙張範圍，取消拖曳保留原頁
+ok 9 - 電子書：拖曳進度限制在紙張範圍，取消拖曳保留原頁
+  ---
+  duration_ms: 0.2037
+  type: 'test'
+  ...
+# Subtest: 電子書：快速重複翻頁不會跳頁；換孩子或篩選時取消舊翻頁
+ok 10 - 電子書：快速重複翻頁不會跳頁；換孩子或篩選時取消舊翻頁
+  ---
+  duration_ms: 0.2461
+  type: 'test'
+  ...
+# Subtest: 電子書呈現指定封面與純文字故事；無照片仍可閱讀，左右鍵停在正確邊界
+ok 11 - 電子書呈現指定封面與純文字故事；無照片仍可閱讀，左右鍵停在正確邊界
+  ---
+  duration_ms: 11.1378
+  type: 'test'
+  ...
+# Subtest: 寬螢幕翻動獨立紙張，動畫完成才換頁，切孩子會取消舊動畫
+ok 12 - 寬螢幕翻動獨立紙張，動畫完成才換頁，切孩子會取消舊動畫
+  ---
+  duration_ms: 13.4112
+  type: 'test'
+  ...
+# Subtest: 手機翻動整張直式頁；拖曳不足回原頁，取消手勢及垂直捲動不翻頁
+ok 13 - 手機翻動整張直式頁；拖曳不足回原頁，取消手勢及垂直捲動不翻頁
+  ---
+  duration_ms: 6.3597
+  type: 'test'
+  ...
+# Subtest: 完整前端載入後，可從時間軸切換電子書，再回到同一段手帳故事
+ok 14 - 完整前端載入後，可從時間軸切換電子書，再回到同一段手帳故事
+  ---
+  duration_ms: 142.7388
+  type: 'test'
+  ...
+# Subtest: 雜誌書封、目錄跳頁與照片續頁共用翻頁引擎，保留原故事映射並取消舊動畫
+ok 15 - 雜誌書封、目錄跳頁與照片續頁共用翻頁引擎，保留原故事映射並取消舊動畫
+  ---
+  duration_ms: 22.7509
+  type: 'test'
+  ...
+# Subtest: avatar thumbnails use requested edge while story photos keep their original limit
+ok 16 - avatar thumbnails use requested edge while story photos keep their original limit
+  ---
+  duration_ms: 13.7085
+  type: 'test'
+  ...
+# Subtest: photo processing never enlarges small images and releases oversized bitmaps after rejection
+ok 17 - photo processing never enlarges small images and releases oversized bitmaps after rejection
+  ---
+  duration_ms: 18.2877
+  type: 'test'
+  ...
+# Subtest: 電子書從書封和目錄開始，依孕期及年份分章，保留來源故事索引
+ok 18 - 電子書從書封和目錄開始，依孕期及年份分章，保留來源故事索引
+  ---
+  duration_ms: 2.738
+  type: 'test'
+  ...
+# Subtest: 三種排版完整呈現全部照片，封面優先但不改來源順序，延伸頁指向原故事
+ok 19 - 三種排版完整呈現全部照片，封面優先但不改來源順序，延伸頁指向原故事
+  ---
+  duration_ms: 0.9161
+  type: 'test'
+  ...
+# Subtest: 新欄位可保存、清除並相容舊資料，拒絕錯誤設定及照片路徑
+ok 20 - 新欄位可保存、清除並相容舊資料，拒絕錯誤設定及照片路徑
+  ---
+  duration_ms: 1.8306
+  type: 'test'
+  ...
+# Subtest: 數字可選填、分開填寫及清除，舊紀錄不會被補成零
+ok 21 - 數字可選填、分開填寫及清除，舊紀錄不會被補成零
+  ---
+  duration_ms: 3.2628
+  type: 'test'
+  ...
+# Subtest: 儲存層拒絕無效數字、負數、零、字串及超出輸入範圍的值
+ok 22 - 儲存層拒絕無效數字、負數、零、字串及超出輸入範圍的值
+  ---
+  duration_ms: 1.212
+  type: 'test'
+  ...
+# Subtest: 曲線只取指定孩子且有該數字的紀錄，按實際日期排序，缺值不變成零
+ok 23 - 曲線只取指定孩子且有該數字的紀錄，按實際日期排序，缺值不變成零
+  ---
+  duration_ms: 30.1937
+  type: 'test'
+  ...
+# Subtest: 圖表以時間間隔定位；單點、同日、相同數值與空資料都能建立有限座標
+ok 24 - 圖表以時間間隔定位；單點、同日、相同數值與空資料都能建立有限座標
+  ---
+  duration_ms: 2.1699
+  type: 'test'
+  ...
+# Subtest: 圖表與可存取明細分開呈現單位、最新量測日期，且可回到原紀錄編輯
+ok 25 - 圖表與可存取明細分開呈現單位、最新量測日期，且可回到原紀錄編輯
+  ---
+  duration_ms: 18.1774
+  type: 'test'
+  ...
+# Subtest: 年齡以完整日曆月及該月份內比例計算，出生當天、生日及閏日均精確定位
+ok 26 - 年齡以完整日曆月及該月份內比例計算，出生當天、生日及閏日均精確定位
+  ---
+  duration_ms: 1.4018
+  type: 'test'
+  ...
+# Subtest: 參考節點來自官方檔案，男女孩值分開，支援 0 到 84 個月
+ok 27 - 參考節點來自官方檔案，男女孩值分開，支援 0 到 84 個月
+  ---
+  duration_ms: 1.419
+  type: 'test'
+  ...
+# Subtest: 量測點按年齡對齊，孕期及超齡不夾到圖邊界，極端量測不被裁去
+ok 28 - 量測點按年齡對齊，孕期及超齡不夾到圖邊界，極端量測不被裁去
+  ---
+  duration_ms: 0.5636
+  type: 'test'
+  ...
+# Subtest: 孩子參考性別選填、可清除，非法值不可保存
+ok 29 - 孩子參考性別選填、可清除，非法值不可保存
+  ---
+  duration_ms: 1.4446
+  type: 'test'
+  ...
+# Subtest: 離線來源檔案雜湊與轉換中繼資料一致
+ok 30 - 離線來源檔案雜湊與轉換中繼資料一致
+  ---
+  duration_ms: 191.8136
+  type: 'test'
+  ...
+# Subtest: 真正圖表產生五條性別參考線與年齡量測點，點擊與鍵盤可讀取數值
+ok 31 - 真正圖表產生五條性別參考線與年齡量測點，點擊與鍵盤可讀取數值
+  ---
+  duration_ms: 12.3559
+  type: 'test'
+  ...
+# Subtest: 允許保存出生前故事；尚未出生可省略生日，出生後補填不影響原紀錄
+ok 32 - 允許保存出生前故事；尚未出生可省略生日，出生後補填不影響原紀錄
+  ---
+  duration_ms: 4.0693
+  type: 'test'
+  ...
+# Subtest: 年齡顯示涵蓋孕期、出生前天數、出生當天及原有月齡，跨年與閏年仍正確
+ok 33 - 年齡顯示涵蓋孕期、出生前天數、出生當天及原有月齡，跨年與閏年仍正確
+  ---
+  duration_ms: 3.9441
+  type: 'test'
+  ...
+# Subtest: 新增紀錄不再限制生日以前，孕期相簿預設今天而非未來出生日期
+ok 34 - 新增紀錄不再限制生日以前，孕期相簿預設今天而非未來出生日期
+  ---
+  duration_ms: 1.4191
+  type: 'test'
+  ...
+# Subtest: growth chart sex persists per child, remains on other edits and can be cleared
+ok 35 - growth chart sex persists per child, remains on other edits and can be cleared
+  ---
+  duration_ms: 251.4373
+  type: 'test'
+  ...
+# Subtest: book settings and magazine layouts persist independently per child and validate cover files
+ok 36 - book settings and magazine layouts persist independently per child and validate cover files
+  ---
+  duration_ms: 162.4115
+  type: 'test'
+  ...
+# Subtest: height and weight survive HTTP saves, partial edits and clearing without changing sibling data
+ok 37 - height and weight survive HTTP saves, partial edits and clearing without changing sibling data
+  ---
+  duration_ms: 123.0944
+  type: 'test'
+  ...
+# Subtest: pregnancy stories persist before birth and survive adding the actual birthday
+ok 38 - pregnancy stories persist before birth and survive adding the actual birthday
+  ---
+  duration_ms: 99.5277
+  type: 'test'
+  ...
+# Subtest: growth serves local flipbook assets with the expected content types
+ok 39 - growth serves local flipbook assets with the expected content types
+  ---
+  duration_ms: 83.6334
+  type: 'test'
+  ...
+# Subtest: growth initializes, persists multiple children and records, backs up and rejects stale saves
+ok 40 - growth initializes, persists multiple children and records, backs up and rejects stale saves
+  ---
+  duration_ms: 120.6017
+  type: 'test'
+  ...
+# Subtest: growth rejects foreign writes, invalid dates, dangling children and photos without changing disk
+ok 41 - growth rejects foreign writes, invalid dates, dangling children and photos without changing disk
+  ---
+  duration_ms: 49.1044
+  type: 'test'
+  ...
+# Subtest: photos accept real raster bytes, survive reads and reject foreign, fake, oversized and unsafe paths
+ok 42 - photos accept real raster bytes, survive reads and reject foreign, fake, oversized and unsafe paths
+  ---
+  duration_ms: 117.2212
+  type: 'test'
+  ...
+# Subtest: corrupt growth file is reported and preserved
+ok 43 - corrupt growth file is reported and preserved
+  ---
+  duration_ms: 48.8046
+  type: 'test'
+  ...
+# Subtest: growth deletion preserves sibling records and concurrent saves cannot overwrite each other
+ok 44 - growth deletion preserves sibling records and concurrent saves cannot overwrite each other
+  ---
+  duration_ms: 161.5595
+  type: 'test'
+  ...
+# Subtest: growth page and only explicitly allowed assets are served
+ok 45 - growth page and only explicitly allowed assets are served
+  ---
+  duration_ms: 59.6039
+  type: 'test'
+  ...
+# Subtest: child avatars persist, can be replaced and removed without affecting siblings or records
+ok 46 - child avatars persist, can be replaced and removed without affecting siblings or records
+  ---
+  duration_ms: 139.8476
+  type: 'test'
+  ...
+# Subtest: invalid or missing child avatar files are rejected without altering saved data
+ok 47 - invalid or missing child avatar files are rejected without altering saved data
+  ---
+  duration_ms: 95.1294
+  type: 'test'
+  ...
+# Subtest: record cover photo persists without reordering photos and can be changed or cleared
+ok 48 - record cover photo persists without reordering photos and can be changed or cleared
+  ---
+  duration_ms: 136.6334
+  type: 'test'
+  ...
+# Subtest: cover photo must belong to the same record
+ok 49 - cover photo must belong to the same record
+  ---
+  duration_ms: 32.5283
+  type: 'test'
+  ...
+# Subtest: timeline displays each date, title and selected cover, linking back to its album page
+ok 50 - timeline displays each date, title and selected cover, linking back to its album page
+  ---
+  duration_ms: 4.2875
+  type: 'test'
+  ...
+# Subtest: timeline keeps legacy first-photo covers and photo-free records visible
+ok 51 - timeline keeps legacy first-photo covers and photo-free records visible
+  ---
+  duration_ms: 3.4547
+  type: 'test'
+  ...
+# Subtest: child preview switches to that child timeline and resets old filters and photo state
+ok 52 - child preview switches to that child timeline and resets old filters and photo state
+  ---
+  duration_ms: 2.5436
+  type: 'test'
+  ...
+# Subtest: timeline source includes only the chosen child, ordered by date with combined filters
+ok 53 - timeline source includes only the chosen child, ordered by date with combined filters
+  ---
+  duration_ms: 20.095
+  type: 'test'
+  ...
+1..53
+# tests 53
+# suites 0
+# pass 53
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3378.6692
+TAP version 13
+# Subtest: GitHub 專案子路徑的 API／照片及返回 Home 網址保持正確，預覽顯示提示
+ok 1 - GitHub 專案子路徑的 API／照片及返回 Home 網址保持正確，預覽顯示提示
+  ---
+  duration_ms: 4.2797
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 243.4817
+TAP version 13
+# Subtest: 本機後台停止成功後清除登入狀態並停用編輯，雲端不顯示停止入口
+ok 1 - 本機後台停止成功後清除登入狀態並停用編輯，雲端不顯示停止入口
+  ---
+  duration_ms: 66.1297
+  type: 'test'
+  ...
+# Subtest: 尚未登入也能從右上角登入狀態左側停止本機服務
+ok 2 - 尚未登入也能從右上角登入狀態左側停止本機服務
+  ---
+  duration_ms: 11.3541
+  type: 'test'
+  ...
+# Subtest: 停止入口僅放在後台，書籤範本與產物不再包含停止按鈕或停止流程
+ok 3 - 停止入口僅放在後台，書籤範本與產物不再包含停止按鈕或停止流程
+  ---
+  duration_ms: 8.6222
+  type: 'test'
+  ...
+# Subtest: 尚未儲存作品或取消確認不停止服務，停止失敗保留登入與編輯能力
+ok 4 - 尚未儲存作品或取消確認不停止服務，停止失敗保留登入與編輯能力
+  ---
+  duration_ms: 38.0192
+  type: 'test'
+  ...
+# Subtest: 取消公開後按一次表單儲存即更新 JSON，表單保留未公開狀態且顯示就近提示
+ok 5 - 取消公開後按一次表單儲存即更新 JSON，表單保留未公開狀態且顯示就近提示
+  ---
+  duration_ms: 77.8325
+  type: 'test'
+  ...
+# Subtest: 儲存衝突保留未公開草稿與就近錯誤提示，再次提交也不覆蓋其他分頁的新版本
+ok 6 - 儲存衝突保留未公開草稿與就近錯誤提示，再次提交也不覆蓋其他分頁的新版本
+  ---
+  duration_ms: 64.0276
+  type: 'test'
+  ...
+# Subtest: 表單儲存後立即重複按相同按鈕不會重複寫入
+ok 7 - 表單儲存後立即重複按相同按鈕不會重複寫入
+  ---
+  duration_ms: 65.5683
+  type: 'test'
+  ...
+# Subtest: 新增作品按一次即可儲存，後續修改同一作品不會重複新增
+ok 8 - 新增作品按一次即可儲存，後續修改同一作品不會重複新增
+  ---
+  duration_ms: 108.2087
+  type: 'test'
+  ...
+# Subtest: 刪除後的清單可從上方儲存，不要求填寫空白新增表單
+ok 9 - 刪除後的清單可從上方儲存，不要求填寫空白新增表單
+  ---
+  duration_ms: 112.453
+  type: 'test'
+  ...
+# Subtest: 清單可依關鍵字與狀態篩選，編號不受篩選影響
+ok 10 - 清單可依關鍵字與狀態篩選，編號不受篩選影響
+  ---
+  duration_ms: 16.9169
+  type: 'test'
+  ...
+# Subtest: 頁面訊息顯示五秒後自動清除
+ok 11 - 頁面訊息顯示五秒後自動清除
+  ---
+  duration_ms: 5124.0311
+  type: 'test'
+  ...
+# Subtest: 登入訊息只顯示在右下角提示，不出現在表單內
+ok 12 - 登入訊息只顯示在右下角提示，不出現在表單內
+  ---
+  duration_ms: 8.528
+  type: 'test'
+  ...
+# Subtest: 登入後暫存於分頁，重新整理在 10 分鐘內免重新登入，逾時或登出則清除
+ok 13 - 登入後暫存於分頁，重新整理在 10 分鐘內免重新登入，逾時或登出則清除
+  ---
+  duration_ms: 23.4993
+  type: 'test'
+  ...
+# Subtest: 作品 JSON 拒絕危險連結與重複 ID，公開資料不含草稿並按順序顯示
+ok 14 - 作品 JSON 拒絕危險連結與重複 ID，公開資料不含草稿並按順序顯示
+  ---
+  duration_ms: 9.121
+  type: 'test'
+  ...
+# Subtest: Google 授權檢查驗證後的身分、有效期及管理員白名單
+ok 15 - Google 授權檢查驗證後的身分、有效期及管理員白名單
+  ---
+  duration_ms: 0.6941
+  type: 'test'
+  ...
+# Subtest: 本機 JSON 在相同版本的並行存檔只接受一筆，損壞檔案不能當作空資料
+ok 16 - 本機 JSON 在相同版本的並行存檔只接受一筆，損壞檔案不能當作空資料
+  ---
+  duration_ms: 79.3461
+  type: 'test'
+  ...
+# Subtest: GCS 以固定 generation 讀取，條件寫入拒絕過期版本，generation 不轉成不精確數字
+ok 17 - GCS 以固定 generation 讀取，條件寫入拒絕過期版本，generation 不轉成不精確數字
+  ---
+  duration_ms: 28.1045
+  type: 'test'
+  ...
+# Subtest: 私人 HTTP API 拒絕未登入及非管理員；合法管理員可編輯，公開端僅讀已公開作品
+ok 18 - 私人 HTTP API 拒絕未登入及非管理員；合法管理員可編輯，公開端僅讀已公開作品
+  ---
+  duration_ms: 202.0003
+  type: 'test'
+  ...
+# Subtest: 雲端入口只提供公開產物與作品 API，不暴露本機書籤、相簿或來源程式
+ok 19 - 雲端入口只提供公開產物與作品 API，不暴露本機書籤、相簿或來源程式
+  ---
+  duration_ms: 871.5063
+  type: 'test'
+  ...
+# Subtest: 作品草稿可新增、編輯、排序與刪除，接受成功存檔後才清除變更狀態
+ok 20 - 作品草稿可新增、編輯、排序與刪除，接受成功存檔後才清除變更狀態
+  ---
+  duration_ms: 2.8026
+  type: 'test'
+  ...
+# Subtest: 未公開與精選作品優先排列，手動排序不會跨越狀態或精選群組
+ok 21 - 未公開與精選作品優先排列，手動排序不會跨越狀態或精選群組
+  ---
+  duration_ms: 0.4208
+  type: 'test'
+  ...
+# Subtest: 同源雲端 API 出錯時不顯示可能已下架的舊作品，只有未設定 API 的靜態 404 可回退
+ok 22 - 同源雲端 API 出錯時不顯示可能已下架的舊作品，只有未設定 API 的靜態 404 可回退
+  ---
+  duration_ms: 51.1948
+  type: 'test'
+  ...
+# Subtest: 公開 API 回傳空清單時清除舊作品，作品文字以安全 DOM 顯示
+ok 23 - 公開 API 回傳空清單時清除舊作品，作品文字以安全 DOM 顯示
+  ---
+  duration_ms: 7.0793
+  type: 'test'
+  ...
+# Subtest: 所有公開作品依清單順序自動編號
+ok 24 - 所有公開作品依清單順序自動編號
+  ---
+  duration_ms: 21.6551
+  type: 'test'
+  ...
+# Subtest: 精選作品在首頁清單置頂，且其餘作品保留原有排序
+ok 25 - 精選作品在首頁清單置頂，且其餘作品保留原有排序
+  ---
+  duration_ms: 4.734
+  type: 'test'
+  ...
+1..25
+# tests 25
+# suites 0
+# pass 25
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 6156.7047
+TAP version 13
+# Subtest: launcher reuses a matching server and restarts an outdated server before opening the page
+ok 1 - launcher reuses a matching server and restarts an outdated server before opening the page
+  ---
+  duration_ms: 1.8018
+  type: 'test'
+  ...
+# Subtest: launcher starts an offline server and refuses to shut down another app or workspace
+ok 2 - launcher starts an offline server and refuses to shut down another app or workspace
+  ---
+  duration_ms: 1.2003
+  type: 'test'
+  ...
+# Subtest: Home launcher refuses unsuccessful shutdown and reports the actual port on startup timeout
+ok 3 - Home launcher refuses unsuccessful shutdown and reports the actual port on startup timeout
+  ---
+  duration_ms: 3.0679
+  type: 'test'
+  ...
+# Subtest: Home 提供 Google 後台資源，未設定時維護 API 保持鎖定，公開作品保留原九筆
+ok 4 - Home 提供 Google 後台資源，未設定時維護 API 保持鎖定，公開作品保留原九筆
+  ---
+  duration_ms: 303.1996
+  type: 'test'
+  ...
+# Subtest: 公開建置包含後台與首頁腳本，不打包私有設定、Google 服務帳號或 JSON 草稿
+ok 5 - 公開建置包含後台與首頁腳本，不打包私有設定、Google 服務帳號或 JSON 草稿
+  ---
+  duration_ms: 560.4178
+  type: 'test'
+  ...
+# Subtest: GitHub 建置在本機資料不存在時使用已追蹤的公開作品快照
+ok 6 - GitHub 建置在本機資料不存在時使用已追蹤的公開作品快照
+  ---
+  duration_ms: 435.4853
+  type: 'test'
+  ...
+# Subtest: 單站除錯服務也能讀取同一張 Home Logo
+ok 7 - 單站除錯服務也能讀取同一張 Home Logo
+  ---
+  duration_ms: 208.0713
+  type: 'test'
+  ...
+# Subtest: 公開建置的書籤與相簿共用 Home/images/logo.png，不再需要子網站圖片副本
+ok 8 - 公開建置的書籤與相簿共用 Home/images/logo.png，不再需要子網站圖片副本
+  ---
+  duration_ms: 571.3556
+  type: 'test'
+  ...
+# Subtest: Home 本機服務提供兩個子網站共用的 Logo 路徑
+ok 9 - Home 本機服務提供兩個子網站共用的 Logo 路徑
+  ---
+  duration_ms: 117.1729
+  type: 'test'
+  ...
+# Subtest: 兩站有獨立入口、資源與 API，舊相簿轉址且沿用原資料
+ok 10 - 兩站有獨立入口、資源與 API，舊相簿轉址且沿用原資料
+  ---
+  duration_ms: 351.008
+  type: 'test'
+  ...
+# Subtest: CathFlow 與 DynastyExplorer 有獨立子站，舊網址轉址且公開產物包含標誌
+ok 11 - CathFlow 與 DynastyExplorer 有獨立子站，舊網址轉址且公開產物包含標誌
+  ---
+  duration_ms: 580.2537
+  type: 'test'
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 11
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1785.7735

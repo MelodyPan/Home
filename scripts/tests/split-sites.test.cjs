@@ -17,6 +17,10 @@ test('兩站有獨立入口、資源與 API，舊相簿轉址且沿用原資料'
  const server=await createHomeServer(home,{dataRoot});await new Promise(r=>server.listen(0,'127.0.0.1',r));
  t.after(async()=>{await new Promise(r=>server.close(r));await fs.rm(dataRoot,{recursive:true,force:true});});
  const origin='http://127.0.0.1:'+server.address().port;
+ await assert.rejects(fs.access(path.join(dataRoot,'assets/bookmarks-data.txt')));
+ assert.equal((await fetch(origin+'/bookmarks/assets/bookmarks-data.txt')).status,404);
+ assert.equal((await fetch(origin+'/bookmarks/api/bookmarks',{method:'PUT'})).status,404);
+
  for(const [route,target] of [['/bookmarks/','/bookmarks/bookmarks.html'],['/growth/','/growth/growth.html'],['/bookmarks/growth.html','/growth/growth.html']]){
   const response=await fetch(origin+route,{redirect:'manual'});assert.equal(response.status,302,route);assert.equal(response.headers.get('location'),target);
  }

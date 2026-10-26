@@ -23,6 +23,7 @@ test('公開建置只使用白名單，清除 HTML 內嵌個人書籤，不發�
  const html=await fs.readFile(path.join(out,'bookmarks/bookmarks.html'),'utf8');
  const payload=JSON.parse(html.match(/id="bookmark-data">([\s\S]*?)<\/script>/)[1]);assert.deepEqual(payload.entries,[]);assert.deepEqual(payload.icons,{});
  assert.equal(await fs.readFile(path.join(out,'index.html'),'utf8'),'<html>HOME</html>');
+ for(const name of ['bookmark-drive.js','bookmark-cloud.js','bookmark-drive-ui.js'])await fs.access(path.join(out,'bookmarks/Javascript',name));
  for(const file of ['assets/bookmarks-data.txt','assets/growth-data.json','assets/growth-photos','scripts/server.cjs','src/home.html'])await assert.rejects(fs.access(path.join(out,'bookmarks',file)));
- assert.match(await fs.readFile(path.join(out,'bookmarks/Javascript/site-config.js'),'utf8'),/preview/);
+ assert.match(await fs.readFile(path.join(out,'bookmarks/Javascript/site-config.js'),'utf8'),/\"mode\":\"drive\"/);
 });

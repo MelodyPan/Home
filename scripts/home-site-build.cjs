@@ -1,7 +1,8 @@
 // Home 的公開建置：只複製白名單，從範本建立空白書籤頁，完全不讀取私人書籤／相簿資料。
 const fs=require('node:fs/promises'),path=require('node:path');
 const {publicDocument}=require('../apps/admin/public/project-model.js');
-const BOOKMARK_JS=['bookmark-core.js','bookmark-file.js','home.js'];
+const BOOKMARK_JS=['bookmark-core.js','bookmark-file.js','bookmark-drive.js','bookmark-cloud.js','bookmark-login.js','bookmark-drive-ui.js','home.js'];
+const {loadDriveConfig}=require('../apps/bookmarks/scripts/drive-config.cjs');
 const GROWTH_JS=['growth.js','growth-flipbook.js','growth-metrics.js','growth-reference.js'];
 const GROWTH_CSS=['growth.css','growth-flipbook.css','growth-metrics.css'];
 // The local source is ignored by Git; CI consumes this published-only snapshot.
@@ -42,7 +43,8 @@ async function buildSite(homeRoot,options={}){
   await fs.mkdir(path.join(output,site,'Javascript'),{recursive:true});await fs.mkdir(path.join(output,site,'src'),{recursive:true});
   await fs.copyFile(path.join(sharedRoot,'Javascript/app-runtime.js'),path.join(output,site,'Javascript/app-runtime.js'));
   await fs.copyFile(path.join(sharedRoot,'src/cozy-theme.css'),path.join(output,site,'src/cozy-theme.css'));
-  await fs.writeFile(path.join(output,site,'Javascript/site-config.js'),'window.BookmarksConfig={mode:"preview",homeUrl:"../index.html"};\n');
+  const config=site==='bookmarks'?await loadDriveConfig(homeRoot):{mode:'preview',homeUrl:'../index.html'};
+  await fs.writeFile(path.join(output,site,'Javascript/site-config.js'),'window.BookmarksConfig='+JSON.stringify(config)+';\n');
  }
  // 公開首頁不列出私人的書籤與成長相簿入口；本機首頁維持原樣。
  const publicIndex=(await fs.readFile(path.join(homeRoot,'index.html'),'utf8')).replace(/[ \t]*<!-- BOOKMARKS_SUBSYSTEM -->\r?\n?/,'').replace(/[ \t]*<article class="project" id="(?:bookmarks|growth)-subsystem">[^]*?<\/article>\r?\n?/g,'');

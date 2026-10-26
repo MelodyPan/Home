@@ -3,8 +3,8 @@ const fs=require('node:fs/promises'),path=require('node:path');
 const {createHash}=require('node:crypto');
 async function getHomeVersion(homeRoot,appRoot=path.join(homeRoot,'apps/bookmarks')){
  const {getServerVersion}=require(path.join(appRoot,'scripts/server-version.cjs'));const hash=createHash('sha256').update(getServerVersion());
- for(const file of ['scripts/home-site-server.cjs','apps/growth/scripts/server.cjs','apps/growth/scripts/growth-store.cjs','apps/admin/server/handler.cjs','apps/admin/server/auth.cjs','apps/admin/server/config.cjs','apps/admin/server/store.cjs','apps/admin/server/public-config.cjs','apps/admin/public/project-model.js','apps/admin/projects.seed.json','portfolio.config.json','.home-portfolio.json','.home-local.json'])try{hash.update(await fs.readFile(path.join(homeRoot,file)));}catch(e){if(e.code!=='ENOENT')throw e;}
- for(const key of ['GOOGLE_CLIENT_ID','ADMIN_GOOGLE_SUBS','ADMIN_EMAILS','PUBLIC_ORIGIN','PROJECTS_BUCKET','PROJECTS_OBJECT','PORTFOLIO_API_BASE'])hash.update(process.env[key]||'');
+ for(const file of ['scripts/home-site-server.cjs','apps/growth/scripts/server.cjs','apps/growth/scripts/growth-store.cjs','apps/admin/server/handler.cjs','apps/admin/server/auth.cjs','apps/admin/server/config.cjs','apps/admin/server/store.cjs','apps/admin/server/public-config.cjs','apps/admin/public/project-model.js','apps/admin/projects.seed.json','portfolio.config.json','bookmarks.config.json','.home-portfolio.json','.home-local.json'])try{hash.update(await fs.readFile(path.join(homeRoot,file)));}catch(e){if(e.code!=='ENOENT')throw e;}
+ for(const key of ['GOOGLE_CLIENT_ID','ADMIN_GOOGLE_SUBS','ADMIN_EMAILS','PUBLIC_ORIGIN','PROJECTS_BUCKET','PROJECTS_OBJECT','PORTFOLIO_API_BASE','BOOKMARKS_GOOGLE_CLIENT_ID'])hash.update(process.env[key]||'');
  return hash.digest('hex');
 }
 async function createHomeServer(homeRoot,options={}){
@@ -15,13 +15,10 @@ async function createHomeServer(homeRoot,options={}){
  const growthRoot=options.growthRoot||path.join(homeRoot,'apps/growth');
  const {createGrowthHandler}=require(path.join(growthRoot,'scripts/server.cjs'));
  const growth=createGrowthHandler(growthRoot,{basePath:'/growth',dataRoot:options.growthDataRoot||(config.growthDataRoot?path.resolve(homeRoot,config.growthDataRoot):dataRoot),runtimeConfig:{mode:'local',homeUrl:'../index.html'}});
- await fs.mkdir(path.join(dataRoot,'assets'),{recursive:true});
- const {createDataFile}=require(path.join(appRoot,'Javascript/bookmark-file.js'));
- try{await fs.writeFile(path.join(dataRoot,'assets/bookmarks-data.txt'),JSON.stringify(createDataFile([],{added:[],deletedIds:[]},[],'1970-01-01T00:00:00.000Z')),{flag:'wx'});}catch(e){if(e.code!=='EEXIST')throw e;}
  const {createBookmarkServer}=require(path.join(appRoot,'scripts/server.cjs'));
  const {createAdminHandler}=require(path.join(homeRoot,'apps/admin/server/handler.cjs'));
  const portfolio=await createAdminHandler({root:homeRoot,...options.portfolio,canShutdown:true});
- return createBookmarkServer(appRoot,{version:await getHomeVersion(homeRoot,appRoot),dataRoot,basePath:'/bookmarks',flush:growth.flush,runtimeConfig:{mode:'local',homeUrl:'../index.html'},handleAdditional:legacyGrowth,serveRoot:async(req,res,state)=>{
+ return createBookmarkServer(appRoot,{homeRoot,version:await getHomeVersion(homeRoot,appRoot),basePath:'/bookmarks',flush:growth.flush,handleAdditional:legacyGrowth,serveRoot:async(req,res,state)=>{
   if(await growth.handle(req,res,state))return;
   if(await portfolio(req,res))return;
   const send=(code,body,type='text/html; charset=utf-8')=>{res.writeHead(code,{'Content-Type':type,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(body);};
