@@ -2,9 +2,11 @@
 (function(root,factory){if(typeof module==='object'&&module.exports)module.exports=factory();else root.BookmarkCloud=factory();})(globalThis,function(){
  'use strict';
  const error=(code,message)=>Object.assign(new Error(message),{code});
- function createCloudSession({store,authorize,onChange=()=>{},clearAuthorization=()=>{}}){
+ function createCloudSession({store,authorize,onChange=()=>{},clearAuthorization=()=>{},saveDelayMs=600}){
   const state={phase:'disconnected',account:null,libraries:[],datasetId:null,document:null,draft:null,revision:[],heads:[],error:null,pending:0,online:true};
   let queue=Promise.resolve(),failed=null,draftAccount=null,authorizedAccount=null,busy=false;
+  let saveSequence=0,saveDue=0;
+  const contentKey=document=>{const {updatedAt,...content}=document||{};return JSON.stringify(content);};
   const notify=()=>onChange(state);
   const failure=e=>{if(e.datasetId&&!state.datasetId)state.datasetId=e.datasetId;state.error=e;state.phase=e.code==='conflict'?'conflict':'error';state.heads=e.heads||[];notify();};
   function accept(result){state.datasetId=result.datasetId;state.document=result.document;state.revision=result.revision;state.heads=[];state.error=null;state.phase='ready';}
@@ -46,13 +48,15 @@
    if(!state.online||!['ready','saving'].includes(state.phase)||!state.datasetId||busy)return Promise.resolve();
    try{ensureAccount();}catch(e){failure(e);return Promise.resolve();}
    const snapshot=structuredClone(document);state.draft=snapshot;draftAccount=state.account.id;state.pending++;state.phase='saving';notify();
+   const sequence=++saveSequence;saveDue=Date.now()+saveDelayMs;
    const task=queue.then(async()=>{
+    if(saveDelayMs>0){if(sequence!==saveSequence)return;await new Promise(resolve=>setTimeout(resolve,Math.max(0,saveDue-Date.now())));if(sequence!==saveSequence)return;}
     if(failed||state.phase==='conflict')return;
     const revision=[...state.revision];
-    try{accept(await store.write(state.datasetId,snapshot,revision));if(state.draft===snapshot){state.draft=null;draftAccount=null;}}
+    try{if(!state.online)throw error('network','目前沒有網路連線，請連線後重試。');if(contentKey(snapshot)!==contentKey(state.document))accept(await store.write(state.datasetId,snapshot,revision));if(state.draft===snapshot){state.draft=null;draftAccount=null;}}
     catch(e){failed={document:snapshot,revision};failure(e);}
-   }).finally(()=>{state.pending--;if(state.pending&&!failed&&state.phase!=='conflict')state.phase='saving';notify();});
-   queue=task.catch(()=>{});return task;
+   }).finally(()=>{state.pending--;if(!failed&&state.phase!=='conflict')state.phase=state.pending?'saving':'ready';notify();});
+   queue=task.catch(()=>{});return task.then(()=>queue);
   }
   async function create(document){
    if(busy||state.pending||state.draft||!['empty','choosing'].includes(state.phase))return;

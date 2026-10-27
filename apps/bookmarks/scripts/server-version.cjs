@@ -4,5 +4,5 @@ const fs=require('node:fs');
 const path=require('node:path');
 const {createHash}=require('node:crypto');
 // 將書籤服務與共用模組雜湊成版本；Home 另外加入相簿服務的版本。
-function getServerVersion(){const root=path.join(__dirname,'..');const hash=createHash('sha256');for(const file of ['../shared/scripts/data-lock.cjs','scripts/drive-config.cjs','scripts/server.cjs','Javascript/bookmark-core.js','Javascript/bookmark-file.js'])hash.update(fs.readFileSync(path.join(root,file)));return hash.digest('hex');}
+function getServerVersion(){const root=path.join(__dirname,'..');const hash=createHash('sha256');for(const file of ['../shared/scripts/data-lock.cjs','scripts/drive-config.cjs','scripts/server.cjs','scripts/url-check-api.cjs','scripts/url-checker.cjs','Javascript/bookmark-check.js','Javascript/bookmark-core.js','Javascript/bookmark-file.js'])hash.update(fs.readFileSync(path.join(root,file)));return hash.digest('hex');}
 module.exports={getServerVersion};

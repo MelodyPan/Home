@@ -124,6 +124,8 @@
     if(['__proto__','constructor','prototype'].includes(id)||!value||typeof value.title!=='string'||!value.title.trim()||value.title.length>200)throw Error('invalid');
     const title=value.title.trim();if(value.url!==undefined){if(typeof value.url!=='string')throw Error('invalid');const normalized=normalizeBookmarkDetails(value);entryOverrides[id]={title,url:normalized.url};}else entryOverrides[id]={title};
    }catch{warning=true;}}}
+   let quickOrder;
+   if(data.quickOrder!==undefined){if(!Array.isArray(data.quickOrder)||data.quickOrder.some(id=>typeof id!=='string'||!id)||new Set(data.quickOrder).size!==data.quickOrder.length)warning=true;else quickOrder=[...data.quickOrder];}
    let categoryOrder;
    if(data.categoryOrder!==undefined){if(!Array.isArray(data.categoryOrder)||data.categoryOrder.length!==CATEGORIES.length||new Set(data.categoryOrder).size!==CATEGORIES.length||data.categoryOrder.some(id=>!CATEGORIES.some(c=>c.id===id)))warning=true;else categoryOrder=[...data.categoryOrder];}
    const categoryOverrides={};
@@ -135,7 +137,7 @@
    const workSubcategories=[],workSubcategoryAssignments={};const workIds=new Set(),workNames=new Set();
    if(data.workSubcategories!==undefined){if(!Array.isArray(data.workSubcategories))warning=true;else for(const item of data.workSubcategories){try{if(!item||!validWorkSubcategoryId(item.id)||workIds.has(item.id))throw Error('invalid');const name=normalizeWorkSubcategoryName(item.name),key=(item.category||'work')+':'+name.toLocaleLowerCase();if(item.category!==undefined&&!['work','dev'].includes(item.category))throw Error('invalid parent');if(workNames.has(key))throw Error('duplicate');workSubcategories.push({id:item.id,name,...(item.category?{category:item.category}:{})});workIds.add(item.id);workNames.add(key);}catch{warning=true;}}}
    if(data.workSubcategoryAssignments!==undefined){if(!data.workSubcategoryAssignments||typeof data.workSubcategoryAssignments!=='object'||Array.isArray(data.workSubcategoryAssignments))warning=true;else for(const [id,target]of Object.entries(data.workSubcategoryAssignments)){if(!['__proto__','constructor','prototype'].includes(id)&&workIds.has(target))workSubcategoryAssignments[id]=target;else warning=true;}}
-   return {changes:{added,deletedIds,...(Object.keys(entryOverrides).length?{entryOverrides}:{}),...(categoryOrder?{categoryOrder}:{}),...(workSubcategories.length?{workSubcategories}:{}),...(Object.keys(workSubcategoryAssignments).length?{workSubcategoryAssignments}:{}),...(Object.keys(urlChecks).length?{urlChecks}:{}),...(Object.keys(statusOverrides).length?{statusOverrides}:{}),...(Object.keys(categoryOverrides).length?{categoryOverrides}:{})},warning:warning||deletedIds.length!==data.deletedIds.length};
+   return {changes:{added,deletedIds,...(quickOrder?{quickOrder}:{}),...(Object.keys(entryOverrides).length?{entryOverrides}:{}),...(categoryOrder?{categoryOrder}:{}),...(workSubcategories.length?{workSubcategories}:{}),...(Object.keys(workSubcategoryAssignments).length?{workSubcategoryAssignments}:{}),...(Object.keys(urlChecks).length?{urlChecks}:{}),...(Object.keys(statusOverrides).length?{statusOverrides}:{}),...(Object.keys(categoryOverrides).length?{categoryOverrides}:{})},warning:warning||deletedIds.length!==data.deletedIds.length};
   }catch{return empty();}
  }
  function updateBookmarkCategory(changes,entry,category){

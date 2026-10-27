@@ -22,6 +22,7 @@
   if(Object.keys(loaded.changes.workSubcategoryAssignments||{}).some(id=>!ids.has(id)))fail();
   // 異動與收藏只能引用存在的基礎或手動新增項目；已刪除項目的來源仍保留以供復原。
   if(Object.keys(loaded.changes.entryOverrides||{}).some(id=>!ids.has(id)))fail();
+  if((loaded.changes.quickOrder||[]).some(id=>!ids.has(id)))fail();
   if(data.favorites.some(id=>typeof id!=='string'||!ids.has(id)))fail();
   return {baseEntries,changes:loaded.changes,favorites:[...new Set(data.favorites)],checkedAt:data.checkedAt};
  }

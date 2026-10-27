@@ -6,7 +6,7 @@
 
 在 Home 根目錄執行 npm start 或雙擊 start-home.cmd。首頁為 http://127.0.0.1:4179/；書籤入口 /bookmarks/，相簿入口 /growth/。Home 的停止服務仍位於 /admin/ 右上角，會等待相簿寫入完成。停止本機服務不代表 Drive 草稿已同步，關閉書籤前須確認同步狀態。
 
-bookmarks 僅使用 Google Drive，localhost 也不讀寫本機書籤。依 [Drive 設定](google-drive-setup.md) 設定 Client ID，連接自己的帳號並首次匯入。舊 /bookmarks/assets/bookmarks-data.txt、/bookmarks/api/bookmarks 及網址檢查 API 已移除。
+bookmarks 僅使用 Google Drive，localhost 也不讀寫本機書籤。依 [Drive 設定](google-drive-setup.md) 設定 Client ID，連接自己的帳號並首次匯入。舊 /bookmarks/assets/bookmarks-data.txt、/bookmarks/api/bookmarks 已移除；另提供手動觸發、無狀態的網址連線檢查 API，不讀寫本機書籤。
 
 成長相簿維持原有本機儲存。Home 的 .home-local.json 仍可提供 growthDataRoot；為相容既有安裝，也沿用 bookmarksDataRoot 作為相簿的舊資料根目錄。這個舊設定名稱不代表書籤仍會讀取該處資料。本機既有書籤、照片及備份皆不刪除。
 

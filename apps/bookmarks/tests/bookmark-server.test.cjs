@@ -22,7 +22,8 @@ test('bookmark service exposes cloud assets only; private data routes are absent
  await fs.writeFile(path.join(root,'Javascript/home.js'),'/* fixture */');await fs.writeFile(path.join(root,'bookmarks.html'),'<html>cloud</html>');
  const server=createBookmarkServer(root);await new Promise(r=>server.listen(0,'127.0.0.1',r));t.after(async()=>{await new Promise(r=>server.close(r));await fs.rm(root,{recursive:true,force:true});});
  const origin='http://127.0.0.1:'+server.address().port;
- for(const [route,method]of [['/assets/bookmarks-data.txt','GET'],['/api/bookmarks','PUT'],['/api/url-check','POST'],['/api/url-check','GET']])assert.equal((await fetch(origin+route,{method})).status,404,route);
+ for(const [route,method]of [['/assets/bookmarks-data.txt','GET'],['/api/bookmarks','PUT']])assert.equal((await fetch(origin+route,{method})).status,404,route);
+ assert.equal((await fetch(origin+'/api/url-check',{method:'POST'})).status,403);assert.equal((await fetch(origin+'/api/url-check')).status,200);
  assert.equal(await fs.readFile(filename,'utf8'),original);await assert.rejects(fs.access(filename+'.bak'));
  assert.equal((await fetch(origin+'/server.cjs')).status,404);assert.equal((await fetch(origin+'/Javascript/home.js')).status,200);
  assert.equal((await fetch(origin+'/Javascript/unknown.js')).status,404);

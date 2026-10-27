@@ -5,12 +5,17 @@ const {createManualBookmark}=require('../Javascript/bookmark-core.js');
 const {createDataFile}=require('../Javascript/bookmark-file.js');
 process.chdir(path.resolve(__dirname,'../../..'));
 (async()=>{
- const server=createBookmarkServer(path.resolve('apps/bookmarks'));await new Promise(r=>server.listen(0,'127.0.0.1',r));
+ let holdChecks=false;const checkedUrls=[];
+ const server=createBookmarkServer(path.resolve('apps/bookmarks'),{checkUrl:async(url,{signal})=>{
+  if(holdChecks)await new Promise((resolve,reject)=>{if(signal.aborted)reject(signal.reason);else signal.addEventListener('abort',()=>reject(signal.reason),{once:true});});
+  checkedUrls.push(url);
+  return {status:url.endsWith('/b')?'missing':'reachable',code:url.endsWith('/b')?404:200,reason:'browser test',finalUrl:url,checkedAt:new Date().toISOString()};
+ }});await new Promise(r=>server.listen(0,'127.0.0.1',r));
  let browser;try{
-  browser=await chromium.launch({headless:true,...(process.env.BROWSER_CHANNEL?{channel:process.env.BROWSER_CHANNEL}:{})});const context=await browser.newContext(),page=await context.newPage(),errors=[],files=new Map();let count=0,account='me',listFail=false,uploadGate=null;
+  browser=await chromium.launch({headless:true,...(process.env.BROWSER_CHANNEL?{channel:process.env.BROWSER_CHANNEL}:{})});const context=await browser.newContext(),page=await context.newPage(),errors=[],files=new Map();let count=0,uploads=0,account='me',listFail=false,uploadGate=null;
   page.on('pageerror',e=>errors.push(e.message));
   await context.route('https://accounts.google.com/gsi/client',route=>route.fulfill({contentType:'application/javascript',body:`window.google={accounts:{oauth2:{initTokenClient(options){return {requestAccessToken(){options.callback({access_token:'test-token',expires_in:3600});}}},hasGrantedAllScopes(){return true;}}}};`}));
-  await context.route('**/Javascript/site-config.js',route=>route.fulfill({contentType:'application/javascript',body:'window.BookmarksConfig={mode:"drive",googleClientId:"123-browser.apps.googleusercontent.com"};'}));
+  await context.route('**/Javascript/site-config.js',route=>route.fulfill({contentType:'application/javascript',body:'window.BookmarksConfig={mode:"drive",urlCheckAvailable:true,googleClientId:"123-browser.apps.googleusercontent.com"};'}));
   await context.route('https://www.googleapis.com/**',async route=>{
    const req=route.request(),url=new URL(req.url());let body,status=200,etag='';
    if(url.pathname.endsWith('/about'))body={user:{permissionId:account,emailAddress:account+'@example.test'}};
@@ -20,6 +25,7 @@ process.chdir(path.resolve(__dirname,'../../..'));
     else{const folders=(url.searchParams.get('q')||'').includes("mimeType = 'application/vnd.google-apps.folder'");body={files:[...files.values()].map(x=>x.meta).filter(meta=>folders?meta.mimeType==='application/vnd.google-apps.folder'&&meta.name==='MelodyHome':meta.appProperties?.purpose==='melody-home-bookmarks-v1')};}if(listFail)status=403;
    }
    else if(url.pathname.startsWith('/upload/drive/v3/files')){
+    uploads++;
     const json=req.postData().split('\r\n').filter(x=>x.startsWith('{')),meta=JSON.parse(json[0]),content=JSON.parse(json[1]);
     if(uploadGate)await uploadGate();
     if(req.method()==='PATCH'){
@@ -53,8 +59,19 @@ process.chdir(path.resolve(__dirname,'../../..'));
   const folder=[...files.values()].find(x=>x.meta.mimeType==='application/vnd.google-apps.folder');assert.equal(folder.meta.name,'MelodyHome');assert([...files.values()].filter(x=>x.content).every(x=>x.meta.parents?.[0]===folder.meta.id));
   assert.deepEqual(await page.evaluate(()=>Object.keys(localStorage)),[]);
   await page.locator('#close-drive-dialog').click();
+  await page.locator('#check-info').click();holdChecks=true;await page.locator('#run-url-check').click();await page.locator('#cancel-url-check').waitFor({state:'visible'});await page.locator('#cancel-url-check').click();await page.waitForFunction(()=>document.querySelector('#url-check-message').textContent.includes('已取消'));
+  assert.equal([...files.values()].find(x=>x.content).content.data.checkedAt,'1970-01-01T00:00:00Z');
+  holdChecks=false;await page.locator('#run-url-check').click();await page.waitForFunction(()=>document.querySelector('#url-check-message').textContent==='檢查完成，已同步至 Google Drive。');
+  assert.equal(await page.locator('#status-summary button').count(),2);const checkedDocument=[...files.values()].find(x=>x.content).content.data;assert.notEqual(checkedDocument.checkedAt,'1970-01-01T00:00:00Z');assert.equal(checkedDocument.changes.urlChecks['manual-import-b'].status,'missing');
+  await page.locator('#dialog-done').click();
+  await page.locator('[data-bookmark="manual-import-b"] .recheck-button').click();assert.equal(await page.locator('#url-check-scope').inputValue(),'single');await page.locator('#run-url-check').click();await page.waitForFunction(()=>document.querySelector('#url-check-message').textContent==='檢查完成，已同步至 Google Drive。');assert.equal(checkedUrls.at(-1),'https://example.com/b');assert.equal([...files.values()].find(x=>x.content).content.data.checkedAt,checkedDocument.checkedAt,'partial checks do not change the last full-check timestamp');await page.locator('#dialog-done').click();
+  await page.locator('[data-bookmark="manual-import-a"] .bookmark-select').check();await page.locator('#check-info').click();await page.locator('#url-check-scope').selectOption('selected');assert.match(await page.locator('#url-check-targets').textContent(),/共 1 筆/);await page.locator('#run-url-check').click();await page.waitForFunction(()=>document.querySelector('#url-check-message').textContent==='檢查完成，已同步至 Google Drive。');assert.equal(checkedUrls.at(-1),'https://example.com/a');await page.locator('#dialog-done').click();
+  await page.locator('#categories .nav-button[data-category="life"]').click();await page.locator('#check-info').click();await page.locator('#url-check-scope').selectOption('filtered');assert.match(await page.locator('#url-check-targets').textContent(),/共 1 筆/);await page.locator('#url-check-scope').selectOption('abnormal');assert.match(await page.locator('#url-check-targets').textContent(),/共 1 筆/);await page.locator('#dialog-done').click();
+  await page.locator('#primary-nav .nav-button').first().click();const beforeBurst=uploads;await page.locator('.favorite-button').nth(0).click();await page.locator('.favorite-button').nth(1).click();await page.waitForFunction(()=>document.querySelector('#cloud-message').textContent==='已同步至 Google Drive。');assert.equal(uploads-beforeBurst,1,'two quick edits coalesce into a single upload');
+  await page.locator('#home-link').click();const originalQuick=await page.locator('.quick-label').allTextContents();await page.locator('#manage-quick-order').click();await page.locator('.quick-order-row').nth(1).locator('button').first().click();await page.locator('#close-quick-order').click();await page.waitForFunction(()=>document.querySelector('#cloud-message').textContent==='已同步至 Google Drive。');assert.deepEqual(await page.locator('.quick-label').allTextContents(),[originalQuick[1],originalQuick[0]]);
   await page.reload();await page.waitForFunction(()=>document.querySelector('#total-top').textContent==='2'&&document.querySelector('#cloud-message').textContent==='已同步至 Google Drive。');
   assert.equal(await page.locator('#drive-dialog').isVisible(),false,'reload resumes without opening the login dialog');
+  assert.deepEqual(await page.locator('.quick-label').allTextContents(),[originalQuick[1],originalQuick[0]],'quick order survives reload');
   await page.locator('#primary-nav .nav-button').first().click();
   const second=await context.newPage();second.on('pageerror',e=>errors.push(e.message));await second.goto(url);await second.locator('#drive-login').click();await second.locator('#cloud-connect').click();await second.waitForFunction(()=>document.querySelector('#total-top').textContent==='2');await second.locator('#close-drive-dialog').click();
   await second.locator('#primary-nav .nav-button').first().click();assert.equal(await second.locator('.bookmark-card').count(),2);
@@ -71,13 +88,13 @@ process.chdir(path.resolve(__dirname,'../../..'));
   await page.locator('#drive-login').click();assert.equal(await page.locator('#drive-login').textContent(),'登入');assert.equal(await page.locator('#drive-manage').isVisible(),false);assert.equal(await page.locator('#total-top').textContent(),'0');assert.equal(await page.locator('#cloud-account').textContent(),'尚未連接');
   assert.equal(await page.evaluate(()=>sessionStorage.getItem('melody-drive-login-v1')),null);
   account='me';await page.locator('#drive-login').click();await page.locator('#cloud-connect').click();await page.waitForFunction(()=>document.querySelector('#total-top').textContent==='2');
-  await page.evaluate(()=>{window.testTime=Date.now();Date.now=()=>window.testTime;window.testTime+=9*60000;document.dispatchEvent(new Event('keydown'));window.testTime+=9*60000;window.dispatchEvent(new Event('focus'));});
-  await page.waitForTimeout(1200);assert.equal(await page.locator('#total-top').textContent(),'2','activity extends the idle deadline');
-  await page.evaluate(()=>{window.testTime+=60000;window.dispatchEvent(new Event('focus'));});
+  await page.evaluate(()=>{window.testTime=Date.now();Date.now=()=>window.testTime;window.testTime+=20*60000;window.dispatchEvent(new Event('focus'));});
+  await page.waitForTimeout(1200);assert.equal(await page.locator('#total-top').textContent(),'2','idle time does not log out');
+  await page.evaluate(()=>{window.testTime+=45*60000;window.dispatchEvent(new Event('focus'));});
   await page.waitForFunction(()=>document.querySelector('#total-top').textContent==='0');assert.equal(await page.evaluate(()=>sessionStorage.getItem('melody-drive-login-v1')),null);
   await page.reload();await page.waitForFunction(()=>document.querySelector('#cloud-message').textContent.includes('請連接'));await page.locator('#drive-login').click();
   await page.locator('#close-drive-dialog').click();await page.setViewportSize({width:390,height:844});await page.screenshot({path:'.drive-mobile.png',fullPage:true});await page.locator('#drive-login').click();assert.equal(await page.locator('#drive-dialog').isVisible(),true);await page.screenshot({path:'.drive-mobile-dialog.png',fullPage:true});
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
-  assert.deepEqual(errors,[]);console.log(JSON.stringify({browser:'pass',cases:['connect/create','add/save','favorite','reimport existing dataset','MelodyHome folder','file picker focus guard','no private localStorage','reload restores authorization','activity extends idle deadline','idle logout survives reload','second device reload','concurrent edits/conflict resolution','account switch failure clears UI','disconnect clears UI','mobile width'],snapshots:[...files.values()].filter(x=>x.content).length}));
+  assert.deepEqual(errors,[]);console.log(JSON.stringify({browser:'pass',cases:['partial URL checks','quick entry order persists','burst edits upload once','connect/create','add/save','favorite','reimport existing dataset','MelodyHome folder','file picker focus guard','no private localStorage','reload restores authorization','no idle logout','token expiry logout survives reload','second device reload','concurrent edits/conflict resolution','account switch failure clears UI','disconnect clears UI','mobile width'],snapshots:[...files.values()].filter(x=>x.content).length}));
  }finally{await browser?.close();await new Promise(r=>server.close(r));}
 })().catch(e=>{console.error(e);process.exitCode=1;});

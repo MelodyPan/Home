@@ -1,11 +1,23 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const {createCloudSession}=require('../Javascript/bookmark-cloud.js');
-function fixture(){
+function fixture(saveDelayMs=0){
  let identity='a',fail=null,revision=1,content={value:1},reads=0,writes=0;
  const store={reset(){},async account(){return{id:identity,email:identity+'@example.test'};},async listLibraries(){return[{id:'library'}];},async read(){reads++;return {datasetId:'library',document:structuredClone(content),revision:[String(revision)]};},async write(id,document,expected){writes++;if(fail)throw fail;assert.deepEqual(expected,[String(revision)]);content=document;return {datasetId:id,document,revision:[String(++revision)]};},async create(document){return {datasetId:'new',document,revision:['1']};},async readHead(){return {document:{value:9},revision:['2','3']};},async resolve(id,document,expected){assert.deepEqual(expected,['2','3']);return {datasetId:id,document,revision:['4']};}};
- const session=createCloudSession({store,authorize:async()=>{},onChange(){}});
+ const session=createCloudSession({store,saveDelayMs,authorize:async()=>{},onChange(){}});
  return {session,store,setAccount(value){identity=value;},fail(value){fail=value;},stats:()=>({reads,writes})};
 }
+test('burst edits coalesce to one latest write and identical data skips upload',async()=>{
+ const f=fixture(20),s=f.session;await s.connect();const a=s.save({value:2}),b=s.save({value:3}),c=s.save({value:4});assert(s.hasUnsaved);await Promise.all([a,b,c]);assert.equal(f.stats().writes,1);assert.equal(s.state.document.value,4);assert.equal(s.state.pending,0);assert.equal(s.state.phase,'ready');
+ await s.save({value:4,updatedAt:'2026-10-26T12:00:00Z'});assert.equal(f.stats().writes,1);assert.equal(s.hasUnsaved,false);
+});
+test('edits arriving during an upload coalesce into the next write and preserve ordering',async()=>{
+ const f=fixture(10),s=f.session;await s.connect();let started,release;const begun=new Promise(r=>started=r),gate=new Promise(r=>release=r),write=f.store.write;let calls=0;
+ f.store.write=async(...args)=>{if(++calls===1){started();await gate;}return write(...args);};
+ const first=s.save({value:2});await begun;const second=s.save({value:3}),third=s.save({value:4});release();await Promise.all([first,second,third]);assert.equal(f.stats().writes,2);assert.equal(s.state.document.value,4);assert.equal(s.hasUnsaved,false);
+});
+test('failed batched upload keeps the newest draft and retries it without losing edits',async()=>{
+ const f=fixture(10),s=f.session;await s.connect();f.fail(Object.assign(new Error('offline'),{code:'network'}));await Promise.all([s.save({value:2}),s.save({value:3})]);assert.equal(f.stats().writes,1);assert.equal(s.state.draft.value,3);assert.equal(s.state.phase,'error');f.fail(null);await s.retry();assert.equal(s.state.document.value,3);assert.equal(s.hasUnsaved,false);
+});
 test('connect loads the sole cloud library; saves and clean refreshes update memory only',async()=>{
  const {session:s,stats}=fixture();assert.equal(s.state.phase,'disconnected');await s.connect();assert.equal(s.state.document.value,1);
  await s.save({value:2});assert.equal(s.state.phase,'ready');assert.equal(s.state.draft,null);await s.refresh();assert.equal(s.state.document.value,2);assert.equal(stats().reads,2);

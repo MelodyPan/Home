@@ -63,3 +63,5 @@
 - [介面範本](../src/home.html)：現有操作入口及表單欄位。
 - [本機服務](../scripts/server.cjs)、[網址檢查器](../scripts/url-checker.cjs)、[啟動器](../../../scripts/home-site-start.cjs)。
 - [中文操作指南](user-guide.md)、[架構與開發指南](README.md)。
+
+2026-10-26 後續更新：局部網址重查（單筆、篩選、勾選、異常／未檢查）、常用入口上移／下移排序與 Drive 保存、600ms 連續操作合併同步及相同內容略過上傳已實作。原有每天一檔、帳號隔離與衝突檢查保留。

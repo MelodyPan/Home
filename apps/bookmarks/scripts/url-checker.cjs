@@ -4,6 +4,7 @@ const https=require('node:https');
 const dns=require('node:dns').promises;
 const net=require('node:net');
 const {mergeLibrary}=require('../Javascript/bookmark-core.js');
+const {sensitiveReason}=require('../Javascript/bookmark-check.js');
 // 內部、回送、保留與特殊網段不發送請求；IPv4 與 IPv6 分別驗證。
 const blocked4=new net.BlockList(),blocked6=new net.BlockList();
 for(const [address,prefix]of [['0.0.0.0',8],['10.0.0.0',8],['127.0.0.0',8],['169.254.0.0',16],['172.16.0.0',12],['192.168.0.0',16],['100.64.0.0',10],['192.0.0.0',24],['192.0.2.0',24],['198.18.0.0',15],['198.51.100.0',24],['203.0.113.0',24],['224.0.0.0',4],['240.0.0.0',4]])blocked4.addSubnet(address,prefix,'ipv4');
@@ -13,6 +14,7 @@ function skipped(message){return Object.assign(new Error(message),{skipped:true}
 // 每一跳重新導向都需重新驗證，並略過特殊協定、內部名稱與含帳密的網址。
 function validateUrl(raw){
  let url;try{url=new URL(raw);}catch{throw skipped('網址格式無法解析');}
+ const sensitive=sensitiveReason(raw);if(sensitive)throw skipped(sensitive);url.hash='';
  const host=url.hostname.replace(/^\[|\]$/g,'').replace(/\.$/,'').toLowerCase();
  if(!['http:','https:'].includes(url.protocol)||url.username||url.password)throw skipped('特殊協定或含登入資訊，未送出請求');
  if(host==='localhost'||host.endsWith('.localhost')||host.endsWith('.local')||host.endsWith('.internal')||(!host.includes('.')&&!net.isIP(host))||(net.isIP(host)&&isPrivateAddress(host)))throw skipped('內部或特殊網址，未送出請求');

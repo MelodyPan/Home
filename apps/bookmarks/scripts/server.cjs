@@ -2,9 +2,11 @@
 const http=require('node:http'),fs=require('node:fs/promises'),path=require('node:path');
 const {getServerVersion}=require('./server-version.cjs');
 const {loadDriveConfig}=require('./drive-config.cjs');
+const {createUrlCheckApi}=require('./url-check-api.cjs');
 function createBookmarkServer(root=path.resolve(__dirname,'..'),options={}){
  const version=options.version||getServerVersion(),basePath=options.basePath||'';let stopping=false;
- const assets=['bookmark-core.js','bookmark-file.js','bookmark-drive.js','bookmark-cloud.js','bookmark-login.js','bookmark-drive-ui.js','home.js'].map(name=>'/Javascript/'+name);
+ const checks=createUrlCheckApi({check:options.checkUrl});
+ const assets=['bookmark-core.js','bookmark-file.js','bookmark-drive.js','bookmark-cloud.js','bookmark-login.js','bookmark-drive-ui.js','bookmark-check.js','bookmark-quick.js','home.js'].map(name=>'/Javascript/'+name);
  const server=http.createServer(async(req,res)=>{
   const send=(code,body,type='application/json; charset=utf-8',headers={})=>{
    if(basePath&&headers.Location?.startsWith('/')&&!headers.Location.startsWith(basePath+'/'))headers={...headers,Location:basePath+headers.Location};
@@ -18,13 +20,14 @@ function createBookmarkServer(root=path.resolve(__dirname,'..'),options={}){
     else{if(options.serveRoot)await options.serveRoot(req,res,{stopping});else send(404,'{"error":"Not found"}');return;}
    }
    if(req.method==='GET'&&req.url==='/api/health'){send(200,JSON.stringify({app:'melody-pan-bookmarks',workspace:path.resolve(root),version,stopping}));return;}
+   if(req.url==='/api/url-check'){await checks(req,res,{origin:'http://'+host,stopping});return;}
    if(req.method==='POST'&&req.url==='/api/shutdown'){
     if(req.headers.origin!=='http://'+host||!/^application\/json(?:;|$)/i.test(req.headers['content-type']||'')){send(403,'{"error":"Invalid origin or content type"}');return;}
     if(stopping){send(503,'{"error":"服務正在停止。"}');return;}
     stopping=true;await options.flush?.();res.once('finish',()=>{server.close();server.closeIdleConnections();});send(200,'{"stopped":true}');return;
    }
    if(req.method==='GET'&&req.url==='/Javascript/site-config.js'){
-    const config=await loadDriveConfig(options.homeRoot||path.resolve(__dirname,'../../..'));
+    const config={...await loadDriveConfig(options.homeRoot||path.resolve(__dirname,'../../..')),urlCheckAvailable:true};
     send(200,'window.BookmarksConfig='+JSON.stringify(config)+';','application/javascript; charset=utf-8');return;
    }
    if(req.method==='GET'&&req.url==='/Javascript/app-runtime.js'){send(200,await fs.readFile(path.join(__dirname,'../../shared/Javascript/app-runtime.js')),'application/javascript; charset=utf-8');return;}
