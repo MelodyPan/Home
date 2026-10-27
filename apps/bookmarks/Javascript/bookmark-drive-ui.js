@@ -6,10 +6,9 @@
   let credential='',expires=0,session,importing=false,selectingImport=false;
   let tabStorage;try{tabStorage=window.sessionStorage;}catch{}
   const login=BookmarkLogin.createLoginCache({storage:tabStorage,clientId:config.googleClientId});
-  let expiring=false,limit=0,renewing=false,renewRetry=0,details=null;
-  const SESSION_MS=10*60*60*1000,RENEW_BEFORE_MS=5*60*1000;
+  let expiring=false,details=null;
   const store=BookmarkDrive.createDriveStore({token:()=>Date.now()<expires?credential:''});
-  const clearAuthorization=()=>{credential='';expires=0;limit=0;details=null;login.clear();renderTokenDetails();};
+  const clearAuthorization=()=>{credential='';expires=0;details=null;login.clear();renderTokenDetails();};
   function renderTokenDetails(){const node=$('cloud-token-details');node.hidden=!credential;node.textContent=!credential?'':details?'Google 回傳 expires_in：'+details.expiresIn+' 秒（約 '+(details.expiresIn/60).toFixed(1)+' 分鐘）。取得時間：'+new Date(details.receivedAt).toLocaleString('zh-TW',{timeZone:'Asia/Taipei',hour12:false})+'（台灣時間）':'這次登入尚未記錄 Google 回傳的 expires_in；請重新連接後查看。';}
   function requestToken(prompt){
    if(!config.googleClientId)return Promise.reject(new Error('請先設定 Google OAuth Client ID，設定方式見專案的 Google Drive 操作說明。'));
@@ -23,19 +22,11 @@
     client.requestAccessToken({prompt});
    });
   }
-  const tokenExpiry=response=>Date.now()+Number(response.expires_in||3600)*1000-30000;
+  const tokenExpiry=response=>{const details=BookmarkLogin.tokenDetails(response);if(!details)throw new Error('Google 未回傳有效的授權期限，請重新登入。');return details.receivedAt+details.expiresIn*1000;};
   async function authorize({resume=false}={}){
-   if(resume){const saved=login.read();if(!saved)throw new Error('登入已逾時，請重新連接 Google Drive。');credential=saved.token;expires=saved.expires;limit=saved.limit||0;details=saved.tokenDetails||null;renderTokenDetails();return;}
+   if(resume){const saved=login.read();if(!saved)throw new Error('登入已逾時，請重新連接 Google Drive。');credential=saved.token;expires=saved.expires;details=saved.tokenDetails||null;renderTokenDetails();return;}
    let response;try{response=await requestToken('select_account');}catch(error){clearAuthorization();throw error;}
-   credential=response.access_token;expires=tokenExpiry(response);limit=Date.now()+SESSION_MS;details=BookmarkLogin.tokenDetails(response);login.save(credential,expires,limit,details);expiring=false;renderTokenDetails();
-  }
-  // Silent renewal keeps the session alive up to SESSION_MS; failure falls back to normal expiry.
-  async function renew(){
-   if(renewing||expiring||!credential||Date.now()<renewRetry||Date.now()>=limit||expires-Date.now()>RENEW_BEFORE_MS)return;
-   renewing=true;
-   try{const response=await requestToken('');if(credential){credential=response.access_token;expires=tokenExpiry(response);details=BookmarkLogin.tokenDetails(response);login.save(credential,expires,limit,details);renderTokenDetails();}}
-   catch{renewRetry=Date.now()+60000;}
-   finally{renewing=false;}
+   expires=tokenExpiry(response);credential=response.access_token;details=BookmarkLogin.tokenDetails(response);login.save(credential,expires,undefined,details);expiring=false;renderTokenDetails();
   }
   function message(text){$('cloud-message').textContent=text;}
   function update(state){
@@ -102,14 +93,13 @@
   window.addEventListener('online',()=>{session.setOnline(true);session.refresh();});window.addEventListener('offline',()=>session.setOnline(false));
   const refresh=()=>{if(!selectingImport&&!importing&&!document.hidden&&!document.querySelector('dialog[open]'))session.refresh();};
   document.addEventListener('visibilitychange',refresh);window.addEventListener('focus',refresh);
-  async function checkIdle(){
-   renew();
+  async function checkExpiry(){
    if(!credential&&!expiring)return;
    if(!expiring&&Date.now()<expires)return;
    expiring=true;clearAuthorization();
-   try{await session.disconnect({discard:true});expiring=false;message('登入時間已到（或 Google 授權無法續期），請重新登入。');}catch{/* Wait for an in-flight save before clearing the view. */}
+   try{await session.disconnect({discard:true});expiring=false;message('Google 授權已到期，請重新登入。');}catch{/* Wait for an in-flight save before clearing the view. */}
   }
-  document.addEventListener('visibilitychange',checkIdle);window.addEventListener('focus',checkIdle);setInterval(checkIdle,1000);
+  document.addEventListener('visibilitychange',checkExpiry);window.addEventListener('focus',checkExpiry);setInterval(checkExpiry,1000);
   session.setOnline(navigator.onLine);if(login.read())session.connect({resume:true});return session;
  }
  globalThis.BookmarkDriveUI={mount};

@@ -3,11 +3,19 @@ const {createDriveStore}=require('../Javascript/bookmark-drive.js');
 const {createDataFile}=require('../Javascript/bookmark-file.js');
 const {createCloudSession}=require('../Javascript/bookmark-cloud.js');
 const document=()=>createDataFile([],{added:[],deletedIds:[]},[],'1970-01-01T00:00:00Z');
-function fakeDrive(){
+function fakeDrive({browserMetadata=false}={}){
  const files=new Map();let counter=0,failAfterUpload=false,barrier=null;
  const reply=(body,status=200,headers={})=>new Response(JSON.stringify(body),{status,headers});
  async function request(address,options={}){
   assert.equal(options.headers.Authorization,'Bearer test-token');const url=new URL(address);
+  if(url.pathname.startsWith('/drive/v2/files/')||url.pathname.startsWith('/upload/drive/v2/files/')){
+   const forwarded=new URL(url);forwarded.pathname=forwarded.pathname.replace('/v2/','/v3/');let body=options.body;
+   const convert=meta=>{assert(!meta.appProperties,'v2 writes must use private properties');assert((meta.properties||[]).every(p=>p.visibility==='PRIVATE'));const {title,properties,...rest}=meta;return {...rest,...(title?{name:title}:{}),appProperties:Object.fromEntries((properties||[]).map(p=>[p.key,p.value]))};};
+   if(body){if(url.pathname.startsWith('/upload/')){const lines=body.split('\r\n'),index=lines.findIndex(line=>line.startsWith('{'));lines[index]=JSON.stringify(convert(JSON.parse(lines[index])));body=lines.join('\r\n');}else body=JSON.stringify(convert(JSON.parse(body)));}
+   const response=await request(forwarded.href,{...options,...(body?{body}:{}),...(options.method==='PUT'?{method:'PATCH'}:{})});
+   if(!response.ok||options.method)return response;
+   const meta=await response.json(),stored=files.get(meta.id);return reply({id:meta.id,etag:String(stored.version||1),parents:(meta.parents||[]).map(id=>({id})),properties:Object.entries(meta.appProperties||{}).map(([key,value])=>({key,value,visibility:'PRIVATE'}))});
+  }
   if(url.pathname.endsWith('/about'))return reply({user:{permissionId:'account-a',emailAddress:'a@example.test'}});
   if(url.pathname.endsWith('/generateIds'))return reply({ids:['file-'+(++counter)]});
   if(url.pathname==='/drive/v3/files'){
@@ -29,7 +37,7 @@ function fakeDrive(){
   const id=url.pathname.split('/').at(-1),file=files.get(id);
   if(!file)return reply({},404);
   if(options.method==='PATCH'){if(options.headers['If-Match']&&options.headers['If-Match']!==String(file.version||1))return reply({},412);const patch=JSON.parse(options.body);if(patch.appProperties)file.meta.appProperties={...file.meta.appProperties,...patch.appProperties};file.version=(file.version||1)+1;file.meta.parents=(file.meta.parents||[]).filter(id=>!(url.searchParams.get('removeParents')||'').split(',').includes(id));if(url.searchParams.get('addParents'))file.meta.parents.push(url.searchParams.get('addParents'));return reply(file.meta);}
-  return reply(url.searchParams.get('alt')==='media'?file.content:file.meta,200,{etag:String(file.version||1)});
+  return reply(url.searchParams.get('alt')==='media'?file.content:file.meta,200,browserMetadata?{}:{etag:String(file.version||1)});
  }
  return {files,request,loseReply(){failAfterUpload=true;},concurrent(){let arrivals=0,release;const gate=new Promise(r=>release=r);barrier=async()=>{if(++arrivals===2){barrier=null;release();}await gate;};}};
 }
@@ -124,7 +132,7 @@ test('old immutable files remain readable; first daily save preserves them and l
 
 test('missing conditional metadata stops daily updates before sending a write',async()=>{
  const api=fakeDrive(),a=store(api),first=await a.create(document());let writes=0;
- const b=createDriveStore({token:()=> 'test-token',now:()=>Date.parse('2026-10-26T07:00:00Z'),request:async(url,options)=>{if(options.method==='PATCH')writes++;const response=await api.request(url,options);response.headers.delete('etag');return response;}});
+ const b=createDriveStore({token:()=> 'test-token',now:()=>Date.parse('2026-10-26T07:00:00Z'),request:async(url,options)=>{if(['PATCH','PUT'].includes(options.method))writes++;const response=await api.request(url,options);response.headers.delete('etag');if(new URL(url).pathname.startsWith('/drive/v2/')){const meta=await response.json();delete meta.etag;return new Response(JSON.stringify(meta));}return response;}});
  await assert.rejects(b.write(first.datasetId,document(),first.revision),e=>e.code==='conditional');assert.equal(writes,0);assert.deepEqual((await a.read(first.datasetId)).revision,first.revision);
 });
 test('new snapshots live inside MelodyHome and reconnect moves legacy snapshots without changing content',async()=>{
@@ -141,4 +149,32 @@ test('shared MelodyHome folders are not used for uploads or migration of private
  // Sharing a folder after it was cached must also be detected before the next upload.
  api.files.get(target).meta.shared=true;await b.write(root.datasetId,document(),root.revision);
  const last=snapshots(api).at(-1);assert.notEqual(last.meta.parents[0],target);assert.equal(api.files.get(last.meta.parents[0]).meta.shared,false);
+});
+
+
+test('URL check results automatically persist across Taiwan midnight with browser-hidden v3 ETags',async()=>{
+ let time=Date.parse('2026-10-26T07:00:00Z');const api=fakeDrive({browserMetadata:true}),a=store(api,()=>time);
+ const {createManualBookmark}=require('../Javascript/bookmark-core.js'),{mergeResults}=require('../Javascript/bookmark-check.js');
+ const entry=createManualBookmark({title:'Example',url:'https://example.com',category:'life'},'manual-check',1);
+ const original=createDataFile([],{added:[entry],deletedIds:[]},[],'1970-01-01T00:00:00Z');await a.create(original);
+ const session=createCloudSession({store:a,authorize:async()=>{},saveDelayMs:0});await session.connect();time+=86400000;
+ const stamp=new Date(time).toISOString(),result={status:'reachable',code:200,reason:'checked',finalUrl:entry.url,checkedAt:stamp};
+ const updated=createDataFile([],mergeResults([entry],original.changes,new Map([[entry.url,result]])),[],stamp);
+ await session.save(updated);assert.equal(session.state.phase,'ready');assert.equal(session.hasUnsaved,false);
+ const loaded=await store(api,()=>time).read(session.state.datasetId);assert.deepEqual(loaded.document.changes.urlChecks[entry.id],result);assert.equal(loaded.document.checkedAt,stamp);assert.equal(snapshots(api).length,2);
+ const second={...result,status:'missing',code:404};updated.changes.urlChecks[entry.id]=second;
+ await session.save(updated);assert.equal(session.state.phase,'ready');assert.equal(snapshots(api).length,2);assert.equal((await a.read(session.state.datasetId)).document.changes.urlChecks[entry.id].code,404);
+});
+
+test('browser-compatible conditional updates still reject concurrent writes',async()=>{
+ const api=fakeDrive({browserMetadata:true}),a=store(api),b=store(api),root=await a.create(document());api.concurrent();
+ const results=await Promise.allSettled([a.write(root.datasetId,document(),root.revision),b.write(root.datasetId,document(),root.revision)]);
+ assert.equal(results.filter(x=>x.status==='fulfilled').length,1);assert.equal(results.find(x=>x.status==='rejected').reason.code,'conflict');assert.equal(snapshots(api).length,1);
+});
+
+
+test('browser conditional retries recover uncertain writes and keep one daily file',async()=>{
+ const api=fakeDrive({browserMetadata:true}),a=store(api),root=await a.create(document());api.loseReply();
+ await assert.rejects(a.write(root.datasetId,document(),root.revision),e=>e.code==='network');
+ const saved=await a.write(root.datasetId,document(),root.revision);assert.equal(saved.revision.length,1);assert.equal(snapshots(api).length,1);
 });

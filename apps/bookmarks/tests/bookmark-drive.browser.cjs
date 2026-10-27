@@ -17,22 +17,29 @@ process.chdir(path.resolve(__dirname,'../../..'));
   await context.route('https://accounts.google.com/gsi/client',route=>route.fulfill({contentType:'application/javascript',body:`window.google={accounts:{oauth2:{initTokenClient(options){return {requestAccessToken(){options.callback({access_token:'test-token',expires_in:3600});}}},hasGrantedAllScopes(){return true;}}}};`}));
   await context.route('**/Javascript/site-config.js',route=>route.fulfill({contentType:'application/javascript',body:'window.BookmarksConfig={mode:"drive",urlCheckAvailable:true,googleClientId:"123-browser.apps.googleusercontent.com"};'}));
   await context.route('https://www.googleapis.com/**',async route=>{
-   const req=route.request(),url=new URL(req.url());let body,status=200,etag='';
+   const req=route.request(),url=new URL(req.url()),legacy=url.pathname.includes('/v2/');let method=req.method(),posted=req.postData(),body,status=200,etag='';
+   if(legacy){
+    url.pathname=url.pathname.replace('/v2/','/v3/');if(method==='PUT')method='PATCH';
+    const convert=meta=>{assert(!meta.appProperties);assert((meta.properties||[]).every(p=>p.visibility==='PRIVATE'));const {title,properties,...rest}=meta;return {...rest,...(title?{name:title}:{}),appProperties:Object.fromEntries((properties||[]).map(p=>[p.key,p.value]))};};
+    if(posted){if(url.pathname.startsWith('/upload/')){const lines=posted.split('\r\n'),index=lines.findIndex(line=>line.startsWith('{'));lines[index]=JSON.stringify(convert(JSON.parse(lines[index])));posted=lines.join('\r\n');}else posted=JSON.stringify(convert(JSON.parse(posted)));}
+   }
    if(url.pathname.endsWith('/about'))body={user:{permissionId:account,emailAddress:account+'@example.test'}};
    else if(url.pathname.endsWith('/generateIds'))body={ids:['file-'+(++count)]};
    else if(url.pathname==='/drive/v3/files'){
-    if(req.method()==='POST'){const meta={...req.postDataJSON(),shared:false};files.set(meta.id,{meta:{...meta,parents:['root'],createdTime:new Date().toISOString()}});body=meta;}
+    if(method==='POST'){const meta={...JSON.parse(posted),shared:false};files.set(meta.id,{meta:{...meta,parents:['root'],createdTime:new Date().toISOString()}});body=meta;}
     else{const folders=(url.searchParams.get('q')||'').includes("mimeType = 'application/vnd.google-apps.folder'");body={files:[...files.values()].map(x=>x.meta).filter(meta=>folders?meta.mimeType==='application/vnd.google-apps.folder'&&meta.name==='MelodyHome':meta.appProperties?.purpose==='melody-home-bookmarks-v1')};}if(listFail)status=403;
    }
    else if(url.pathname.startsWith('/upload/drive/v3/files')){
     uploads++;
-    const json=req.postData().split('\r\n').filter(x=>x.startsWith('{')),meta=JSON.parse(json[0]),content=JSON.parse(json[1]);
+    const json=posted.split('\r\n').filter(x=>x.startsWith('{')),meta=JSON.parse(json[0]),content=JSON.parse(json[1]);
     if(uploadGate)await uploadGate();
-    if(req.method()==='PATCH'){
+    if(method==='PATCH'){
      const id=url.pathname.split('/').at(-1),prior=files.get(id);if(req.headers()['if-match']!==String(prior.version||1)){status=412;body={};}else{prior.meta={...prior.meta,...meta,...(url.searchParams.has('addParents')?{parents:[url.searchParams.get('addParents')]}:{})};prior.content=content;prior.version=(prior.version||1)+1;body={id};}
     }else if(files.has(meta.id)){status=409;body={};}else{files.set(meta.id,{meta:{...meta,createdTime:new Date().toISOString()},content,version:1});body={id:meta.id};}
-   }else{const data=files.get(url.pathname.split('/').at(-1));if(data){if(req.method()==='PATCH'){const patch=req.postDataJSON();if(req.headers()['if-match']&&req.headers()['if-match']!==String(data.version||1)){status=412;body={};}else{if(patch.appProperties)data.meta.appProperties={...data.meta.appProperties,...patch.appProperties};if(url.searchParams.has('addParents'))data.meta.parents=[url.searchParams.get('addParents')];data.version=(data.version||1)+1;}}body=body|| (url.searchParams.get('alt')==='media'?data.content:data.meta);etag=String(data.version||1);}else{status=404;body={};}}
-   await route.fulfill({status,contentType:'application/json',headers:etag?{etag,'Access-Control-Expose-Headers':'etag'}:{},body:JSON.stringify(body)});
+   }else{const data=files.get(url.pathname.split('/').at(-1));if(data){if(method==='PATCH'){const patch=JSON.parse(posted);if(req.headers()['if-match']&&req.headers()['if-match']!==String(data.version||1)){status=412;body={};}else{if(patch.appProperties)data.meta.appProperties={...data.meta.appProperties,...patch.appProperties};if(url.searchParams.has('addParents'))data.meta.parents=[url.searchParams.get('addParents')];data.version=(data.version||1)+1;}}body=body|| (url.searchParams.get('alt')==='media'?data.content:data.meta);etag=String(data.version||1);}else{status=404;body={};}}
+   if(legacy&&method==='GET'&&status===200)body={id:body.id,etag,parents:(body.parents||[]).map(id=>({id})),properties:Object.entries(body.appProperties||{}).map(([key,value])=>({key,value,visibility:'PRIVATE'}))};
+   // Reproduce Google metadata responses whose ETag cannot be read by JS.
+   await route.fulfill({status,contentType:'application/json',body:JSON.stringify(body)});
   });
   const url='http://127.0.0.1:'+server.address().port+'/bookmarks.html';
   await page.goto(url);await page.waitForFunction(()=>document.querySelector('#cloud-message').textContent.includes('請連接'));
@@ -93,7 +100,7 @@ process.chdir(path.resolve(__dirname,'../../..'));
   await page.evaluate(()=>{window.testTime+=45*60000;window.dispatchEvent(new Event('focus'));});
   await page.waitForFunction(()=>document.querySelector('#total-top').textContent==='0');assert.equal(await page.evaluate(()=>sessionStorage.getItem('melody-drive-login-v1')),null);
   await page.reload();await page.waitForFunction(()=>document.querySelector('#cloud-message').textContent.includes('請連接'));await page.locator('#drive-login').click();
-  await page.locator('#close-drive-dialog').click();await page.setViewportSize({width:390,height:844});await page.screenshot({path:'.drive-mobile.png',fullPage:true});await page.locator('#drive-login').click();assert.equal(await page.locator('#drive-dialog').isVisible(),true);await page.screenshot({path:'.drive-mobile-dialog.png',fullPage:true});
+  await page.locator('#close-drive-dialog').click();await page.setViewportSize({width:390,height:844});await page.screenshot({path:path.resolve('data/bookmarks-check-mobile.png'),fullPage:true});await page.locator('#drive-login').click();assert.equal(await page.locator('#drive-dialog').isVisible(),true);await page.screenshot({path:path.resolve('data/bookmarks-check-mobile-dialog.png'),fullPage:true});
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
   assert.deepEqual(errors,[]);console.log(JSON.stringify({browser:'pass',cases:['partial URL checks','quick entry order persists','burst edits upload once','connect/create','add/save','favorite','reimport existing dataset','MelodyHome folder','file picker focus guard','no private localStorage','reload restores authorization','no idle logout','token expiry logout survives reload','second device reload','concurrent edits/conflict resolution','account switch failure clears UI','disconnect clears UI','mobile width'],snapshots:[...files.values()].filter(x=>x.content).length}));
  }finally{await browser?.close();await new Promise(r=>server.close(r));}

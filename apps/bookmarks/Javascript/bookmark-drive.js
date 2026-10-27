@@ -91,15 +91,26 @@
   const conflict=g=>new DriveError('conflict','雲端有不同版本；請選擇雲端內容或目前分頁的未同步草稿繼續使用。',{heads:choices(g),revision:g.revision});
   async function read(datasetId){const g=await graph(datasetId);if(g.heads.length!==1)throw conflict(g);const {document}=await download(g.heads[0]);return {datasetId,document,revision:g.revision,heads:choices(g)};}
   async function readHead(datasetId,id){const g=await graph(datasetId),meta=g.heads.find(x=>revisionKey(x)===id);if(!meta)throw conflict(g);return {datasetId,document:(await download(meta)).document,revision:g.revision,heads:choices(g)};}
+  const privateProperties=props=>Object.entries(props).map(([key,value])=>({key,value,visibility:'PRIVATE'}));
+  async function conditionalFile(id){
+   const response=await call(API+'/files/'+encodeURIComponent(id)+'?fields=id,parents,appProperties'),meta=await response.json(),etag=response.headers.get('etag');
+   if(etag)return {meta,etag,version:'v3'};
+   // Drive v3 does not always expose ETags to browser clients. v2 includes the
+   // file ETag in JSON; use that same API version for the conditional write.
+   const legacy=await(await call('https://www.googleapis.com/drive/v2/files/'+encodeURIComponent(id)+'?fields=id,etag,parents(id),properties(key,value,visibility)')).json();
+   if(typeof legacy.etag!=='string'||!legacy.etag||legacy.etag.startsWith('W/'))throw new DriveError('conditional','無法取得 Google Drive 檔案版本，已保留未同步資料；請稍後重試。');
+   if(legacy.id!==id||!Array.isArray(legacy.properties)||!Array.isArray(legacy.parents))throw invalid();
+   return {meta:{id:legacy.id,parents:legacy.parents.map(p=>p.id),appProperties:Object.fromEntries(legacy.properties.filter(p=>p.visibility==='PRIVATE').map(p=>[p.key,p.value]))},etag:legacy.etag,version:'v2'};
+  }
   async function reserveDay(operation){
    // Reserve tomorrow's ID on an existing head before creation. Two devices then
    // create the same Drive ID rather than two files with the same daily name.
    for(let attempt=0;attempt<3;attempt++){
-    const response=await call(API+'/files/'+encodeURIComponent(operation.baseId)+'?fields=id,appProperties'),base=await response.json();
+    const {meta:base,etag,version}=await conditionalFile(operation.baseId);
     if(revisionKey(base)!==operation.baseRevision){pending=null;throw conflict(await graph(operation.datasetId));}
     if(base.appProperties.nextDay===operation.day&&validId(base.appProperties.nextFile)){operation.id=base.appProperties.nextFile;return;}
-    const etag=response.headers.get('etag');if(!etag)throw new DriveError('conditional','無法確認雲端版本，已暫停建立每日書籤檔，請重新連接後重試。');
-    try{await call(API+'/files/'+encodeURIComponent(operation.baseId)+'?fields=id',{method:'PATCH',headers:{'Content-Type':'application/json','If-Match':etag},body:JSON.stringify({appProperties:{nextDay:operation.day,nextFile:operation.commit}})});operation.id=operation.commit;return;}
+    const reservation={nextDay:operation.day,nextFile:operation.commit};
+    try{await call('https://www.googleapis.com/drive/'+version+'/files/'+encodeURIComponent(operation.baseId)+'?fields=id',{method:'PATCH',headers:{'Content-Type':'application/json','If-Match':etag},body:JSON.stringify(version==='v2'?{properties:privateProperties({...base.appProperties,...reservation})}:{appProperties:reservation})});operation.id=operation.commit;return;}
     catch(error){if(error.code!=='changed')throw error;}
    }
    throw new DriveError('network','其他裝置正在建立當日檔案，請稍後重試。');
@@ -112,20 +123,19 @@
    const props={purpose:PURPOSE,dataset:operation.datasetId,day:operation.day,commit:operation.commit,parent:operation.parents[0]||'',merge:operation.parents.length>1?'1':'0'};
    const meta={id:operation.id,name:'bookmarks-'+operation.day+'.json',mimeType:'application/json',parents:[parentFolder],appProperties:props};
    const envelope={format:1,datasetId:operation.datasetId,commit:operation.commit,parents:operation.parents,data:operation.document};
-   let etag='',moveQuery='';
+   let etag='',moveQuery='',version='v3',currentProperties={};
    if(operation.update){
-    const response=await call(API+'/files/'+encodeURIComponent(operation.id)+'?fields=id,parents,appProperties'),current=await response.json();
+    const conditional=await conditionalFile(operation.id),current=conditional.meta;etag=conditional.etag;version=conditional.version;currentProperties=current.appProperties;
     if(current.appProperties?.commit===operation.commit){const stored=await download(current);if(JSON.stringify(stored.envelope)!==JSON.stringify(envelope))throw invalid();return meta;}
     if(revisionKey(current)!==operation.previous){pending=null;throw conflict(await graph(operation.datasetId));}
     if(current.appProperties.nextDay&&current.appProperties.nextDay>operation.day){pending=null;throw conflict(await graph(operation.datasetId));}
-    etag=response.headers.get('etag');if(!etag)throw new DriveError('conditional','無法確認當日檔案版本，已暫停更新以免覆蓋其他裝置的修改。請重新連接後重試。');
     if(!current.parents?.includes(parentFolder)){moveQuery='&addParents='+encodeURIComponent(parentFolder);if(current.parents?.length)moveQuery+='&removeParents='+encodeURIComponent(current.parents.join(','));}
    }
    // Drive updates cannot change id or parents through the multipart metadata body.
-   const uploadMeta=operation.update?{name:meta.name,mimeType:meta.mimeType,appProperties:props}:meta;
+   const uploadMeta=version==='v2'?{title:meta.name,mimeType:meta.mimeType,properties:privateProperties({...currentProperties,...props})}:operation.update?{name:meta.name,mimeType:meta.mimeType,appProperties:props}:meta;
    const boundary='bookmark_'+uuid(),body='--'+boundary+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+JSON.stringify(uploadMeta)+'\r\n--'+boundary+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+JSON.stringify(envelope)+'\r\n--'+boundary+'--';
    if(new TextEncoder().encode(body).length>5*1024*1024)throw new DriveError('size','書籤資料超過 5 MB，請先下載備份並縮減資料。');
-   try{await call('https://www.googleapis.com/upload/drive/v3/files'+(operation.update?'/'+encodeURIComponent(operation.id):'')+'?uploadType=multipart&fields=id'+moveQuery,{method:operation.update?'PATCH':'POST',headers:{'Content-Type':'multipart/related; boundary='+boundary,...(etag?{'If-Match':etag}:{})},body});}
+   try{await call('https://www.googleapis.com/upload/drive/'+version+'/files'+(operation.update?'/'+encodeURIComponent(operation.id):'')+'?uploadType=multipart&fields=id'+moveQuery,{method:version==='v2'?'PUT':operation.update?'PATCH':'POST',headers:{'Content-Type':'multipart/related; boundary='+boundary,...(etag?{'If-Match':etag}:{})},body});}
    catch(error){if(error.code==='changed'){pending=null;throw conflict(await graph(operation.datasetId));}if(error.code!=='exists')throw error;const existing=await(await call(API+'/files/'+encodeURIComponent(operation.id)+'?fields=id,appProperties')).json();const stored=await download(existing);if(JSON.stringify(stored.envelope)!==JSON.stringify(envelope)){pending=null;throw conflict(await graph(operation.datasetId));}}
    return meta;
   }
