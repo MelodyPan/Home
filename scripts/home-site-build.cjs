@@ -1,7 +1,7 @@
 // Home 的公開建置：只複製白名單，從範本建立空白書籤頁，完全不讀取私人書籤／相簿資料。
 const fs=require('node:fs/promises'),path=require('node:path');
 const {publicDocument}=require('../apps/admin/public/project-model.js');
-const BOOKMARK_JS=['bookmark-core.js','bookmark-file.js','bookmark-drive.js','bookmark-cloud.js','bookmark-login.js','bookmark-drive-ui.js','home.js'];
+const BOOKMARK_JS=['bookmark-core.js','bookmark-file.js','bookmark-drive.js','bookmark-cloud.js','bookmark-login.js','bookmark-drive-ui.js','bookmark-check.js','bookmark-quick.js','home.js'];
 const {loadDriveConfig}=require('../apps/bookmarks/scripts/drive-config.cjs');
 const GROWTH_JS=['growth.js','growth-flipbook.js','growth-metrics.js','growth-reference.js'];
 const GROWTH_CSS=['growth.css','growth-flipbook.css','growth-metrics.css'];

@@ -6,10 +6,11 @@
   let credential='',expires=0,session,importing=false,selectingImport=false;
   let tabStorage;try{tabStorage=window.sessionStorage;}catch{}
   const login=BookmarkLogin.createLoginCache({storage:tabStorage,clientId:config.googleClientId});
-  let expiring=false,limit=0,renewing=false,renewRetry=0;
-  const SESSION_MS=8*60*60*1000,RENEW_BEFORE_MS=5*60*1000;
+  let expiring=false,limit=0,renewing=false,renewRetry=0,details=null;
+  const SESSION_MS=10*60*60*1000,RENEW_BEFORE_MS=5*60*1000;
   const store=BookmarkDrive.createDriveStore({token:()=>Date.now()<expires?credential:''});
-  const clearAuthorization=()=>{credential='';expires=0;limit=0;login.clear();};
+  const clearAuthorization=()=>{credential='';expires=0;limit=0;details=null;login.clear();renderTokenDetails();};
+  function renderTokenDetails(){const node=$('cloud-token-details');node.hidden=!credential;node.textContent=!credential?'':details?'Google 回傳 expires_in：'+details.expiresIn+' 秒（約 '+(details.expiresIn/60).toFixed(1)+' 分鐘）。取得時間：'+new Date(details.receivedAt).toLocaleString('zh-TW',{timeZone:'Asia/Taipei',hour12:false})+'（台灣時間）':'這次登入尚未記錄 Google 回傳的 expires_in；請重新連接後查看。';}
   function requestToken(prompt){
    if(!config.googleClientId)return Promise.reject(new Error('請先設定 Google OAuth Client ID，設定方式見專案的 Google Drive 操作說明。'));
    if(!globalThis.google?.accounts?.oauth2)return Promise.reject(new Error('Google 登入元件尚未載入，請檢查網路或阻擋設定後重試。'));
@@ -24,15 +25,15 @@
   }
   const tokenExpiry=response=>Date.now()+Number(response.expires_in||3600)*1000-30000;
   async function authorize({resume=false}={}){
-   if(resume){const saved=login.read();if(!saved)throw new Error('登入已逾時，請重新連接 Google Drive。');credential=saved.token;expires=saved.expires;limit=saved.limit||0;return;}
+   if(resume){const saved=login.read();if(!saved)throw new Error('登入已逾時，請重新連接 Google Drive。');credential=saved.token;expires=saved.expires;limit=saved.limit||0;details=saved.tokenDetails||null;renderTokenDetails();return;}
    let response;try{response=await requestToken('select_account');}catch(error){clearAuthorization();throw error;}
-   credential=response.access_token;expires=tokenExpiry(response);limit=Date.now()+SESSION_MS;login.save(credential,expires,limit);expiring=false;
+   credential=response.access_token;expires=tokenExpiry(response);limit=Date.now()+SESSION_MS;details=BookmarkLogin.tokenDetails(response);login.save(credential,expires,limit,details);expiring=false;renderTokenDetails();
   }
   // Silent renewal keeps the session alive up to SESSION_MS; failure falls back to normal expiry.
   async function renew(){
    if(renewing||expiring||!credential||Date.now()<renewRetry||Date.now()>=limit||expires-Date.now()>RENEW_BEFORE_MS)return;
    renewing=true;
-   try{const response=await requestToken('');if(credential){credential=response.access_token;expires=tokenExpiry(response);login.save(credential,expires,limit);}}
+   try{const response=await requestToken('');if(credential){credential=response.access_token;expires=tokenExpiry(response);details=BookmarkLogin.tokenDetails(response);login.save(credential,expires,limit,details);renderTokenDetails();}}
    catch{renewRetry=Date.now()+60000;}
    finally{renewing=false;}
   }
