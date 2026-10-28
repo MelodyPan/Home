@@ -4,8 +4,11 @@
  const error=(code,message)=>Object.assign(new Error(message),{code});
  function createCloudSession({store,authorize,onChange=()=>{},clearAuthorization=()=>{},saveDelayMs=600}){
   const state={phase:'disconnected',account:null,libraries:[],datasetId:null,document:null,draft:null,revision:[],heads:[],error:null,pending:0,online:true};
+  // queue 保持寫入順序；pending 是排隊數，busy 保護連接／載入／重試等不可並行操作。
+  // draftAccount 綁住草稿來源，authorizedAccount 必須經 Drive 查證，不能只信任新 token。
   let queue=Promise.resolve(),failed=null,draftAccount=null,authorizedAccount=null,busy=false;
   let saveSequence=0,saveDue=0;
+  // 快照時間每次都不同；僅 updatedAt 改變不應再上傳一次。
   const contentKey=document=>{const {updatedAt,...content}=document||{};return JSON.stringify(content);};
   const notify=()=>onChange(state);
   const failure=e=>{if(e.datasetId&&!state.datasetId)state.datasetId=e.datasetId;state.error=e;state.phase=e.code==='conflict'?'conflict':'error';state.heads=e.heads||[];notify();};
@@ -15,6 +18,7 @@
    if(state.draft||state.pending)throw error('dirty','請先處理未同步草稿。');ensureAccount();state.phase='loading';state.datasetId=datasetId;state.document=null;notify();
    try{accept(await store.read(datasetId));}catch(e){failure(e);return;}notify();
   }
+  // 先確認上次失敗的原操作，再補寫最新草稿，避免不確定的上傳被另一份內容取代。
   async function retry(){
    if(state.pending||busy)return;
    try{ensureAccount();if(!state.online)throw error('network','目前沒有網路連線，請連線後重試。');if(state.phase==='conflict')return;
@@ -26,6 +30,7 @@
     state.draft=null;draftAccount=null;
    }catch(e){failure(e);}finally{busy=false;notify();}
   }
+  // 重新連接不是直接換憑證：先確認帳號，錯帳號時不得重試原分頁草稿。
   async function connect({resume=false}={}){
    if(state.pending||busy){state.error=error('busy','正在同步，請等待完成後再重新連接。');notify();return;}
    // A new token is not trusted as the previous account until Drive confirms its identity.
@@ -44,10 +49,12 @@
     state.phase=state.libraries.length?'choosing':'empty';state.document=null;
    }catch(e){if(!authorizedAccount){clearAuthorization();state.document=null;}failure(e);}finally{busy=false;notify();}
   }
+  // 保存獨立快照後才排隊；編輯端繼續改動物件，不會污染已開始的寫入。
   function save(document){
    if(!state.online||!['ready','saving'].includes(state.phase)||!state.datasetId||busy)return Promise.resolve();
    try{ensureAccount();}catch(e){failure(e);return Promise.resolve();}
    const snapshot=structuredClone(document);state.draft=snapshot;draftAccount=state.account.id;state.pending++;state.phase='saving';notify();
+   // 每次新編輯延後防抖期限；尚未開始的舊任務可略過，已開始的寫入仍會完成。
    const sequence=++saveSequence;saveDue=Date.now()+saveDelayMs;
    const task=queue.then(async()=>{
     if(saveDelayMs>0){if(sequence!==saveSequence)return;await new Promise(resolve=>setTimeout(resolve,Math.max(0,saveDue-Date.now())));if(sequence!==saveSequence)return;}
@@ -68,6 +75,7 @@
    try{ensureAccount();busy=true;state.phase='saving';state.draft=structuredClone(document);draftAccount=state.account.id;failed={document:state.draft,revision:[...state.revision]};notify();accept(await store.write(state.datasetId,state.draft,state.revision));failed=null;state.draft=null;draftAccount=null;}
    catch(e){failure(e);}finally{busy=false;notify();}
   }
+  // 採用使用者明確選取的版本，不自行合併；寫入仍須帶最新衝突 heads。
   async function resolve(headId){
    if(busy||state.pending||state.phase!=='conflict')return;
    try{ensureAccount();busy=true;const expected=state.heads.map(x=>x.id).sort();state.phase='saving';notify();
@@ -77,12 +85,14 @@
     const result=await store.resolve(state.datasetId,choice,expected);accept(result);state.draft=null;draftAccount=null;failed=null;
    }catch(e){failure(e);}finally{busy=false;notify();}
   }
+  // 同一資料集背景更新保留目前畫面；內容完全相同時保留物件參照，避免 UI 重畫閃動。
   async function refresh(){
    if(busy||state.pending||state.draft||state.phase!=='ready'||!state.online)return;
    const previous=state.document;busy=true;state.phase='loading';notify();
    try{ensureAccount();const result=await store.read(state.datasetId);if(JSON.stringify(result.document)===JSON.stringify(previous))result.document=previous;accept(result);}
    catch(e){failure(e);}finally{busy=false;notify();}
   }
+  // 草稿只在記憶體；只有確認 discard 才能丟棄，不能藉由登出悄悄遺失待存內容。
   async function disconnect({discard=false}={}){
    if(state.pending||busy)throw error('busy','正在同步，請等待完成。');
    if(state.draft&&!discard)throw error('dirty','尚有未同步草稿，請先下載備份或重試。');

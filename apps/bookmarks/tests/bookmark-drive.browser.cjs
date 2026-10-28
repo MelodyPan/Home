@@ -14,7 +14,7 @@ process.chdir(path.resolve(__dirname,'../../..'));
  let browser;try{
   browser=await chromium.launch({headless:true,...(process.env.BROWSER_CHANNEL?{channel:process.env.BROWSER_CHANNEL}:{})});const context=await browser.newContext(),page=await context.newPage(),errors=[],files=new Map();let count=0,uploads=0,account='me',listFail=false,uploadGate=null,startupGate=null;
   page.on('pageerror',e=>errors.push(e.message));
-  await context.route('https://accounts.google.com/gsi/client',route=>route.fulfill({contentType:'application/javascript',body:`window.google={accounts:{oauth2:{initTokenClient(options){return {requestAccessToken(){options.callback({access_token:'test-token',expires_in:3600});}}},hasGrantedAllScopes(){return true;}}}};`}));
+  await context.route('https://accounts.google.com/gsi/client',route=>route.fulfill({contentType:'application/javascript',body:`window.google={accounts:{oauth2:{initTokenClient(options){return {requestAccessToken(){window.oauthAttempts=window.oauthAttempts||[];window.oauthAttempts.push(options);if(window.oauthBehavior!=='pending')options.callback({access_token:'test-token',expires_in:3600});}}},hasGrantedAllScopes(){return true;}}}};`}));
   await context.route('**/Javascript/site-config.js',route=>route.fulfill({contentType:'application/javascript',body:'window.BookmarksConfig={mode:"drive",urlCheckAvailable:true,googleClientId:"123-browser.apps.googleusercontent.com"};'}));
   await context.route('https://www.googleapis.com/**',async route=>{
    const req=route.request(),url=new URL(req.url()),legacy=url.pathname.includes('/v2/');let method=req.method(),posted=req.postData(),body,status=200,etag='';
@@ -47,6 +47,11 @@ process.chdir(path.resolve(__dirname,'../../..'));
   assert.equal(await page.locator('#drive-dialog').isVisible(),false);await page.locator('#drive-login').click();await page.locator('#drive-dialog').waitFor({state:'visible'});
   assert.equal(await page.locator('main #save-indicator,main .cloud-panel,main #file-storage-bar').count(),0);
   assert.equal(await page.locator('#total-top').textContent(),'0');
+  await page.evaluate(()=>window.oauthBehavior='pending');await page.locator('#cloud-connect').click();await page.waitForFunction(()=>document.querySelector('#cloud-message').textContent.includes('正在連接'));
+  await page.locator('#close-drive-dialog').click();assert.equal(await page.locator('#drive-login').isEnabled(),true,'login remains available when Google never reports cancellation');await page.locator('#drive-login').click();await page.waitForFunction(()=>!document.querySelector('#cloud-connect').disabled);
+  await page.locator('#cloud-connect').click();await page.evaluate(()=>window.oauthAttempts[0].callback({access_token:'stale-token',expires_in:3600}));await page.waitForTimeout(100);assert.equal(await page.locator('#cloud-connect').isDisabled(),true,'stale response cannot complete a newer authorization');
+  await page.evaluate(()=>{window.dispatchEvent(new Event('blur'));window.dispatchEvent(new Event('focus'));});await page.waitForFunction(()=>!document.querySelector('#cloud-connect').disabled);assert.match(await page.locator('#cloud-message').textContent(),/取消|關閉|再試/);assert.equal(await page.locator('#cloud-account').textContent(),'尚未連接');
+  await page.evaluate(()=>window.oauthBehavior='success');
   await page.locator('#cloud-connect').click();await page.locator('#cloud-initialize').waitFor({state:'visible'});
   page.on('dialog',d=>d.accept());await page.locator('#cloud-new').click();await page.waitForFunction(()=>document.querySelector('#cloud-message').textContent==='已同步至 Google Drive。');
   await page.locator('#close-drive-dialog').click();

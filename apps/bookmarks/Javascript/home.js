@@ -30,6 +30,7 @@
  const mutations='#add-bookmark,#undo-delete,#undo-delete-list,.favorite-button,.delete-button,.edit-category-button,.edit-status-button,.edit-details-button,.recheck-button,#manage-quick-order,.quick-order-mutation,#batch-category,.bookmark-select,#select-results,.manage-work-subcategories,.work-subcategory-mutation,.category-order-mutation,#manage-category-order,#confirm-delete';
  document.addEventListener('click',event=>{if((!fileReady||fileError)&&event.target.closest(mutations)){event.preventDefault();event.stopImmediatePropagation();toast(fileError||'請先連接 Google Drive。');}},true);
  window.addEventListener('beforeunload',event=>{if(cloud?.hasUnsaved){event.preventDefault();event.returnValue='';}});
+ // 雲端狀態是編輯開關與畫面來源；有 draft／pending 時不能用舊遠端文件蓋掉本機修改。
  function cloudChanged(remote){
   if(checkJob&&(!remote.online||!remote.document||!['ready','saving'].includes(remote.phase)||remote.account?.id!==checkJob.account||remote.datasetId!==checkJob.dataset))checkJob.controller.abort();
   fileReady=!!remote.document;fileConflict=remote.phase==='conflict';
@@ -52,6 +53,7 @@
  let duplicateUrlCounts=new Map();
  // home 為精簡首頁，browse 為左側分類清單，library 為保留首頁搜尋區的結果模式。
  // 此物件也保存目前篩選、排序與分頁上限；不會直接寫入書籤 JSON。
+ // simpleLinks 記錄上方入口；有 query 時仍切換詳細卡片。allSort 與分類頁 sort 分開。
  const state={simpleLinks:false,selectionEnabled:false,duplicatesOnly:false,layout:savedLayout,browseSearchOpen:false,view:'home',purpose:'all',originalFolder:'all',category:'all',workSubcategory:'all',query:'',status:'all',favoriteOnly:false,sort:'original',allSort:'url',limit:36};
  for(const button of document.querySelectorAll('[data-purpose-filter]'))button.addEventListener('click',()=>{state.simpleLinks=false;state.selectionEnabled=true;state.view='browse';state.purpose=state.purpose===button.dataset.purposeFilter?'all':button.dataset.purposeFilter;state.category='all';state.workSubcategory='all';state.limit=36;render();if(matchMedia('(max-width:740px)').matches){document.querySelector('.sidebar').classList.remove('mobile-open');$('mobile-toggle').setAttribute('aria-expanded','false');$('library-title').focus({preventScroll:true});$('library-title').scrollIntoView({block:'start'});}});
  const purposeChoices=[['all','全部用途'],['work','工作用途'],['personal','生活']];
@@ -75,6 +77,7 @@
  let toastTimer;
  function toast(message){clearTimeout(toastTimer);$('toast').textContent=message;$('toast').hidden=false;toastTimer=setTimeout(()=>$('toast').hidden=true,4500);}
  let expandedCategory=null;
+ // 點常用收藏清除全部篩選；點所有書籤重設網址排序。收合子分類只改側欄，不重設結果。
  function navButton(label,name,value,count){const b=el('button','nav-button');b.type='button';b.dataset.category=value;if(categoryMap.has(value))b.dataset.purpose=purposeFor(value);b.append(icon(name),el('span','',label),el('span','count',String(count)));b.addEventListener('click',()=>{if(value==='all')state.allSort='url';if(value==='favorites'){Object.assign(state,{query:'',purpose:'all',originalFolder:'all',status:'all',duplicatesOnly:false});$('search').value='';$('browse-search').value='';$('status-filter').value='all';selectedBookmarks.clear();}state.selectionEnabled=value!=='all'&&value!=='favorites';state.simpleLinks=!state.selectionEnabled;const expandable=['work','dev'].includes(value);if(expandable&&state.view!=='home'&&state.category===value&&!state.favoriteOnly){expandedCategory=expandedCategory===value?null:value;renderWorkSubnavigation();return;}expandedCategory=expandable?value:null;state.browseSearchOpen=false;state.view='browse';state.category=value==='favorites'?'all':value;state.favoriteOnly=value==='favorites';state.workSubcategory='all';state.limit=36;render();if(matchMedia('(max-width:740px)').matches){document.querySelector('.sidebar').classList.remove('mobile-open');$('mobile-toggle').setAttribute('aria-expanded','false');$('library-title').scrollIntoView({block:'start'});$('library-title').tabIndex=-1;$('library-title').focus({preventScroll:true});}});return b;}
  $('primary-nav').append(navButton('所有書籤','grid','all',entries.length),navButton('常用收藏','star','favorites',favorites.size));
  for(const c of CATEGORIES)$('categories').append(navButton(c.name,c.icon,c.id,entries.filter(e=>e.category===c.id).length));
@@ -138,6 +141,7 @@
  // 選取集合以 ID 記錄；currentResults 包含尚未展開的結果，批次確認時另存選取快照。
  const selectedBookmarks=new Set();let currentResults=[],pendingBatchIds=[];
  // 全選以全部符合篩選的結果為準；部分選取時使用原生 indeterminate 狀態。
+ // 顯示與可勾選條件集中在這裡，讓上方搜尋結果恢復完整操作、清空後回簡易連結。
  function simplePresentation(){return state.simpleLinks&&!state.query;}
  function selectionAvailable(){return state.selectionEnabled||(state.simpleLinks&&!!state.query);}
  function updateSelectionUI(){if(!selectionAvailable())selectedBookmarks.clear();document.querySelector('.selection-toolbar').hidden=!selectionAvailable();const count=selectedBookmarks.size;$('selection-count').textContent='已選 '+count+' 筆';$('batch-category').disabled=!count;$('clear-selection').disabled=!count;const all=$('select-results');all.disabled=!currentResults.length;all.checked=!!count&&count===currentResults.length;all.indeterminate=count>0&&count<currentResults.length;for(const article of $('bookmark-grid').children){const selected=selectedBookmarks.has(article.dataset.bookmark);article.dataset.selected=String(selected);const input=article.querySelector('.bookmark-select');if(input)input.checked=selected;}}
@@ -175,6 +179,7 @@
  }
  // 以 DOM 與 textContent 組合卡片，避免把使用者輸入當成 HTML 執行。
  function card(e){const c=categoryMap.get(e.category),article=el('article','bookmark-card');article.dataset.bookmark=e.id;article.dataset.purpose=getBookmarkPurpose(e);const top=el('div','card-top');top.append(siteSymbol(e,c.color));const domain=el('span','card-domain',e.domain);domain.title=e.domain;const checkbox=el('input','bookmark-select');checkbox.type='checkbox';checkbox.checked=selectedBookmarks.has(e.id);checkbox.setAttribute('aria-label','選取書籤：'+e.title);checkbox.addEventListener('change',()=>{if(checkbox.checked)selectedBookmarks.add(e.id);else selectedBookmarks.delete(e.id);updateSelectionUI();});if(selectionAvailable())domain.prepend(checkbox);top.append(domain,starButton(e),deleteButton(e));article.append(top);if(safeWebUrl(e.url)){const a=el('a','card-link');attachLink(a,e);a.append(el('h3','',e.title||e.domain));article.append(a);}else{const h=el('h3','disabled-title',e.title||e.url);h.title='此網址使用特殊協定，請從原始書籤開啟。';article.append(h);}const folder=el('p','card-folder');folder.title=e.folder||'原始書籤根目錄';folder.append(icon('folder'),el('span','',e.folder.replace(/^書籤列\s*\/\s*/,'').replace(/^書籤列$/,'書籤列')||'原始書籤根目錄'));article.append(folder);const bottom=el('div','card-bottom');bottom.append(editDetailsButton(e),editCategoryButton(e));bottom.append(editStatusButton(e),recheckButton(e));if(state.duplicatesOnly&&(duplicateUrlCounts.get(e.url)||0)>1){const badge=el('span','duplicate-badge','同網址 '+duplicateUrlCounts.get(e.url)+' 筆');badge.title='依全部未刪除書籤比對；其他同網址書籤可能位於不同分類。';bottom.append(badge);}article.append(bottom);return article;}
+ // 簡易入口只顯示圖示與完整名稱；同樣驗證協定，避免不安全網址成為可點連結。
  function simpleLink(entry){const category=categoryMap.get(entry.category),link=el(safeWebUrl(entry.url)?'a':'span','quick-link simple-bookmark-link');link.dataset.bookmark=entry.id;link.dataset.purpose=getBookmarkPurpose(entry);if(safeWebUrl(entry.url))attachLink(link,entry);else{link.setAttribute('aria-disabled','true');link.title='此網址使用特殊協定，請從原始書籤開啟。';}const symbol=el('span','quick-symbol '+category.color);symbol.append(icon(category.icon));link.append(symbol,el('span','quick-label',entry.title||entry.domain));return link;}
  const quickDefinitions=[{match:e=>/^ChatGPT$/i.test(e.title),label:'ChatGPT',icon:'sparkles'}, {match:e=>/Google Gemini/i.test(e.title),label:'Gemini',icon:'sparkles'}, {match:e=>/員工入口網站/.test(e.title),label:'員工入口',icon:'briefcase'}, {match:e=>/^GitHub$/i.test(e.title),label:'GitHub',icon:'code'}, {match:e=>/Goodinfo!/i.test(e.title),label:'Goodinfo!',icon:'chart'}, {match:e=>/VoiceTube 看影片/i.test(e.title),label:'VoiceTube',icon:'languages'}];
  function renderQuickManager(){const list=$('quick-order-list');list.replaceChildren();const ordered=BookmarkQuick.orderedFavorites(entries,[...favorites],changes.quickOrder);for(const [index,entry]of ordered.entries()){const row=el('div','quick-order-row');row.append(el('span','',entry.title));for(const [direction,label,disabled]of [[-1,'上移',index===0],[1,'下移',index===ordered.length-1]]){const button=el('button','soft-button quick-order-mutation',label);button.type='button';button.disabled=disabled;button.setAttribute('aria-label',label+'：'+entry.title);button.addEventListener('click',()=>{changes=BookmarkQuick.moveQuick(entries,[...favorites],changes,entry.id,direction);queueFileSave();renderQuick();renderQuickManager();[...list.querySelectorAll('button')].find(node=>node.getAttribute('aria-label')===label+'：'+entry.title&&!node.disabled)?.focus();});row.append(button);}list.append(row);}}
@@ -208,6 +213,7 @@
   for(const b of document.querySelectorAll('.nav-button')){const active=!isHome&&b.dataset.category===current;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));b.querySelector('.count').textContent=b.dataset.category==='favorites'?entries.filter(e=>favorites.has(e.id)).length:b.dataset.category==='all'?entries.length:entries.filter(e=>e.category===b.dataset.category).length;}
   renderQuick();
   let rows=selectBookmarks(entries,{...state,favorites:[...favorites]});
+  // 網址排序不能再套工作系統優先，否則畫面顯示的排序名稱會與實際結果不一致。
   const sort=state.simpleLinks&&!state.favoriteOnly?state.allSort:state.sort;$('sort').value=sort;
   if(sort==='url')rows.sort((a,b)=>a.url.localeCompare(b.url,'en'));
   if(sort==='name')rows.sort((a,b)=>a.title.localeCompare(b.title,'zh-Hant'));
@@ -265,6 +271,7 @@
   if(!available)$('url-check-message').textContent='此網站未設定連線檢查服務，請使用本機網站執行。';
   else if(!remote?.account)$('url-check-message').textContent='請先登入 Google Drive 並載入書籤。';
  }
+ // 檢查期間不逐筆改書籤；全部完成並確認帳號／資料集未變後，才合併並自動存回 Drive。
  $('run-url-check').addEventListener('click',async()=>{
   const remote=cloud?.state;if(checkJob||remote?.phase!=='ready'||cloud.hasUnsaved||!remote.online||!entries.length)return;
   const targets=checkTargets();if(!targets.length)return;const full=$('url-check-scope').value==='all';
@@ -276,6 +283,7 @@
     if(!response.ok)throw new Error(response.status===404?'連線檢查服務尚未就緒，請重新啟動本機網站。':'檢查服務暫時無法完成，請稍後重試。');return response.json();
    }});
    controller.signal.throwIfAborted();if(cloud.state.account?.id!==job.account||cloud.state.datasetId!==job.dataset||fileError)throw new Error('連線或資料已變更，未套用檢查結果。');
+   // 進入存檔後結果已套用；即使視窗關閉，也不能把已開始的雲端寫入當作撤銷。
    job.stage='saving';updateCheckControls();changes=BookmarkCheck.mergeResults(entries,changes,results);if(full)checkedAt=new Date().toISOString();refreshLibrary();$('url-check-message').textContent='檢查完成，正在同步至 Google Drive…';
    await cloud.save(snapshot());
    $('url-check-message').textContent=cloud.state.phase==='ready'?'檢查完成，已同步至 Google Drive。':'檢查完成，但同步尚未完成，請到「雲端管理」處理或下載備份。';
@@ -291,5 +299,6 @@
  $('total-top').textContent=entries.length;
  $('library-title').tabIndex=-1;
  render();cloud=BookmarkDriveUI.mount({onChange:cloudChanged,download:downloadData});
+ // 等第一次恢復授權與讀取結束再揭露畫面，避免先顯示 0 筆／登入，再跳成已連接。
  try{await cloud.initialLoad;}finally{document.body.removeAttribute('data-bookmarks-loading');$('bookmark-startup').setAttribute('aria-hidden','true');$('bookmark-startup').inert=true;}
 })();

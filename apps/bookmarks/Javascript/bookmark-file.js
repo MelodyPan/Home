@@ -1,4 +1,4 @@
-// 書籤 JSON 格式的共用入口，供瀏覽器建立快照、服務端驗證存檔內容。
+// 書籤 JSON 格式的共用入口，供瀏覽器建立／還原備份，以及 Drive 存取層驗證內容。
 (function(root,factory){if(typeof module==='object'&&module.exports)module.exports=factory(require('./bookmark-core.js'));else root.BookmarkFile=factory(root.BookmarkCore);})(typeof globalThis!=='undefined'?globalThis:this,function(core){
  const {CATEGORIES,STATUS,loadLibraryChanges,mergeLibrary}=core;
  // baseEntries、changes 與 favorites 是可還原資料；entries 是重新合併的衍生結果。
@@ -9,6 +9,7 @@
  }
  // 採嚴格驗證：格式、重複 ID、欄位型別與參照關係有誤就停止載入。
  // 不信任檔案附帶的 entries，而是回傳來源資料，交由核心重新合併。
+ // 這裡接收網站下載的內層備份，不接受含 format／datasetId／data 的 Drive 版本外層。
  function readDataFile(text){
   const data=JSON.parse(text);const fail=()=>{throw new Error('書籤資料檔格式不正確，請還原備份後重試。');};
   if(!data||data.schemaVersion!==1||!Array.isArray(data.baseEntries)||!data.changes||!Array.isArray(data.favorites)||!Number.isFinite(Date.parse(data.checkedAt)))fail();

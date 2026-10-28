@@ -67,10 +67,10 @@ dialog{width:calc(100% - 36px);max-width:460px;max-height:calc(100vh - 36px);ove
 .url-check-controls{margin:16px 0;padding:14px;border:1px solid #e2d5dd;border-radius:12px}.url-check-controls progress{display:block;width:100%;margin-top:12px;accent-color:#956080}.url-check-controls progress[hidden]{display:none}.url-check-controls button{margin:0 8px 8px 0}.url-check-controls button:disabled{opacity:.5;cursor:default}
 .quick-order-row{display:flex;align-items:center;gap:8px;margin:10px 0}.quick-order-row>span{flex:1;min-width:0;overflow-wrap:anywhere}.quick-order-row button{white-space:nowrap}.url-check-controls select{display:block;width:100%;padding:8px;margin-top:8px;border:1px solid #d8cbd3;border-radius:8px;background:white;color:inherit}.recheck-button{padding:5px 9px;font-size:11px}
 
-/* Upper navigation uses the same compact links as the home favorites. */
+/* 上方簡易入口沿用常用入口樣式；詳細卡片仍使用原本的格狀／清單規則。 */
 .bookmark-grid[data-presentation=simple]{grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr));gap:14px}
 
-/* Keep the uninitialized page covered until the tab authorization has resumed. */
+/* 恢復分頁授權前遮住未初始化介面，避免 0 筆／未登入的中間畫面；不是本機書籤快取。 */
 :root{scrollbar-gutter:stable}
 .bookmark-startup{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;background:#fff8f3;color:#85657b;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .15s ease,visibility 0s .15s}
 .bookmark-startup-content{width:min(300px,80vw);text-align:center}.bookmark-startup svg{width:40px;height:40px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linejoin:round}.bookmark-startup p{margin:18px 0 24px;font-size:15px;letter-spacing:.05em}
@@ -79,3 +79,6 @@ body[data-bookmarks-loading]>.sidebar,body[data-bookmarks-loading]>.workspace{vi
 @media(prefers-reduced-motion:reduce){.bookmark-startup{transition:none}}
 
 .scroll-top-button{position:fixed;right:max(20px,env(safe-area-inset-right));bottom:max(20px,env(safe-area-inset-bottom));z-index:25;display:grid;place-items:center;width:48px;height:48px;border:1px solid #a47b9d;border-radius:50%;background:#916087;color:#fff;font-size:17px;font-weight:650;box-shadow:0 4px 14px #76536f33}.scroll-top-button:hover{background:#795271}
+
+/* 共用主題較晚載入；用 toast ID 提高優先序，確保白字不再被灰字規則蓋掉。 */
+body[data-page=bookmarks] #toast{color:#fff;font-size:14px;font-weight:500;line-height:1.7;bottom:max(25px,env(safe-area-inset-bottom));overflow-wrap:anywhere}

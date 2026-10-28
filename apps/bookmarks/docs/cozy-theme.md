@@ -1,8 +1,10 @@
 # 全站溫馨可愛主題說明
 
-更新日期：2026-10-24。
+> 此文件保留當時的設計／評估紀錄，不作為目前完整操作規則。現行行為請看 [使用指南](../../../docs/bookmarks-guide.md) 與 [開發維護說明](../../../docs/bookmarks-development.md)。
 
-導覽：[文件首頁](README.md) · [成長相簿說明](growth-album.md)
+設計紀錄日期：2026-10-24；2026-10-29 校正檔案連結與指令。書籤歡迎區後續已移除，下文保留當時設計背景。
+
+導覽：[文件首頁](README.md) · [成長相簿說明](../../growth/docs/growth-album.md)
 
 ## 設計範圍
 
@@ -14,11 +16,11 @@
 
 | 檔案 | 用途 |
 | --- | --- |
-| [src/cozy-theme.css](../src/cozy-theme.css) | 共用色彩、按鈕、表單、對話框，以及各頁面的主題調整 |
+| [apps/shared/src/cozy-theme.css](../../shared/src/cozy-theme.css) | 共用色彩、按鈕、表單、對話框，以及各頁面的主題調整 |
 | [src/home.css](../src/home.css) | 書籤原始版型、格狀／清單排列及功能樣式 |
 | [src/home.html](../src/home.html) | 書籤首頁範本、歡迎區與主題引用 |
-| [src/growth.css](../src/growth.css) | 成長相簿版型、拍立得、照片選擇與時間軸 |
-| [growth.html](../growth.html) | 成長相簿入口與主題引用 |
+| [apps/growth/src/growth.css](../../growth/src/growth.css) | 成長相簿版型、拍立得、照片選擇與時間軸 |
+| [apps/growth/growth.html](../../growth/growth.html) | 成長相簿入口與主題引用 |
 | [scripts/server.cjs](../scripts/server.cjs) | 以固定路由提供共用主題，不公開任意樣式檔案 |
 
 共用主題在各頁原本樣式之後載入。書籤頁使用 `body[data-page="bookmarks"]`，相簿頁使用 `body[data-page="growth"]` 作為範圍，避免同名類別互相影響。
@@ -57,8 +59,8 @@
 ## 修改與驗證方式
 
 ```powershell
-node scripts/build-home.cjs
-node --test
+node apps/bookmarks/scripts/build-home.cjs
+npm test
 ```
 
 單獨修改 `cozy-theme.css` 後重新整理即可，不需要重建相簿或重啟服務。修改首頁範本後需重建 `bookmarks.html`；修改服務路由後重新執行 `start-home.cmd`，讓啟動器更新版本。

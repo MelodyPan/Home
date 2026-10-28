@@ -1,11 +1,14 @@
 # 書籤工作台
 
-在 Home 根目錄執行 `npm start`，從首頁的「書籤工作台」卡片進入，或開啟 `http://127.0.0.1:4179/bookmarks/`。
+這個網站整理個人網站連結，資料一律保存在自己的 Google Drive，電腦與手機可使用同一份書籤。
 
-書籤一律使用私人 Google Drive，電腦與手機以同一 Google 帳號連接。先依 [Google Drive 設定步驟](docs/google-drive-setup.md) 建立 OAuth Client ID，填入 Home 根目錄的 `bookmarks.config.json`。未連接時不載入書籤，也不回退至本機資料。
+- **第一次使用：** [使用指南](../../docs/bookmarks-guide.md)，從登入、找書籤到備份逐步說明。
+- **設定網站：** [Google Drive 設定](docs/google-drive-setup.md)，給管理者設定 OAuth Client ID。
+- **維護程式：** [開發維護說明](../../docs/bookmarks-development.md)，說明模組、資料與驗證方式。
+- **查歷次改動：** [調整總整理](../../docs/bookmarks-adjustments.md)。
 
-`bookmarks.html` 為入口；`src/home.html` 與 `src/home.css` 為建置範本。重建頁面執行 `node apps/bookmarks/scripts/build-home.cjs`，只產生空白公開頁；私人資料於 Google 授權後從 Drive 載入。以台灣日期每天一檔，同日同步更新該檔，前幾天檔案保留，衝突時可選擇要採用的版本。
+線上入口：https://melodypan.github.io/Home/bookmarks/ 。本機在 Home 根目錄執行 `npm start` 後開啟 http://127.0.0.1:4179/bookmarks/ 。
 
-成長相簿已拆至 `../growth/`，原有儲存方式未變更。Home 的 `npm test` 執行全部網站測試；`npm run build` 建置使用 Drive 的書籤網站與相簿預覽，不包含私人資料。
+本機與線上都使用 Google Drive；本機另外提供網址連線檢查。GitHub Pages 目前沒有檢查服務，按鈕停用是預期限制。
 
-詳見 [Home 整合說明](docs/home-integration.md) 及 [書籤操作指南](docs/user-guide.md)。
+`src/home.html` 與 `src/home.css` 是範本，執行 `node apps/bookmarks/scripts/build-home.cjs` 產生 `bookmarks.html`。公開頁不內嵌私人書籤，登入後才從 Drive 載入。

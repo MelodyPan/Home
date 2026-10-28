@@ -1,28 +1,25 @@
-# Home 與書籤／成長相簿整合
+# Home 與書籤子網站整合
 
-更新日期：2026-10-26。
+更新日期：2026-10-29。本文件只描述書籤；其他子網站的儲存與部署方式，請閱讀各自文件。
 
-## 使用方式
+## 本機開啟
 
-在 Home 根目錄執行 npm start 或雙擊 start-home.cmd。首頁為 http://127.0.0.1:4179/；書籤入口 /bookmarks/，相簿入口 /growth/。Home 的停止服務仍位於 /admin/ 右上角，會等待相簿寫入完成。停止本機服務不代表 Drive 草稿已同步，關閉書籤前須確認同步狀態。
+在 Home 根目錄執行 `npm start` 或使用既有 Home 啟動器，再開啟 http://127.0.0.1:4179/bookmarks/ 。不要直接雙擊 HTML 使用 OAuth。
 
-bookmarks 僅使用 Google Drive，localhost 也不讀寫本機書籤。依 [Drive 設定](google-drive-setup.md) 設定 Client ID，連接自己的帳號並首次匯入。舊 /bookmarks/assets/bookmarks-data.txt、/bookmarks/api/bookmarks 已移除；另提供手動觸發、無狀態的網址連線檢查 API，不讀寫本機書籤。
+本機服務提供網頁、公開設定與無狀態網址檢查 API。它不讀寫舊書籤資料檔，也不提供舊 `/bookmarks/api/bookmarks` 儲存 API；書籤仍透過 Google 授權讀寫 Drive。
 
-成長相簿維持原有本機儲存。Home 的 .home-local.json 仍可提供 growthDataRoot；為相容既有安裝，也沿用 bookmarksDataRoot 作為相簿的舊資料根目錄。這個舊設定名稱不代表書籤仍會讀取該處資料。本機既有書籤、照片及備份皆不刪除。
-
-## 程式與資料
-
-- apps/bookmarks：書籤頁面、Drive 存取及測試。
-- apps/growth：相簿程式與原有本機資料服務。
-- apps/shared：共用主題、runtime 與相簿使用的資料鎖。
-- bookmarks.config.json：公開 Google OAuth Client ID，不含密碼或私鑰。
-- .home-local.json：Git 忽略的相簿資料位置設定。
-- dist：公開建置產物，不包含私人書籤、相簿 JSON、照片或備份。
-
-舊相簿網址及 API 轉址保持原有行為。相簿仍保留跨程序資料鎖與 ETag；書籤已不使用本機檔案鎖。
+手機上的 127.0.0.1 是手機本身，不會連到電腦。跨裝置平常使用線上 HTTPS 網址。
 
 ## 公開建置
 
-npm test 執行各子站測試；npm run build 建置書籤 Drive 模式與相簿唯讀預覽。只有設定公開 Client ID 後才能連接 Drive；未設定時顯示設定提示。公開首頁依原有行為不列私人子網站入口，部署後可直接開啟 /Home/bookmarks/。
+從 Home 根目錄執行 `npm test` 與 `npm run build`，只發布 `dist/`。書籤頁由範本產生空白資料，登入後才載入私人 Drive。圖片路徑與模組皆需支援 GitHub 專案子路徑 `/Home/`。
 
-GitHub Actions 只發布 dist，可透過 BOOKMARKS_GOOGLE_CLIENT_ID Repository Variable 注入 Client ID；詳見 Drive 設定文件。本次程式修改不會自行推送或發布網站，也不會自動上傳舊資料。
+公開建置不包含 Node.js 伺服器，因此不提供網址檢查。不能把本機的 urlCheckAvailable 設定直接當成線上能力。
+
+公開 Google Client ID 來自 `BOOKMARKS_GOOGLE_CLIENT_ID` 或根目錄 `bookmarks.config.json`，設定見 [Google Drive 設定](google-drive-setup.md)。Client Secret 或存取 token 不應放入公開設定。
+
+## 發布
+
+既有 GitHub Actions 會在 main 推送後測試、建置、部署。更新前確認提交範圍，避免混入私人資料與其他子網站未完成的改動；部署成功後再確認公開頁面與資源版本。
+
+完整模組與驗證方式見 [開發維護說明](../../../docs/bookmarks-development.md)，一般使用見 [使用指南](../../../docs/bookmarks-guide.md)。

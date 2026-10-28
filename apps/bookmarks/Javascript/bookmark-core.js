@@ -159,6 +159,8 @@
  function assignWorkSubcategory(changes,entry,id){const workSubcategoryAssignments={...changes.workSubcategoryAssignments};if(!id){delete workSubcategoryAssignments[entry.id];return {...changes,workSubcategoryAssignments};}if(!['work','dev'].includes(entry.category))throw new Error('只有工作系統或程式開發書籤可以設定此分類。');if(!(changes.workSubcategories||[]).some(c=>c.id===id&&(c.category||'work')===entry.category))throw new Error('找不到這個第二層分類。');workSubcategoryAssignments[entry.id]=id;return {...changes,workSubcategoryAssignments};}
  // 產生畫面使用的衍生清單：先排除刪除項目，套用名稱／網址異動，
  // 再套用自動檢查、分類、手動狀態與子分類；手動狀態優先於自動結果。
+ // 顯示資料每次由來源與異動重建：名稱／網址修改 → 自動檢查 → 手動分類 → 手動狀態。
+ // 手動狀態最後套用，所以重新檢查不會蓋掉人工判斷；移除覆寫才會恢復自動結果。
  function mergeLibrary(base,changes){const deleted=new Set(changes.deletedIds);return [...changes.added].reverse().concat(base).filter(e=>!deleted.has(e.id)).map(original=>{
   const detail=changes.entryOverrides?.[original.id];const source=detail?{...original,title:detail.title,...(detail.url?{url:detail.url,domain:new URL(detail.url).hostname.replace(/^www\./,''),status:'unknown',code:0,reason:'網址已修改，尚未檢查',finalUrl:detail.url}:{} )}:original;
   const checked=Object.hasOwn(changes.urlChecks||{},source.id)?changes.urlChecks[source.id]:null;const e=checked?{...source,...checked,statusSource:'automatic'}:source;

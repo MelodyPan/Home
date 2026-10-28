@@ -38,6 +38,7 @@ async function probeHttp(url,{method,signal}){
 }
 // 整筆檢查共用逾時與取消訊號；先 HEAD，必要時改 GET，仍只使用回應狀態。
 // 登入限制、404／410、連線異常分開記錄，連線失敗不直接判定網站已失效。
+// HTTP 狀態只是可達性訊號：2xx 不保證內容相同，逾時／TLS／DNS 問題不能直接標成失效。
 async function checkUrl(raw,{probe=probeHttp,timeoutMs=12000,signal:parentSignal}={}){
  const timeout=AbortSignal.timeout(timeoutMs);const signal=parentSignal?AbortSignal.any([timeout,parentSignal]):timeout;
  let finalUrl=raw,code=0;

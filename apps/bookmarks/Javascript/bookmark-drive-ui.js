@@ -6,7 +6,8 @@
   let credential='',expires=0,session,importing=false,selectingImport=false;
   let tabStorage;try{tabStorage=window.sessionStorage;}catch{}
   const login=BookmarkLogin.createLoginCache({storage:tabStorage,clientId:config.googleClientId});
-  let expiring=false,details=null;
+  // pendingAuthorization 是尚未完成的登入要求；credential 是成功後憑證，兩者不能混用。
+  let expiring=false,details=null,pendingAuthorization=null;
   const store=BookmarkDrive.createDriveStore({token:()=>Date.now()<expires?credential:''});
   const clearAuthorization=()=>{credential='';expires=0;details=null;login.clear();renderTokenDetails();};
   function renderTokenDetails(){const node=$('cloud-token-details');node.hidden=!credential;node.textContent=!credential?'':details?'Google 回傳 expires_in：'+details.expiresIn+' 秒（約 '+(details.expiresIn/60).toFixed(1)+' 分鐘）。取得時間：'+new Date(details.receivedAt).toLocaleString('zh-TW',{timeZone:'Asia/Taipei',hour12:false})+'（台灣時間）':'這次登入尚未記錄 Google 回傳的 expires_in；請重新連接後查看。';}
@@ -14,15 +15,35 @@
    if(!config.googleClientId)return Promise.reject(new Error('請先設定 Google OAuth Client ID，設定方式見專案的 Google Drive 操作說明。'));
    if(!globalThis.google?.accounts?.oauth2)return Promise.reject(new Error('Google 登入元件尚未載入，請檢查網路或阻擋設定後重試。'));
    return new Promise((resolve,reject)=>{
-    const client=google.accounts.oauth2.initTokenClient({client_id:config.googleClientId,scope:'https://www.googleapis.com/auth/drive.file',callback:response=>{
-     if(response.error||!response.access_token){reject(new Error('Google 授權未完成，請重新連接。'));return;}
-     if(!google.accounts.oauth2.hasGrantedAllScopes(response,'https://www.googleapis.com/auth/drive.file')){reject(new Error('需要允許網站存取它建立的 Drive 書籤檔案。'));return;}
-     resolve(response);
-    },error_callback:()=>reject(new Error('Google 登入視窗已關閉或被阻擋，請再試一次。'))});
-    client.requestAccessToken({prompt});
+    let settled=false,leftPage=false,returnTimer,timeout;
+    // 無論成功、拒絕、取消或逾時，統一清理；避免上一輪監聽影響下一次登入。
+    const cleanup=()=>{clearTimeout(returnTimer);clearTimeout(timeout);window.removeEventListener('blur',leave);window.removeEventListener('focus',returned);window.removeEventListener('pageshow',returned);document.removeEventListener('visibilitychange',visibility);};
+    // 一次要求只能完成一次；取消後遲到的 callback 不可把舊 token 當成新登入。
+    const finish=(error,response)=>{if(settled)return;settled=true;cleanup();if(pendingAuthorization===attempt)pendingAuthorization=null;if(error)reject(error);else resolve(response);};
+    const attempt={cancel:()=>finish(new Error('已取消 Google 登入，可以再次連接 Google Drive。'))};
+    const leave=()=>{leftPage=true;clearTimeout(returnTimer);};
+    // iPhone 外部驗證頁可能沒有回報關閉；回頁後留 1.5 秒接正常回應，再解除等待。
+    // 這是恢復策略，不代表確認 popup 已關閉；使用者主動切回也可能取消當次要求。
+    const returned=()=>{if(!leftPage||document.hidden||settled)return;clearTimeout(returnTimer);returnTimer=setTimeout(attempt.cancel,1500);};
+    const visibility=()=>{if(document.hidden)leave();else returned();};
+    pendingAuthorization=attempt;
+    window.addEventListener('blur',leave);window.addEventListener('focus',returned);window.addEventListener('pageshow',returned);document.addEventListener('visibilitychange',visibility);
+    // 限制的是登入要求等待時間，不是登入成功後的 Google token 使用效期。
+    timeout=setTimeout(()=>finish(new Error('Google 登入尚未完成，請再試一次。')),5*60*1000);
+    try{
+     const client=google.accounts.oauth2.initTokenClient({client_id:config.googleClientId,scope:'https://www.googleapis.com/auth/drive.file',callback:response=>{
+      if(settled)return;
+      if(response.error||!response.access_token){finish(new Error('Google 授權未完成，請重新連接。'));return;}
+      if(!google.accounts.oauth2.hasGrantedAllScopes(response,'https://www.googleapis.com/auth/drive.file')){finish(new Error('需要允許網站存取它建立的 Drive 書籤檔案。'));return;}
+      finish(null,response);
+     },error_callback:()=>finish(new Error('Google 登入視窗已關閉或被阻擋，請再試一次。'))});
+     client.requestAccessToken({prompt});
+    }catch(error){finish(error);}
    });
   }
+  // 僅採 Google 真正回傳的 expires_in，缺少有效值就停止；不猜一小時、不自動續期。
   const tokenExpiry=response=>{const details=BookmarkLogin.tokenDetails(response);if(!details)throw new Error('Google 未回傳有效的授權期限，請重新登入。');return details.receivedAt+details.expiresIn*1000;};
+  // F5 只恢復同分頁未過期的授權；書籤內容仍須由 CloudSession 重新讀取 Drive。
   async function authorize({resume=false}={}){
    if(resume){const saved=login.read();if(!saved)throw new Error('登入已逾時，請重新連接 Google Drive。');credential=saved.token;expires=saved.expires;details=saved.tokenDetails||null;renderTokenDetails();return;}
    let response;try{response=await requestToken('select_account');}catch(error){clearAuthorization();throw error;}
@@ -35,7 +56,8 @@
    $('cloud-disconnect').hidden=!state.account;$('cloud-disconnect').disabled=occupied;
    $('cloud-sync').hidden=!state.account;$('cloud-sync').disabled=occupied||state.phase!=='ready'||!state.online;
    const connected=!!state.account&&!!credential;
-   $('drive-login').textContent=connected?'登出':'登入';$('drive-login').title=connected?'中斷 Google Drive 連接':'登入 Google Drive';$('drive-login').disabled=occupied;
+   // 連接中仍讓「登入」可點，以便取消卡住的授權；載入與寫入期間仍保留保護。
+   $('drive-login').textContent=connected?'登出':'登入';$('drive-login').title=connected?'中斷 Google Drive 連接':'登入 Google Drive';$('drive-login').disabled=occupied&&state.phase!=='connecting';
    $('drive-login').setAttribute('aria-haspopup',connected?'false':'dialog');
    $('drive-manage').hidden=!connected;
    $('cloud-account').textContent=state.error?.code==='account'?'請重新連接原帳號':state.account?.email||'尚未連接';
@@ -59,7 +81,7 @@
   session=BookmarkCloud.createCloudSession({store,authorize,clearAuthorization,onChange:update});
   const openManager=()=>{if(!$('drive-dialog').open)$('drive-dialog').showModal();};
   $('drive-manage').addEventListener('click',openManager);
-  $('drive-login').addEventListener('click',()=>{if(session.state.account&&credential)disconnect();else openManager();});
+  $('drive-login').addEventListener('click',()=>{if(pendingAuthorization){pendingAuthorization.cancel();openManager();return;}if(session.state.account&&credential)disconnect();else openManager();});
   $('close-drive-dialog').addEventListener('click',()=>$('drive-dialog').close());
   $('drive-dialog').addEventListener('click',event=>{if(event.target!==$('drive-dialog'))return;const rect=event.target.getBoundingClientRect();if(event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom)event.target.close();});
   $('cloud-connect').addEventListener('click',()=>session.connect());
@@ -73,6 +95,7 @@
   $('reimport-data').addEventListener('click',()=>$('cloud-import').click());
   $('cloud-import').addEventListener('click',()=>{selectingImport=true;});
   $('cloud-import').addEventListener('cancel',()=>{selectingImport=false;});
+  // 選檔與確認可能跨越帳號／資料集變更；套用前重新核對，避免匯入到錯誤位置。
   $('cloud-import').addEventListener('change',async event=>{
    selectingImport=false;
    const selected=event.target.files[0];event.target.value='';if(!selected)return;
@@ -93,6 +116,7 @@
   window.addEventListener('online',()=>{session.setOnline(true);session.refresh();});window.addEventListener('offline',()=>session.setOnline(false));
   const refresh=()=>{if(!selectingImport&&!importing&&!document.hidden&&!document.querySelector('dialog[open]'))session.refresh();};
   document.addEventListener('visibilitychange',refresh);window.addEventListener('focus',refresh);
+  // 效期結束時移除 token 與私人畫面；若有上傳仍在執行，下次檢查再嘗試完成清除。
   async function checkExpiry(){
    if(!credential&&!expiring)return;
    if(!expiring&&Date.now()<expires)return;

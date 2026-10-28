@@ -1,11 +1,13 @@
-# Bookmarks 雲端儲存
+# 書籤雲端儲存摘要
 
-更新日期：2026-10-26。使用者已選擇私人 Google Drive，僅供本人跨裝置使用，且明確要求不保留書籤本機儲存方式。
+更新日期：2026-10-29。一般操作見 [使用指南](../../../docs/bookmarks-guide.md)，程式設計見 [開發維護說明](../../../docs/bookmarks-development.md)。
 
-設定與驗收見 [Google Drive 設定](google-drive-setup.md)，架構見 [開發指南](README.md)。本機及公開網站皆採 Drive，未連接不能編輯；成長相簿未包含在本次雲端改造。
+書籤一律使用私人 Google Drive，不提供本機資料儲存模式，不需要 Cloud Storage bucket、服務帳號或公開分享資料夾。
 
-每日書籤檔透過 Drive API 建立，同日以 ETag 條件式更新，台灣日期跨日後有修改才新增檔案，資料檔不公開分享。OAuth 採 drive.file，token 僅暫存在目前分頁 sessionStorage，登入期限以 Google 回傳的 expires_in 為準，不自動續期，於憑證到期時清除；同步失敗的草稿只在目前分頁，使用者可手動下載。並行修改以條件式更新阻止舊資料覆寫；原分頁保留未同步草稿，由使用者選擇版本。
+檔案位於 MelodyHome，以台灣日期每天一檔。同日條件式更新，跨日有修改才新增。版本衝突由使用者選擇，不自動覆蓋另一台裝置的新資料。
 
-首次匯入由使用者選擇舊 bookmarks-data.txt 並確認數量，不自動讀取或上傳原本私人資料。真正連線需要使用者建立 Google 專案、啟用 Drive API 並設定 Web Client ID；尚未完成真實帳號驗證時，不把模擬測試當成正式驗收。
+OAuth 使用 drive.file；token 僅暫存在目前分頁 sessionStorage。效期依 Google 回傳 expires_in，不設 10 小時續期窗口。未同步草稿只在記憶體，失敗時先下載備份。
 
-本方案不建立 Cloud Storage bucket 或服務帳號，不需要把 Drive 資料夾設成公開。
+第一次或再次匯入，請使用網站提供的 JSON 匯入功能，不是直接把任意檔案放進 Drive。Chrome HTML 匯出檔不是目前網頁接受的匯入格式。
+
+本機與公開網站都讀寫同一份 Drive 書籤；只有本機提供網址檢查服務。設定與管理者操作見 [Google Drive 設定](google-drive-setup.md)。

@@ -1,5 +1,6 @@
 // Stateless local URL checks: no bookmark documents, files, credentials or job storage.
 const {checkUrl}=require('./url-checker.cjs');
+// API 僅收一個 URL 並回傳結果，不接收 Google token、不寫書籤檔；整批套用由前端負責。
 function createUrlCheckApi({check=checkUrl,maxConcurrent=6}={}){
  let active=0;
  return async function handle(req,res,{origin,stopping=false}){
@@ -9,6 +10,7 @@ function createUrlCheckApi({check=checkUrl,maxConcurrent=6}={}){
   if(req.method!=='POST'){send(405,{error:'Method not allowed'});return;}
   if(req.headers.origin!==origin||!/^application\/json(?:;|$)/i.test(req.headers['content-type']||'')){send(403,{error:'Invalid origin or content type'});return;}
   if(active>=maxConcurrent){send(429,{error:'已有檢查進行中，請稍後再試。'});return;}
+  // 回應連線關閉時取消探測；active 在 finally 歸還，避免取消後耗盡可用檢查數。
   active++;const controller=new AbortController(),abort=()=>controller.abort();res.on('close',abort);
   try{
    let body='';for await(const chunk of req){body+=chunk;if(Buffer.byteLength(body)>16384){send(413,{error:'網址過長。'});return;}}

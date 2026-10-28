@@ -1,6 +1,6 @@
-# Google Drive 書籤設定
+# Google Drive 書籤設定（管理者）
 
-更新日期：2026-10-26。bookmarks 現在只使用你自己的 Google Drive。電腦與手機開啟同一個網站、連接同一 Google 帳號，即可載入同一份書籤。成長相簿的儲存方式未變更。
+更新日期：2026-10-29。這份文件供網站管理者完成首次設定；一般使用者看 [使用指南](../../../docs/bookmarks-guide.md)，已設定好的網站不需要每台裝置重做以下步驟。書籤只使用私人 Google Drive，這裡不描述其他子網站的儲存。
 
 ## 1. 建立 Google 專案並啟用 Drive API
 
@@ -8,7 +8,7 @@
 2. 在上方專案選單建立專案，例如 `Home Bookmarks`，也可使用你已有的專案。
 3. 開啟「API 和服務」→「程式庫」，搜尋 **Google Drive API**，按「啟用」。
 
-本功能不使用 Google Cloud Storage bucket，也不需要服務帳號私鑰。Drive API 的使用及可能適用的計費、配額，請查看[官方用量說明](https://developers.google.com/workspace/drive/api/guides/limits)；檔案占用你的 Google Drive 容量。每次存檔保留完整版本，容量會隨使用累積。
+本功能不使用 Google Cloud Storage bucket，也不需要服務帳號私鑰。Drive API 的使用及可能適用的計費、配額，請查看[官方用量說明](https://developers.google.com/workspace/drive/api/guides/limits)；檔案占用你的 Google Drive 容量。當日檔案保存完整快照並重複更新；保留的歷史每日檔案仍會占用容量。
 
 ## 2. 設定 Google Auth Platform
 
@@ -63,7 +63,7 @@ Client ID 是公開設定，可隨網站發布。不要填 Client Secret、Googl
 npm start
 ```
 
-開啟 `http://127.0.0.1:4179/bookmarks/bookmarks.html`。本機伺服器現在只提供書籤網頁，資料仍一律從 Drive 讀寫。
+開啟 `http://127.0.0.1:4179/bookmarks/bookmarks.html`。npm start 啟動 Home 共用服務，也會提供其他子網站；對書籤子網站只提供網頁、公開設定與檢查 API，不讀寫本機書籤檔，資料仍一律從 Drive 讀寫。
 
 線上使用需執行 `npm run build` 並部署 `dist/`，或透過既有 GitHub Pages 工作流程部署。網站入口為 `https://melodypan.github.io/Home/bookmarks/`（部署完成後）；公開首頁仍不列出私人子網站卡片，可將此網址加入瀏覽器收藏。
 
@@ -71,7 +71,7 @@ npm start
 
 1. 按網頁右上角「登入」，在管理視窗內按「連接 Google Drive」，選擇自己的帳號並允許權限。
 2. 尚無雲端書籤時，按「匯入書籤資料檔」，選取原本的 `bookmarks-data.txt`。
-3. 這台電腦原始資料位置是 `C:\Users\D078\source\repos\Bookmarks\assets\bookmarks-data.txt`。程式不會自動讀取或刪除它。
+3. 請從使用者實際保存的位置選擇本網站 JSON 備份；不要假定舊專案的本機路徑仍存在。若只有 Chrome HTML 匯出檔，目前需先轉成網站支援的備份格式。
 4. 確認顯示的書籤、收藏數量，再同意匯入。要保留原資料時，請不要選「建立空白書籤」。
 5. 等待顯示「已同步至 Google Drive」。
 
@@ -94,7 +94,7 @@ Google Drive 連接、帳號、同步狀態、「重新同步」、匯入、匯�
 ## 7. 同步失敗與衝突
 
 - 修改會依序同步；關閉分頁前，確認顯示「已同步至 Google Drive」。
-- 無網路、權限失效或配額錯誤會停止新的編輯。未同步內容只留在目前分頁，提供重試及「下載目前資料」。關閉分頁或瀏覽器仍可能遺失未同步變更。
+- 無網路、權限失效或配額錯誤會停止新的編輯。未同步內容只留在目前分頁，提供重試及「下載未同步資料」。關閉分頁或瀏覽器仍可能遺失未同步變更。
 - 授權過期，重新連接原 Google 帳號；選到不同帳號時不會把舊草稿寫入新帳號。
 - 不同裝置同時修改時，條件式更新阻止舊資料覆蓋較新的內容；未同步草稿留在原分頁。先下載需要留存的內容，再選擇雲端版本或目前分頁草稿，按「使用選取版本」更新當日檔案。不自動合併內容。
 - 版本檔尚未被 Drive 搜尋列出時可能暫時要求重試；重試沿用預先配置的檔案 ID，避免同一次儲存重複建立版本。
@@ -117,3 +117,5 @@ npm run build
 已連接時，右上角顯示「登出」，點擊即中斷 Google Drive 連接並清除分頁登入暫存；「雲端管理」開啟同步、匯入、匯出與備份視窗。未同步時，登出前仍會提示確認。
 
 開發備註：若 Drive v3 的回應未提供可讀取的 ETag，改以 v2 JSON 的 etag 與同版本的條件式更新儲存，保留 PRIVATE 應用程式屬性與 If-Match 保護。無法取得版本資訊時仍停止寫入，避免覆蓋其他裝置資料。
+
+取消 Google 驗證後的恢復方式、目前本機與線上版本差異，見 [iPhone 登入恢復說明](../../../docs/bookmarks-iphone-login-recovery.md)。操作與開發細節分別見 [使用指南](../../../docs/bookmarks-guide.md) 及 [開發維護說明](../../../docs/bookmarks-development.md)。
