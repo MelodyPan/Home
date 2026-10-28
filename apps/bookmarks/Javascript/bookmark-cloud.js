@@ -77,7 +77,12 @@
     const result=await store.resolve(state.datasetId,choice,expected);accept(result);state.draft=null;draftAccount=null;failed=null;
    }catch(e){failure(e);}finally{busy=false;notify();}
   }
-  async function refresh(){if(busy||state.pending||state.draft||state.phase!=='ready'||!state.online)return;try{await open(state.datasetId);}catch(e){failure(e);}}
+  async function refresh(){
+   if(busy||state.pending||state.draft||state.phase!=='ready'||!state.online)return;
+   const previous=state.document;busy=true;state.phase='loading';notify();
+   try{ensureAccount();const result=await store.read(state.datasetId);if(JSON.stringify(result.document)===JSON.stringify(previous))result.document=previous;accept(result);}
+   catch(e){failure(e);}finally{busy=false;notify();}
+  }
   async function disconnect({discard=false}={}){
    if(state.pending||busy)throw error('busy','正在同步，請等待完成。');
    if(state.draft&&!discard)throw error('dirty','尚有未同步草稿，請先下載備份或重試。');

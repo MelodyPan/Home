@@ -67,3 +67,12 @@ test('reimport replaces the current dataset as a new version and retains drafts 
  const f=fixture(),s=f.session;await s.connect();await s.replace({value:546});assert.equal(s.state.datasetId,'library');assert.equal(s.state.document.value,546);assert.equal(f.stats().writes,1);
  f.fail(Object.assign(new Error('offline'),{code:'network'}));await s.replace({value:547});assert.equal(s.state.draft.value,547);assert.equal(s.state.phase,'error');f.fail(null);await s.retry();assert.equal(s.state.document.value,547);
 });
+
+
+test('background refresh retains visible data and identical results retain document identity',async()=>{
+ const f=fixture(),s=f.session;await s.connect();const previous=s.state.document,read=f.store.read;let release;
+ const gate=new Promise(resolve=>release=resolve);f.store.read=async(...args)=>{await gate;return read(...args);};
+ const refreshing=s.refresh();assert.equal(s.state.document,previous,'visible bookmarks must not disappear while reading Drive');assert.equal(s.state.phase,'loading');
+ release();await refreshing;assert.equal(s.state.document,previous,'unchanged content must not rebuild the UI');assert.equal(s.state.phase,'ready');
+ f.store.read=async()=>{throw Object.assign(new Error('offline'),{code:'network'});};await s.refresh();assert.equal(s.state.document,previous);assert.equal(s.state.phase,'error');
+});

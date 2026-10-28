@@ -100,7 +100,7 @@
    try{await session.disconnect({discard:true});expiring=false;message('Google 授權已到期，請重新登入。');}catch{/* Wait for an in-flight save before clearing the view. */}
   }
   document.addEventListener('visibilitychange',checkExpiry);window.addEventListener('focus',checkExpiry);setInterval(checkExpiry,1000);
-  session.setOnline(navigator.onLine);if(login.read())session.connect({resume:true});return session;
+  session.setOnline(navigator.onLine);session.initialLoad=login.read()?session.connect({resume:true}):Promise.resolve();return session;
  }
  globalThis.BookmarkDriveUI={mount};
 })();
