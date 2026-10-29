@@ -18,6 +18,7 @@ GitHub Pages 發布靜態檔案，沒有 Node.js 檢查服務。畫面是否允�
 | [bookmark-file.js](../apps/bookmarks/Javascript/bookmark-file.js) | 建立與嚴格驗證 JSON 備份 |
 | [bookmark-drive.js](../apps/bookmarks/Javascript/bookmark-drive.js) | Drive 私人資料夾、每日檔案、版本關係、條件式寫入與冪等重試 |
 | [bookmark-cloud.js](../apps/bookmarks/Javascript/bookmark-cloud.js) | 連接狀態、帳號確認、同步佇列、分頁草稿與衝突 |
+| [bookmark-cache.js](../apps/bookmarks/Javascript/bookmark-cache.js) | 帳號同意設定、成功同步快照、格式驗證與原子替換 |
 | [bookmark-login.js](../apps/bookmarks/Javascript/bookmark-login.js) | 分頁授權暫存及實際 `expires_in` 資訊 |
 | [bookmark-drive-ui.js](../apps/bookmarks/Javascript/bookmark-drive-ui.js) | Google 授權生命週期、登入管理視窗、匯入與效期清除 |
 | [bookmark-check.js](../apps/bookmarks/Javascript/bookmark-check.js) | 檢查範圍、URL 去重、前端敏感網址過濾與結果合併 |
@@ -34,9 +35,11 @@ GitHub Pages 發布靜態檔案，沒有 Node.js 檢查服務。畫面是否允�
 | --- | --- |
 | Google Drive | 正式書籤、收藏、分類、排序、檢查結果及歷史每日檔 |
 | 分頁記憶體 | 目前已載入資料、未同步草稿、UI 篩選及同步工作 |
-| 瀏覽器儲存 | `sessionStorage` 保存授權相關資料；`localStorage` 保存格狀／清單偏好 |
+| 瀏覽器儲存 | `sessionStorage` 保存授權相關資料；`localStorage` 保存格狀／清單偏好，以及使用者同意後的已同步書籤快取與同意選擇 |
 
-沒有私人書籤的 localStorage／IndexedDB 離線資料庫，也不會從舊本機資料 API 自動恢復書籤。重新整理會重新讀 Drive；草稿不能靠授權暫存恢復。
+不從舊本機資料 API 自動恢復書籤。BookmarkCache 僅在同意後保存成功同步的快照，不保存 token 或草稿；不提供離線編輯。F5 先呈現已驗證快取，有效授權存在時再背景確認 Drive。快取只投影到 home.js 的顯示狀態（cacheReadonly），不注入 CloudSession 的 document、account 或 revision；編輯仍須雲端 ready。
+
+快取 key 為 `melody-bookmarks-cache-v1`，同意選擇 key 為 `melody-bookmarks-cache-consent-v1`。快照包含 accountId、datasetId、revision、syncedAt、document，使用 BookmarkFile 驗證。只以單次 setItem 替換快取，不先 removeItem，避免配額失敗破壞上一份快照。主動登出清除快照；自然到期可繼續唯讀瀏覽。清除並停用會設定該帳號選擇為 false，避免其他分頁寫回。
 
 ### 備份與 Drive 外層格式
 
@@ -106,7 +109,7 @@ Google 的正常 popup 錯誤由 `error_callback` 處理，參考 [官方錯誤�
 - 點常用收藏先清除各項篩選；點所有書籤重設 `allSort='url'`。
 - `allSort` 與其他詳細頁的 `sort` 分開。網址排序不再套用工作系統優先，以免破壞網址順序。
 - `expandedCategory` 只記錄側欄展開狀態；收合不能重置右側已選的子分類結果。
-- `changes.quickOrder` 控制首頁前 6 個常用入口，不是所有書籤的排序。
+- `changes.quickOrder` 控制首頁全部可開啟收藏的順序，不是所有書籤的排序。首頁用緊密多欄連結清單，依上到下、再由左到右排列；透過 `#quick-links` 限定樣式，不能改到其他頁的簡易卡片。
 - 浮動「上」按鈕取決於非首頁、分類為 all、不是 favorites 且頁面已捲動；目前不出現在其他分類。
 
 這些 UI 篩選與展開狀態不寫進私人書籤檔，收藏／分類／常用入口順序等資料異動才會同步。

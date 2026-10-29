@@ -6,7 +6,7 @@ const {createUrlCheckApi}=require('./url-check-api.cjs');
 function createBookmarkServer(root=path.resolve(__dirname,'..'),options={}){
  const version=options.version||getServerVersion(),basePath=options.basePath||'';let stopping=false;
  const checks=createUrlCheckApi({check:options.checkUrl});
- const assets=['bookmark-core.js','bookmark-file.js','bookmark-drive.js','bookmark-cloud.js','bookmark-login.js','bookmark-drive-ui.js','bookmark-check.js','bookmark-quick.js','home.js'].map(name=>'/Javascript/'+name);
+ const assets=['bookmark-core.js','bookmark-file.js','bookmark-drive.js','bookmark-cloud.js','bookmark-login.js','bookmark-cache.js','bookmark-drive-ui.js','bookmark-check.js','bookmark-quick.js','home.js'].map(name=>'/Javascript/'+name);
  const server=http.createServer(async(req,res)=>{
   const send=(code,body,type='application/json; charset=utf-8',headers={})=>{
    if(basePath&&headers.Location?.startsWith('/')&&!headers.Location.startsWith(basePath+'/'))headers={...headers,Location:basePath+headers.Location};
@@ -33,6 +33,8 @@ function createBookmarkServer(root=path.resolve(__dirname,'..'),options={}){
    if(req.method==='GET'&&req.url==='/Javascript/app-runtime.js'){send(200,await fs.readFile(path.join(__dirname,'../../shared/Javascript/app-runtime.js')),'application/javascript; charset=utf-8');return;}
    if(req.method==='GET'&&req.url==='/src/cozy-theme.css'){send(200,await fs.readFile(path.join(__dirname,'../../shared/src/cozy-theme.css')),'text/css; charset=utf-8');return;}
    if(!basePath&&req.method==='GET'&&req.url==='/images/logo.png'){send(200,await fs.readFile(path.resolve(__dirname,'../../../images/logo.png')),'image/png');return;}
+   const iconTypes={'/images/icons/chatgpt.ico':'image/x-icon','/images/icons/gemini.png':'image/png'};
+   if(req.method==='GET'&&Object.hasOwn(iconTypes,req.url)){send(200,await fs.readFile(path.join(root,req.url.slice(1))),iconTypes[req.url]);return;}
    if(req.method==='GET'&&assets.includes(req.url)){send(200,await fs.readFile(path.join(root,req.url.slice(1))),'application/javascript; charset=utf-8');return;}
    if(req.method==='GET'&&['/','/index.html'].includes(req.url)){send(302,'','text/html; charset=utf-8',{Location:'/bookmarks.html'});return;}
    if(req.method==='GET'&&req.url==='/bookmarks.html'){send(200,await fs.readFile(path.join(root,'bookmarks.html')),'text/html; charset=utf-8');return;}

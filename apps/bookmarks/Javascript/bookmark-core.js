@@ -197,8 +197,9 @@
 
  function validEmbeddedIcon(value){return typeof value==='string'&&value.length<=262144&&/^data:image\/(?:png|x-icon|vnd\.microsoft\.icon|jpeg|gif|webp);base64,[a-zA-Z0-9+/=]+$/i.test(value);}
  function extractBookmarkIcons(html){const icons=Object.create(null);for(const match of html.matchAll(/<A\b([^>]*)>/gi)){const href=match[1].match(/\bHREF\s*=\s*(?:"([^"]*)"|'([^']*)')/i),icon=match[1].match(/\bICON\s*=\s*(?:"([^"]*)"|'([^']*)')/i);if(href&&icon){const value=decode(icon[1]??icon[2]);if(validEmbeddedIcon(value))icons[decode(href[1]??href[2])]=value;}}return icons;}
- // 先使用原始匯出檔的內嵌點陣圖示，再嘗試該網站根目錄的 favicon；不使用第三方圖示服務。
- function bookmarkIconSources(raw,icons={}){let url;try{url=new URL(raw);}catch{return [];}if(!['http:','https:'].includes(url.protocol)||url.username||url.password)return [];const embedded=Object.hasOwn(icons,raw)?icons[raw]:null;return [...(validEmbeddedIcon(embedded)?[embedded]:[]),new URL('/favicon.ico',url).href];}
+ // 已隨站保存的官方圖示優先，再用匯出檔內嵌圖示與外站 favicon；不經第三方圖示服務。
+ const shippedIcons=Object.freeze({'chatgpt.com':'images/icons/chatgpt.ico','www.chatgpt.com':'images/icons/chatgpt.ico','chat.openai.com':'images/icons/chatgpt.ico','gemini.google.com':'images/icons/gemini.png'});
+ function bookmarkIconSources(raw,icons={}){let url;try{url=new URL(raw);}catch{return [];}if(!['http:','https:'].includes(url.protocol)||url.username||url.password)return [];const embedded=Object.hasOwn(icons,raw)?icons[raw]:null;return [...(Object.hasOwn(shippedIcons,url.hostname)?[shippedIcons[url.hostname]]:[]),...(validEmbeddedIcon(embedded)?[embedded]:[]),new URL('/favicon.ico',url).href];}
 
  return {countDuplicateUrls,updateBookmarkDetails,batchUpdateBookmarkCategories,extractBookmarkIcons,bookmarkIconSources,orderedCategories,moveCategory,moveWorkSubcategory,prioritizeWorkSearchResults,CATEGORIES,STATUS,FAVORITES_KEY,LIBRARY_KEY,decode,parseBookmarks,classify,safeWebUrl,getBookmarkPurpose,countPurposes,selectBookmarks,listOriginalFolders,countStatuses,loadFavorites,createManualBookmark,loadLibraryChanges,mergeLibrary,updateBookmarkCategory,updateBookmarkStatus,createChromeBookmarkHtml,createWorkSubcategory,renameWorkSubcategory,removeWorkSubcategory,assignWorkSubcategory};
 });

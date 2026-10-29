@@ -82,3 +82,50 @@ body[data-bookmarks-loading]>.sidebar,body[data-bookmarks-loading]>.workspace{vi
 
 /* 共用主題較晚載入；用 toast ID 提高優先序，確保白字不再被灰字規則蓋掉。 */
 body[data-page=bookmarks] #toast{color:#fff;font-size:14px;font-weight:500;line-height:1.7;bottom:max(25px,env(safe-area-inset-bottom));overflow-wrap:anywhere}
+
+/* 僅首頁常用收藏使用多欄連結清單，先由上到下，再接右欄；避免單一連結跨欄，其他入口的簡易卡片不受影響。 */
+#quick-links{display:block;column-count:4;column-gap:28px;column-fill:balance;margin:0;padding:0;list-style:disc}
+@media(max-width:1500px){#quick-links{column-count:3}}
+@media(max-width:1150px){#quick-links{column-count:2}}
+@media(max-width:640px){#quick-links{column-count:1}}
+#quick-links .home-favorite-item{display:list-item;break-inside:avoid;min-width:0;margin-bottom:4px;margin-left:20px;padding-left:2px;color:#426388}
+#quick-links .home-favorite-link{display:inline-flex;align-items:center;min-width:0;max-width:100%;min-height:28px;padding:2px 0;color:#426388;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:4px}
+#quick-links .home-favorite-link:hover{color:#795271}
+#quick-links .home-favorite-link .quick-label{font-size:14px;font-weight:500;line-height:1.6}
+/* Drive 管理視窗依用途分區；授權細節預設收合，避免與日常操作搶畫面。 */
+#drive-dialog{max-width:700px;padding:28px}
+#drive-dialog>.dialog-heading{margin-bottom:22px}
+#drive-dialog .cloud-panel{margin:0}
+#drive-dialog .drive-section{padding:18px 20px;border:1px solid #e8dce5;border-radius:16px;background:#fffdfb}
+#drive-dialog .drive-section+.drive-section,#drive-dialog .drive-data-section{margin-top:14px}
+#drive-dialog .drive-section h3{margin:0;font-size:15px;font-weight:650;color:#795271}
+#drive-dialog .drive-section-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+#drive-dialog #cloud-account{display:block;margin-top:7px;color:#665861}
+#drive-dialog .drive-section p{margin:10px 0 0;line-height:1.7}
+#drive-dialog .drive-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:14px}
+#drive-dialog .drive-section button{margin:0;min-height:40px}
+#drive-dialog .drive-auth-details{margin-top:14px;padding-top:12px;border-top:1px solid #eee5eb;color:#84717f;font-size:12px}
+#drive-dialog .drive-auth-details summary{cursor:pointer;width:fit-content}
+#drive-dialog #cloud-token-details{font-size:12px;overflow-wrap:anywhere}
+#drive-dialog #cloud-message{font-size:13px;color:#685763}
+#drive-dialog #cloud-message[data-phase=ready]{color:#35745b}
+#drive-dialog #cloud-message[data-phase=error],#drive-dialog #cloud-message[data-phase=conflict]{color:#a04c59}
+#drive-dialog .drive-initialize{margin-top:16px;padding-top:14px;border-top:1px solid #eee5eb}
+#drive-dialog .cloud-import-label{margin:6px 0}
+#drive-dialog .dialog-note{font-size:12px;color:#84717f}
+@media(max-width:640px){#drive-dialog{padding:20px 16px}#drive-dialog .drive-section{padding:16px}#drive-dialog .drive-section-heading{flex-wrap:wrap;align-items:flex-start}#drive-dialog .drive-actions>button{flex:1 1 auto}#drive-dialog .drive-cache-section .drive-section-heading{display:block}#drive-dialog #cache-toggle{margin-top:12px}}
+
+/* 圓點表示書籤資料來源，不代表 Google 授權或網址連線狀態。 */
+#bookmark-source-dot[data-source=local]{background:#3d8ee6}
+#bookmark-source-dot[data-source=drive]{background:#d65b68}
+
+#total-top[data-source=local]{color:#3d8ee6}
+#total-top[data-source=drive]{color:#d65b68}
+
+/* 首頁沿用網站 favicon 與失敗備援，只使用小圖，不改成卡片。 */
+#quick-links .home-favorite-link{align-items:flex-start;gap:7px}
+#quick-links .home-favorite-link .site-symbol{width:18px;height:18px;flex:0 0 18px;margin-top:2px;border-radius:4px;background:transparent;color:inherit;font-size:11px;line-height:18px}
+#quick-links .home-favorite-link .site-favicon{width:16px;height:16px}
+#quick-links .home-favorite-link .quick-label{min-width:0}
+
+#quick-links .home-favorite-link .site-symbol[hidden]{display:none}

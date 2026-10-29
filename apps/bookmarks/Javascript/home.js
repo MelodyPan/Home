@@ -13,7 +13,7 @@
  function icon(name){const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('class','icon');svg.setAttribute('aria-hidden','true');svg.innerHTML=paths[name]||paths.folder;return svg;}
  function el(tag,className,text){const n=document.createElement(tag);if(className)n.className=className;if(text!==undefined)n.textContent=text;return n;}
  document.querySelectorAll('[data-icon]').forEach(n=>n.replaceWith(icon(n.dataset.icon)));
- // Only visual layout preferences use localStorage; all bookmark data comes from Drive.
+ // 本檔只保存版面偏好；書籤快取由 BookmarkCache 在使用者同意後管理。
  let storage;try{storage=window.localStorage;}catch{storage={getItem(){},setItem(){}};}
  const {createDataFile,readDataFile}=BookmarkFile;
  let cloud,fileReady=false,fileError='請先連接 Google Drive。',fileConflict=false;
@@ -32,14 +32,16 @@
  window.addEventListener('beforeunload',event=>{if(cloud?.hasUnsaved){event.preventDefault();event.returnValue='';}});
  // 雲端狀態是編輯開關與畫面來源；有 draft／pending 時不能用舊遠端文件蓋掉本機修改。
  function cloudChanged(remote){
+  const sourceDot=$('bookmark-source-dot'),sourceLabel=!remote.document?'尚未載入書籤':remote.dataSource==='local'?'資料來源：localStorage 本機暫存':'資料來源：Google Drive';
+  sourceDot.dataset.source=remote.dataSource==='local'?'local':'drive';sourceDot.title=sourceLabel;sourceDot.setAttribute('aria-label',sourceLabel);$('total-top').dataset.source=sourceDot.dataset.source;
   if(checkJob&&(!remote.online||!remote.document||!['ready','saving'].includes(remote.phase)||remote.account?.id!==checkJob.account||remote.datasetId!==checkJob.dataset))checkJob.controller.abort();
   fileReady=!!remote.document;fileConflict=remote.phase==='conflict';
-  fileError=(!remote.online?'目前離線，請連線後再編輯。':remote.phase==='saving'&&!remote.pending?'正在確認同步結果，完成後即可編輯。':!['ready','saving'].includes(remote.phase)?remote.error?.message||'請先連接並載入 Google Drive 書籤。':'');
+  fileError=(remote.cacheReadonly?'目前為本機暫存，請先登入並確認 Google Drive 版本再修改。':!remote.online?'目前離線，請連線後再編輯。':remote.phase==='saving'&&!remote.pending?'正在確認同步結果，完成後即可編輯。':!['ready','saving'].includes(remote.phase)?remote.error?.message||'請先連接並載入 Google Drive 書籤。':'');
   const active=!!remote.draft||remote.pending>0;
   if(!remote.document||remote.error?.code==='account'){
    baseEntries=[];changes={added:[],deletedIds:[]};favorites=new Set();checkedAt='1970-01-01T00:00:00Z';lastCloudDocument=null;selectedBookmarks.clear();
    for(const dialog of document.querySelectorAll('dialog[open]:not(#drive-dialog)'))dialog.close();refreshLibrary();
-  }else if(remote.document&&!active&&remote.document!==lastCloudDocument){
+  }else if(remote.document&&!active&&remote.document!==lastCloudDocument&&JSON.stringify(remote.document)!==JSON.stringify(lastCloudDocument)){
    const data=readDataFile(JSON.stringify(remote.document));baseEntries=data.baseEntries;changes=data.changes;favorites=new Set(data.favorites);checkedAt=data.checkedAt;lastCloudDocument=remote.document;selectedBookmarks.clear();refreshLibrary();
   }
   const failed=['error','conflict'].includes(remote.phase),status=remote.phase==='saving'?'正在同步至 Google Drive…':fileError||'已同步至 Google Drive';
@@ -47,6 +49,7 @@
   const retry=remote.phase==='error'&&remote.error?.code!=='auth'&&remote.error?.code!=='account';
   $('retry-file').hidden=!retry;$('backup-unsaved').hidden=!remote.draft;
   $('export-data').disabled=!remote.document;$('export-json').disabled=!remote.document&&!remote.draft;
+  $('manage-quick-order').disabled=BookmarkQuick.orderedFavorites(entries,[...favorites],changes.quickOrder).length<2||!fileReady||!!fileError;
   updateCheckControls();
  }
  const layoutKey='melody-pan-bookmark-layout';let savedLayout='grid';try{if(storage.getItem(layoutKey)==='list')savedLayout='list';}catch{}
@@ -173,9 +176,9 @@
  function attachLink(a,e){a.href=e.url;a.target='_blank';a.rel='noopener noreferrer';a.title=e.title+'\n'+e.url;}
  const failedIconSources=new Set();
  // 圖示載入失敗會嘗試下一個來源，最後保留文字替代，避免卡片出現破圖。
- function siteSymbol(entry,color){const symbol=el('span','site-symbol '+color);symbol.setAttribute('aria-hidden','true');const fallback=el('span','site-initial',initial(entry));symbol.append(fallback);const sources=bookmarkIconSources(entry.url,bookmarkIcons).filter(src=>!failedIconSources.has(src));if(!sources.length)return symbol;const img=el('img','site-favicon');img.alt='';img.loading='lazy';img.decoding='async';img.referrerPolicy='no-referrer';let current;
+ function siteSymbol(entry,color,showFallback=true){const symbol=el('span','site-symbol '+color);symbol.setAttribute('aria-hidden','true');const fallback=el('span','site-initial',initial(entry));if(showFallback)symbol.append(fallback);else symbol.hidden=true;const sources=bookmarkIconSources(entry.url,bookmarkIcons).filter(src=>!failedIconSources.has(src));if(!sources.length)return symbol;const img=el('img','site-favicon');img.alt='';img.loading=showFallback?'lazy':'eager';img.decoding='async';img.referrerPolicy='no-referrer';let current;
   const next=()=>{current=sources.shift();if(current)img.src=current;else img.remove();};
-  img.addEventListener('load',()=>{fallback.hidden=true;img.classList.add('loaded');});img.addEventListener('error',()=>{failedIconSources.add(current);next();});symbol.append(img);next();return symbol;
+  img.addEventListener('load',()=>{fallback.hidden=true;symbol.hidden=false;img.classList.add('loaded');});img.addEventListener('error',()=>{failedIconSources.add(current);next();});symbol.append(img);next();return symbol;
  }
  // 以 DOM 與 textContent 組合卡片，避免把使用者輸入當成 HTML 執行。
  function card(e){const c=categoryMap.get(e.category),article=el('article','bookmark-card');article.dataset.bookmark=e.id;article.dataset.purpose=getBookmarkPurpose(e);const top=el('div','card-top');top.append(siteSymbol(e,c.color));const domain=el('span','card-domain',e.domain);domain.title=e.domain;const checkbox=el('input','bookmark-select');checkbox.type='checkbox';checkbox.checked=selectedBookmarks.has(e.id);checkbox.setAttribute('aria-label','選取書籤：'+e.title);checkbox.addEventListener('change',()=>{if(checkbox.checked)selectedBookmarks.add(e.id);else selectedBookmarks.delete(e.id);updateSelectionUI();});if(selectionAvailable())domain.prepend(checkbox);top.append(domain,starButton(e),deleteButton(e));article.append(top);if(safeWebUrl(e.url)){const a=el('a','card-link');attachLink(a,e);a.append(el('h3','',e.title||e.domain));article.append(a);}else{const h=el('h3','disabled-title',e.title||e.url);h.title='此網址使用特殊協定，請從原始書籤開啟。';article.append(h);}const folder=el('p','card-folder');folder.title=e.folder||'原始書籤根目錄';folder.append(icon('folder'),el('span','',e.folder.replace(/^書籤列\s*\/\s*/,'').replace(/^書籤列$/,'書籤列')||'原始書籤根目錄'));article.append(folder);const bottom=el('div','card-bottom');bottom.append(editDetailsButton(e),editCategoryButton(e));bottom.append(editStatusButton(e),recheckButton(e));if(state.duplicatesOnly&&(duplicateUrlCounts.get(e.url)||0)>1){const badge=el('span','duplicate-badge','同網址 '+duplicateUrlCounts.get(e.url)+' 筆');badge.title='依全部未刪除書籤比對；其他同網址書籤可能位於不同分類。';bottom.append(badge);}article.append(bottom);return article;}
@@ -186,9 +189,10 @@
  $('manage-quick-order').addEventListener('click',()=>{renderQuickManager();$('quick-order-dialog').showModal();});
  $('close-quick-order').addEventListener('click',()=>$('quick-order-dialog').close());
  function checkTargets(){return BookmarkCheck.selectCheckEntries(entries,$('url-check-scope').value,{filtered:currentResults,selected:[...selectedBookmarks],id:checkSingleId});}
- function openCheck(scope='all',id=null){if(!checkJob){checkSingleId=id;$('url-check-single').hidden=scope!=='single';$('url-check-scope').value=scope;}updateCheckControls();if(!$('info-dialog').open)$('info-dialog').showModal();}
+ function openCheck(scope='all',id=null){if($('drive-dialog').open)$('drive-dialog').close();if(!checkJob){checkSingleId=id;$('url-check-single').hidden=scope!=='single';$('url-check-scope').value=scope;}updateCheckControls();if(!$('info-dialog').open)$('info-dialog').showModal();}
  function recheckButton(entry){const button=el('button','soft-button recheck-button','重查');button.type='button';button.setAttribute('aria-label','重新檢查：'+entry.title);button.addEventListener('click',()=>openCheck('single',entry.id));return button;}
- function renderQuick(){const container=$('quick-links');container.replaceChildren();const pinned=BookmarkQuick.orderedFavorites(entries,[...favorites],changes.quickOrder);$('manage-quick-order').disabled=pinned.length<2||!fileReady||!!fileError;let quick;if(pinned.length){quick=pinned.slice(0,6).map(e=>({entry:e,label:e.title,icon:categoryMap.get(e.category).icon}));$('quick-title').replaceChildren(icon('star'),document.createTextNode('常用收藏'));}else{quick=quickDefinitions.map(q=>({...q,entry:entries.find(q.match)})).filter(q=>q.entry);$('quick-title').replaceChildren(icon('zap'),document.createTextNode('快速入口'));}for(const q of quick){const a=el('a','quick-link');a.dataset.purpose=getBookmarkPurpose(q.entry);attachLink(a,q.entry);const symbol=el('span','quick-symbol '+categoryMap.get(q.entry.category).color);symbol.append(icon(q.icon));a.append(symbol,el('span','quick-label',q.label));container.append(a);}}
+ // 首頁列出全部可開啟收藏，以多欄清單緊密排列；不要恢復前六筆截斷或套用其他頁的大卡片。
+ function renderQuick(){const container=$('quick-links');container.replaceChildren();const pinned=BookmarkQuick.orderedFavorites(entries,[...favorites],changes.quickOrder);$('manage-quick-order').disabled=pinned.length<2||!fileReady||!!fileError;let quick;if(pinned.length){quick=pinned.map(e=>({entry:e,label:e.title,icon:categoryMap.get(e.category).icon}));$('quick-title').replaceChildren(icon('star'),document.createTextNode('常用收藏'));}else{quick=quickDefinitions.map(q=>({...q,entry:entries.find(q.match)})).filter(q=>q.entry);$('quick-title').replaceChildren(icon('zap'),document.createTextNode('快速入口'));}for(const q of quick){const a=el('a','home-favorite-link');a.dataset.purpose=getBookmarkPurpose(q.entry);attachLink(a,q.entry);a.append(siteSymbol(q.entry,categoryMap.get(q.entry.category).color,false),el('span','quick-label',q.label));const item=el('li','home-favorite-item');item.append(a);container.append(item);}}
  function reset(){Object.assign(state,{duplicatesOnly:false,purpose:'all',originalFolder:'all',category:'all',workSubcategory:'all',query:'',status:'all',favoriteOnly:false,limit:36});$('search').value='';$('status-filter').value='all';render();}
  document.addEventListener('bookmarks-imported',()=>{state.view='library';reset();});
  for(const input of document.querySelectorAll('[data-duplicate-filter]'))input.addEventListener('change',()=>{state.duplicatesOnly=input.checked;state.view=state.view==='home'?'library':state.view;state.limit=36;render();});
@@ -300,5 +304,5 @@
  $('library-title').tabIndex=-1;
  render();cloud=BookmarkDriveUI.mount({onChange:cloudChanged,download:downloadData});
  // 等第一次恢復授權與讀取結束再揭露畫面，避免先顯示 0 筆／登入，再跳成已連接。
- try{await cloud.initialLoad;}finally{document.body.removeAttribute('data-bookmarks-loading');$('bookmark-startup').setAttribute('aria-hidden','true');$('bookmark-startup').inert=true;}
+ try{if(!cloud.hasCachedDocument)await cloud.initialLoad;}finally{if(cloud.hasCachedDocument)$('bookmark-startup').style.transition='none';document.body.removeAttribute('data-bookmarks-loading');$('bookmark-startup').setAttribute('aria-hidden','true');$('bookmark-startup').inert=true;}
 })();

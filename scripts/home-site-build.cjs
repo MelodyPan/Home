@@ -1,7 +1,7 @@
 // Home 的公開建置：只複製白名單，從範本建立空白書籤頁，完全不讀取私人書籤／相簿資料。
 const fs=require('node:fs/promises'),path=require('node:path');
 const {publicDocument}=require('../apps/admin/public/project-model.js');
-const BOOKMARK_JS=['bookmark-core.js','bookmark-file.js','bookmark-drive.js','bookmark-cloud.js','bookmark-login.js','bookmark-drive-ui.js','bookmark-check.js','bookmark-quick.js','home.js'];
+const BOOKMARK_JS=['bookmark-core.js','bookmark-file.js','bookmark-drive.js','bookmark-cloud.js','bookmark-login.js','bookmark-cache.js','bookmark-drive-ui.js','bookmark-check.js','bookmark-quick.js','home.js'];
 const {loadDriveConfig}=require('../apps/bookmarks/scripts/drive-config.cjs');
 const GROWTH_JS=['growth.js','growth-flipbook.js','growth-metrics.js','growth-reference.js'];
 const GROWTH_CSS=['growth.css','growth-flipbook.css','growth-metrics.css'];
@@ -64,6 +64,8 @@ async function buildSite(homeRoot,options={}){
  try{await copyTree(path.join(homeRoot,'images'),path.join(output,'images'));}catch(e){if(e.code!=='ENOENT')throw e;}
  await fs.writeFile(path.join(output,'bookmarks/bookmarks.html'),await emptyBookmarks(appRoot));
  await fs.copyFile(path.join(growthRoot,'growth.html'),path.join(output,'growth/growth.html'));
+ await fs.mkdir(path.join(output,'bookmarks/images/icons'),{recursive:true});
+ for(const icon of ['chatgpt.ico','gemini.png'])await fs.copyFile(path.join(appRoot,'images/icons',icon),path.join(output,'bookmarks/images/icons',icon));
  for(const file of BOOKMARK_JS)await fs.copyFile(path.join(appRoot,'Javascript',file),path.join(output,'bookmarks/Javascript',file));
  for(const file of GROWTH_JS)await fs.copyFile(path.join(growthRoot,'Javascript',file),path.join(output,'growth/Javascript',file));
  for(const file of GROWTH_CSS)await fs.copyFile(path.join(growthRoot,'src',file),path.join(output,'growth/src',file));

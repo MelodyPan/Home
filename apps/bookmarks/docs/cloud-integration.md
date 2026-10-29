@@ -11,3 +11,5 @@ OAuth 使用 drive.file；token 僅暫存在目前分頁 sessionStorage。效期
 第一次或再次匯入，請使用網站提供的 JSON 匯入功能，不是直接把任意檔案放進 Drive。Chrome HTML 匯出檔不是目前網頁接受的匯入格式。
 
 本機與公開網站都讀寫同一份 Drive 書籤；只有本機提供網址檢查服務。設定與管理者操作見 [Google Drive 設定](google-drive-setup.md)。
+
+使用者可選擇 localStorage 快取已同步書籤；F5 優先顯示，Drive 存檔成功後才替換。自然到期可唯讀瀏覽，主動登出會清除快取。快取不授予編輯權限，詳見 [使用指南](../../../docs/bookmarks-guide.md)。

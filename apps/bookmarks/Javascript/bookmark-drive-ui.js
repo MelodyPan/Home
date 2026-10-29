@@ -6,11 +6,15 @@
   let credential='',expires=0,session,importing=false,selectingImport=false;
   let tabStorage;try{tabStorage=window.sessionStorage;}catch{}
   const login=BookmarkLogin.createLoginCache({storage:tabStorage,clientId:config.googleClientId});
+  let localStorage;try{localStorage=window.localStorage;}catch{}
+  const cache=BookmarkCache.createBookmarkCache({storage:localStorage});
+  let cached=cache.read(),lastCachedDocument=null,cacheNotice='',previousPhase='';
+  const askedAccounts=new Set();
   // pendingAuthorization 是尚未完成的登入要求；credential 是成功後憑證，兩者不能混用。
   let expiring=false,details=null,pendingAuthorization=null;
   const store=BookmarkDrive.createDriveStore({token:()=>Date.now()<expires?credential:''});
   const clearAuthorization=()=>{credential='';expires=0;details=null;login.clear();renderTokenDetails();};
-  function renderTokenDetails(){const node=$('cloud-token-details');node.hidden=!credential;node.textContent=!credential?'':details?'Google 回傳 expires_in：'+details.expiresIn+' 秒（約 '+(details.expiresIn/60).toFixed(1)+' 分鐘）。取得時間：'+new Date(details.receivedAt).toLocaleString('zh-TW',{timeZone:'Asia/Taipei',hour12:false})+'（台灣時間）':'這次登入尚未記錄 Google 回傳的 expires_in；請重新連接後查看。';}
+  function renderTokenDetails(){$('cloud-auth-details').hidden=!credential;const node=$('cloud-token-details');node.hidden=!credential;node.textContent=!credential?'':details?'Google 回傳 expires_in：'+details.expiresIn+' 秒（約 '+(details.expiresIn/60).toFixed(1)+' 分鐘）。取得時間：'+new Date(details.receivedAt).toLocaleString('zh-TW',{timeZone:'Asia/Taipei',hour12:false})+'（台灣時間）':'這次登入尚未記錄 Google 回傳的 expires_in；請重新連接後查看。';}
   function requestToken(prompt){
    if(!config.googleClientId)return Promise.reject(new Error('請先設定 Google OAuth Client ID，設定方式見專案的 Google Drive 操作說明。'));
    if(!globalThis.google?.accounts?.oauth2)return Promise.reject(new Error('Google 登入元件尚未載入，請檢查網路或阻擋設定後重試。'));
@@ -51,6 +55,28 @@
   }
   function message(text){$('cloud-message').textContent=text;}
   function update(state){
+   $('cloud-message').dataset.phase=state.phase;
+   if(['loading','saving'].includes(state.phase)&&previousPhase!==state.phase){cache.beginCheck();lastCachedDocument=null;}
+   previousPhase=state.phase;
+   // 快取只負責顯示，絕不交給 CloudSession 當作可寫入的遠端版本。
+   if(cached&&state.account&&(state.account.id!==cached.accountId||state.datasetId&&state.datasetId!==cached.datasetId)||state.error?.code==='account'||['empty','choosing'].includes(state.phase)){cached=null;cache.clear();}
+   if(state.phase==='ready'&&state.document&&!state.draft&&!state.pending&&state.account){
+    const accountId=state.account.id;
+    if(cache.choice(accountId)===null&&!askedAccounts.has(accountId)){askedAccounts.add(accountId);cache.choose(accountId,confirm('是否將書籤暫存在這個瀏覽器（localStorage）？\n同意後可快速開啟與重新整理；修改仍會先儲存 Google Drive。\n主動登出會清除書籤快取。'));}
+    if(cache.choice(accountId)===true&&state.document!==lastCachedDocument){
+     if(cache.write(accountId,state.datasetId,state.document,state.revision))cached={accountId,datasetId:state.datasetId,document:state.document};
+     lastCachedDocument=state.document;
+    }
+   }
+   const usingCache=!state.document&&!!cached;
+   const localSource=usingCache||!!cached&&state.document===cached.document;
+   const view={...state,...(usingCache?{document:cached.document,cacheReadonly:true}:cache.conflict?{cacheReadonly:true}:{}),dataSource:localSource?'local':'drive'};
+   $('cache-status').textContent=cacheNotice||cache.warning;
+   $('cache-status').hidden=!$('cache-status').textContent;
+   $('cache-setting-status').textContent=cache.warning||(state.account?cache.choice(state.account.id)===true?'已開啟本機暫存。存檔成功後會更新快取，主動登出會清除快取。':'未開啟本機暫存，資料由 Google Drive 載入。':cached?'本機快取可供瀏覽；登入後可變更暫存設定。':'尚無書籤快取。');
+   const cacheAccountId=state.account?.id||cached?.accountId,caching=!!cacheAccountId&&cache.choice(cacheAccountId)===true;
+   $('cache-toggle').disabled=!!state.pending||!!state.draft||['connecting','loading','saving'].includes(state.phase)||!cacheAccountId||!caching&&state.phase!=='ready';
+   $('cache-toggle').textContent=caching?'停用並清除暫存':'啟用本機暫存';
    const occupied=importing||['connecting','loading','saving'].includes(state.phase)||state.pending>0;
    $('cloud-connect').disabled=occupied;$('cloud-connect').textContent=state.account?'重新連接 Google Drive':'連接 Google Drive';
    $('cloud-disconnect').hidden=!state.account;$('cloud-disconnect').disabled=occupied;
@@ -59,10 +85,10 @@
    // 連接中仍讓「登入」可點，以便取消卡住的授權；載入與寫入期間仍保留保護。
    $('drive-login').textContent=connected?'登出':'登入';$('drive-login').title=connected?'中斷 Google Drive 連接':'登入 Google Drive';$('drive-login').disabled=occupied&&state.phase!=='connecting';
    $('drive-login').setAttribute('aria-haspopup',connected?'false':'dialog');
-   $('drive-manage').hidden=!connected;
+   $('drive-manage').hidden=!connected&&!cached;
    $('cloud-account').textContent=state.error?.code==='account'?'請重新連接原帳號':state.account?.email||'尚未連接';
    $('cloud-setup').hidden=!!config.googleClientId;
-   $('cloud-initialize').hidden=!['empty','choosing','ready'].includes(state.phase);
+   $('cloud-initialize').hidden=!['empty','choosing'].includes(state.phase);
    $('cloud-new').hidden=state.phase==='ready';$('cloud-import').disabled=occupied||!state.online;
    $('cloud-import-title').textContent=state.phase==='ready'?'重新匯入書籤資料檔':'匯入書籤資料檔';
    $('cloud-import-note').textContent=state.phase==='ready'?'重新匯入會取代目前書籤內容，並更新當日的雲端檔案。':'選擇 bookmarks-data.txt，確認書籤數量後才會上傳。';
@@ -75,7 +101,7 @@
    if(state.draft){const option=document.createElement('option');option.value='draft';option.textContent='目前分頁的未同步草稿';versions.append(option);}
    if([...versions.options].some(x=>x.value===previous))versions.value=previous;
    const labels={disconnected:'請連接 Google Drive，載入你的私人書籤。',connecting:'正在連接 Google…',loading:'正在載入雲端書籤…',choosing:'找到多份書籤，請選擇要開啟的一份。',empty:'尚無雲端書籤。可匯入資料備份，或建立空白書籤。',ready:'已同步至 Google Drive。',saving:'正在同步至 Google Drive…',error:state.error?.message||'同步失敗；請重試或下載備份。',conflict:state.error?.message||'有多個版本，請選擇要繼續使用的內容。'};
-   message(!state.online?'目前沒有網路連線，已暫停編輯；未同步內容仍在目前分頁。':labels[state.phase]);onChange(state);
+   message(!state.online?'目前沒有網路連線，已暫停編輯；未同步內容仍在目前分頁。':labels[state.phase]);onChange(view);
    if(state.phase==='conflict'&&!$('drive-dialog').open)$('drive-dialog').showModal();
   }
   session=BookmarkCloud.createCloudSession({store,authorize,clearAuthorization,onChange:update});
@@ -86,8 +112,24 @@
   $('drive-dialog').addEventListener('click',event=>{if(event.target!==$('drive-dialog'))return;const rect=event.target.getBoundingClientRect();if(event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom)event.target.close();});
   $('cloud-connect').addEventListener('click',()=>session.connect());
   $('cloud-sync').addEventListener('click',()=>session.refresh());
+  $('cache-toggle').addEventListener('click',()=>{
+   const state=session.state,accountId=state.account?.id||cached?.accountId;
+   if(!accountId||state.pending||state.draft||['connecting','loading','saving'].includes(state.phase))return;
+   const enabled=cache.choice(accountId)!==true;
+   if(enabled&&state.phase!=='ready')return;
+   if(enabled&&!confirm('將此帳號書籤暫存在這個瀏覽器？主動登出會清除快取。'))return;
+   const changed=cache.choose(accountId,enabled);cached=null;lastCachedDocument=null;cacheNotice=changed?'':cache.warning;update(state);
+  });
+  // 另一分頁清除／停用快取時，不可再由本頁偷偷重建；內容更新仍由 Drive 確認。
+  window.addEventListener('storage',event=>{
+   if(![null,BookmarkCache.CACHE_KEY,BookmarkCache.PREFERENCES_KEY].includes(event.key))return;
+   const latest=cache.read();if(!latest){
+    if(event.key===BookmarkCache.CACHE_KEY&&event.newValue===null&&session.state.account)cache.suspend(session.state.account.id);
+    cached=null;lastCachedDocument=session.state.document;update(session.state);
+   }
+  });
   async function disconnect(){
-   try{if(session.hasUnsaved&&!confirm('還有未同步內容。請先下載備份；確定要放棄草稿並中斷連接嗎？'))return;await session.disconnect({discard:true});}catch(error){message(error.message);}
+   try{if(session.hasUnsaved&&!confirm('還有未同步內容。請先下載備份；確定要放棄草稿並中斷連接嗎？'))return;await session.disconnect({discard:true});cache.clear();cached=null;lastCachedDocument=null;cacheNotice='';update(session.state);}catch(error){message(error.message);}
   }
   $('cloud-disconnect').addEventListener('click',disconnect);
   $('cloud-open').addEventListener('click',()=>session.open($('cloud-library').value).catch(error=>message(error.message)));
@@ -124,6 +166,7 @@
    try{await session.disconnect({discard:true});expiring=false;message('Google 授權已到期，請重新登入。');}catch{/* Wait for an in-flight save before clearing the view. */}
   }
   document.addEventListener('visibilitychange',checkExpiry);window.addEventListener('focus',checkExpiry);setInterval(checkExpiry,1000);
+  session.hasCachedDocument=!!cached;
   session.setOnline(navigator.onLine);session.initialLoad=login.read()?session.connect({resume:true}):Promise.resolve();return session;
  }
  globalThis.BookmarkDriveUI={mount};
