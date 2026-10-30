@@ -11,7 +11,8 @@
   let cached=cache.read(),lastCachedDocument=null,cacheNotice='',previousPhase='';
   const askedAccounts=new Set();
   // pendingAuthorization 是尚未完成的登入要求；credential 是成功後憑證，兩者不能混用。
-  let expiring=false,details=null,pendingAuthorization=null;
+  let expiring=false,details=null,pendingAuthorization=null,pendingWrite=null;
+  function finishPendingWrite(allowed){const pending=pendingWrite;pendingWrite=null;if(pending)pending.resolve(allowed);}
   const store=BookmarkDrive.createDriveStore({token:()=>Date.now()<expires?credential:''});
   const clearAuthorization=()=>{credential='';expires=0;details=null;login.clear();renderTokenDetails();};
   function renderTokenDetails(){$('cloud-auth-details').hidden=!credential;const node=$('cloud-token-details');node.hidden=!credential;node.textContent=!credential?'':details?'Google 回傳 expires_in：'+details.expiresIn+' 秒（約 '+(details.expiresIn/60).toFixed(1)+' 分鐘）。取得時間：'+new Date(details.receivedAt).toLocaleString('zh-TW',{timeZone:'Asia/Taipei',hour12:false})+'（台灣時間）':'這次登入尚未記錄 Google 回傳的 expires_in；請重新連接後查看。';}
@@ -102,10 +103,31 @@
    if([...versions.options].some(x=>x.value===previous))versions.value=previous;
    const labels={disconnected:'請連接 Google Drive，載入你的私人書籤。',connecting:'正在連接 Google…',loading:'正在載入雲端書籤…',choosing:'找到多份書籤，請選擇要開啟的一份。',empty:'尚無雲端書籤。可匯入資料備份，或建立空白書籤。',ready:'已同步至 Google Drive。',saving:'正在同步至 Google Drive…',error:state.error?.message||'同步失敗；請重試或下載備份。',conflict:state.error?.message||'有多個版本，請選擇要繼續使用的內容。'};
    message(!state.online?'目前沒有網路連線，已暫停編輯；未同步內容仍在目前分頁。':labels[state.phase]);onChange(view);
+   if(pendingWrite){
+    const expected=pendingWrite;
+    if(state.account&&expected.accountId&&state.account.id!==expected.accountId){finishPendingWrite(false);message('登入帳號不同，已取消原本的修改，請重新選擇書籤。');}
+    else if(state.phase==='ready'&&state.online&&credential&&Date.now()<expires&&!view.cacheReadonly){
+     if(expected.datasetId&&state.datasetId!==expected.datasetId){finishPendingWrite(false);message('書籤資料集已改變，已取消原本的修改。');}
+     else{finishPendingWrite(true);$('drive-dialog').close();}
+    }else if(['error','conflict','empty'].includes(state.phase)||!state.online)finishPendingWrite(false);
+   }
    if(state.phase==='conflict'&&!$('drive-dialog').open)$('drive-dialog').showModal();
   }
   session=BookmarkCloud.createCloudSession({store,authorize,clearAuthorization,onChange:update});
   const openManager=()=>{if(!$('drive-dialog').open)$('drive-dialog').showModal();};
+  // 修改只等待本次登入；確認原帳號及資料集後才通知入口接續操作。
+  session.requiresLogin=()=>!credential||Date.now()>=expires||session.state.error?.code==='auth';
+  session.ensureWriteAccess=()=>{
+   if(!session.state.online)return Promise.resolve(false);
+   if(!session.requiresLogin())return Promise.resolve(false);
+   if(pendingWrite)return Promise.resolve(false);
+   const accountId=session.state.account?.id||cached?.accountId,datasetId=session.state.datasetId||cached?.datasetId;
+   const result=new Promise(resolve=>{pendingWrite={resolve,accountId,datasetId};});
+   openManager();message('請連接 Google Drive；登入並確認原本書籤後，會接續剛才的操作。');
+   if(credential&&Date.now()>=expires)checkExpiry();
+   return result;
+  };
+  $('drive-dialog').addEventListener('close',()=>{if(pendingWrite){finishPendingWrite(false);pendingAuthorization?.cancel();}});
   $('drive-manage').addEventListener('click',openManager);
   $('drive-login').addEventListener('click',()=>{if(pendingAuthorization){pendingAuthorization.cancel();openManager();return;}if(session.state.account&&credential)disconnect();else openManager();});
   $('close-drive-dialog').addEventListener('click',()=>$('drive-dialog').close());

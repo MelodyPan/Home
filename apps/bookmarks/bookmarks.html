@@ -157,8 +157,8 @@ body[data-page=bookmarks] #toast{color:#fff;font-size:14px;font-weight:500;line-
 #manage-quick-order{margin-left:auto}
 @media(max-width:740px){.quick-caption-main{gap:10px}}
 @media(max-width:380px){.quick-caption-main{gap:8px}.quick-caption-main #quick-purpose-filters{gap:3px;padding:3px}.quick-caption-main #quick-purpose-filters button{min-width:44px;padding:6px 8px}}
-/* 排序工具不套用表單欄位的手機 16px 字級，與相鄰工具按鈕保持一致。 */
-@media(max-width:740px){body[data-page=bookmarks] #sort{font-size:13px;font-weight:500;line-height:1.4;max-width:110px;min-height:40px}}
+/* 手機排序固定 12px 並自繪箭頭，避免原生選單外觀或文字自動放大影響工具列。 */
+@media(max-width:740px){body[data-page=bookmarks] #sort{appearance:none;-webkit-appearance:none;font-size:12px;font-weight:500;line-height:1.4;-webkit-text-size-adjust:100%;text-size-adjust:100%;max-width:110px;min-height:40px;padding-right:22px;background-image:linear-gradient(45deg,transparent 50%,#4e6f91 50%),linear-gradient(135deg,#4e6f91 50%,transparent 50%);background-position:calc(100% - 12px) 50%,calc(100% - 8px) 50%;background-size:4px 4px;background-repeat:no-repeat}}
 
 /* 簡易卡片始終保留分類圖示，網站圖示載入成功後才並列顯示。 */
 #bookmark-grid .simple-bookmark-link .site-symbol[hidden]{display:none}
@@ -166,6 +166,17 @@ body[data-page=bookmarks] #toast{color:#fff;font-size:14px;font-weight:500;line-
 #bookmark-grid .simple-bookmark-link .site-category-icon{display:grid;place-items:center}
 #bookmark-grid .simple-link-icons{display:inline-flex;align-items:center;justify-content:center;gap:8px;flex-shrink:0}
 #bookmark-grid .simple-website-icon{width:24px;height:24px;flex:0 0 24px;background:transparent;border-radius:4px}
+
+/* 手機收藏標題、用途切換與排序維持同排，縮小局部間距而不截斷文字。 */
+@media(max-width:740px){
+ .quick-section>.section-caption{flex-wrap:nowrap;align-items:center;gap:8px}
+ .quick-caption-main{gap:8px}
+ .quick-caption-main h2{font-size:14px;gap:5px}
+ .quick-caption-main h2 .icon{width:16px;height:16px}
+ .quick-caption-main #quick-purpose-filters{gap:2px;padding:3px}
+ .quick-caption-main #quick-purpose-filters button{min-width:40px;min-height:40px;padding:6px 8px;font-size:12px}
+ body[data-page=bookmarks] #manage-quick-order{flex-shrink:0;min-height:44px;padding:8px;font-size:11px;white-space:nowrap}
+}
 </style>
  <link rel="stylesheet" href="src/cozy-theme.css">
 </head>
