@@ -9,6 +9,10 @@ const {createGrowthServer}=require('../scripts/server.cjs');
   await context.route('https://accounts.google.com/gsi/client',route=>route.fulfill({contentType:'application/javascript',body:''}));
   await page.goto('http://127.0.0.1:'+server.address().port+'/growth.html');await page.waitForFunction(()=>document.querySelector('#child-select option')?.textContent==='尚未新增孩子');
   assert.equal(await page.locator('.site-header .back,.site-header .home-system-link').count(),0);assert.equal(await page.locator('#growth-login').count(),1);
+  assert.equal(await page.locator('#growth-login').evaluate(el=>getComputedStyle(el).touchAction),'manipulation');
+  assert.equal(await page.locator('.growth-header-actions').evaluate(el=>getComputedStyle(el).touchAction),'manipulation');
+  await page.locator('#growth-login').tap();await page.locator('#growth-drive-dialog').waitFor({state:'visible'});
+  await page.locator('#growth-cloud-close').tap();
   for(const width of [320,375,390,414,560,768]){
    await page.setViewportSize({width,height:844});
    for(const withAvatar of [false,true]){

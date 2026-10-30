@@ -10,13 +10,14 @@ process.chdir(path.resolve(__dirname,'../../..'));
  const server=createGrowthServer(path.resolve('apps/growth'));await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
  let browser,page;try{
   browser=await chromium.launch({headless:true,...(process.env.BROWSER_CHANNEL?{channel:process.env.BROWSER_CHANNEL}:{})});
-  const context=await browser.newContext({acceptDownloads:true}),api=fakeDrive({browserMetadata:true}),errors=[];page=await context.newPage();let failSaves=false,holdPhoto=null,holdSnapshot=null;
+  const context=await browser.newContext({acceptDownloads:true,hasTouch:true,isMobile:true}),api=fakeDrive({browserMetadata:true}),errors=[];page=await context.newPage();let failSaves=false,holdPhoto=null,holdSnapshot=null,holdRead=null;
   page.on('pageerror',error=>errors.push(error.message));page.on('dialog',dialog=>dialog.accept());
   await context.route('https://accounts.google.com/gsi/client',route=>route.fulfill({contentType:'application/javascript',body:`window.google={accounts:{oauth2:{initTokenClient(options){return {requestAccessToken(){options.callback({access_token:'test-token',expires_in:3600});}}},hasGrantedAllScopes(){return true;}}}};`}));
   await context.route('**/Javascript/site-config.js',route=>route.fulfill({contentType:'application/javascript',body:'window.BookmarksConfig={mode:"drive",googleClientId:"123-browser.apps.googleusercontent.com"};'}));
   await context.route('https://www.googleapis.com/**',async route=>{
    const req=route.request(),headers=req.headers(),options={method:req.method(),headers:{Authorization:headers.authorization,...(headers['content-type']?{'Content-Type':headers['content-type']}:{ }),...(headers['if-match']?{'If-Match':headers['if-match']}:{})}};
    const bytes=req.postDataBuffer();if(bytes)options.body=headers['content-type']?.startsWith('multipart/')?new Blob([bytes]):bytes.toString();
+   if(holdRead&&req.method()==='GET'&&req.url().includes('alt=media'))await holdRead;
    if(holdPhoto&&req.url().includes('/upload/')&&headers['content-type']?.startsWith('multipart/'))await holdPhoto;
    if(holdSnapshot&&req.url().includes('/upload/')&&!headers['content-type']?.startsWith('multipart/'))await holdSnapshot;
    if(failSaves&&req.url().includes('/upload/')){await route.abort('failed');return;}
@@ -65,7 +66,23 @@ process.chdir(path.resolve(__dirname,'../../..'));
   const snapshots=()=>[...api.files.values()].filter(file=>file.meta.mimeType==='application/json');assert.equal(snapshots().length,1);assert.match(snapshots()[0].meta.name,/^growth-\d{4}-\d{2}\.json$/);
   await page.locator('#growth-login').click();const downloading=page.waitForEvent('download');await page.locator('#growth-cloud-backup').click();const download=await downloading,blob=new Blob([await fs.readFile(await download.path())]),backup=await decode(blob);
   assert.equal(backup.document.records[0].title,'第一個故事');assert.equal(backup.photos.size,1);
-  await page.locator('#growth-cloud-close').click();await page.reload();await page.waitForFunction(()=>document.querySelector('#story-title').textContent==='第一個故事');
+  await page.locator('#growth-cloud-close').click();
+  // Slow session restoration must leave the manager accessible, with status and locked cloud actions.
+  let releaseRead;holdRead=new Promise(resolve=>releaseRead=resolve);await page.reload();
+  await page.waitForFunction(()=>document.querySelector('#growth-login').getAttribute('aria-busy')==='true');
+  assert.equal(await page.locator('#growth-login').isEnabled(),true);await page.locator('#growth-login').tap();
+  await page.locator('#growth-drive-dialog').waitFor({state:'visible'});
+  assert.equal(await page.locator('#growth-cloud-connect').isDisabled(),true);
+  await page.waitForFunction(()=>document.querySelector('#growth-cloud-message').textContent.includes('載入相簿'));
+  releaseRead();holdRead=null;await page.waitForFunction(()=>document.querySelector('#story-title').textContent==='第一個故事');
+  await page.locator('#growth-cloud-close').tap();
+  // Returning to the browser triggers a background refresh; its status remains reachable too.
+  holdRead=new Promise(resolve=>releaseRead=resolve);await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
+  await page.waitForFunction(()=>document.querySelector('#growth-login').getAttribute('aria-busy')==='true');
+  await page.locator('#growth-login').tap();await page.locator('#growth-drive-dialog').waitFor({state:'visible'});
+  assert.match(await page.locator('#growth-cloud-message').textContent(),/載入相簿/);
+  releaseRead();holdRead=null;await page.waitForFunction(()=>document.querySelector('#growth-login').getAttribute('aria-busy')==='false');
+  await page.locator('#growth-cloud-close').tap();
   // A remote change while an untouched edit dialog is open must produce conflict, not silently rebase old fields.
   await page.locator('#edit-current').click();const other=createDriveStore({request:api.request,token:()=> 'test-token'}),dataset=snapshots()[0].meta.appProperties.dataset,remote=await other.read(dataset);
   remote.document.records[0].story='另一台裝置故事';await other.write(dataset,remote.document,remote.revision);

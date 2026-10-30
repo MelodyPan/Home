@@ -24,3 +24,17 @@ test('unconnected albums never fetch private photos or enable edits',()=>{
 test('activity works with the shared login cache that no longer exposes touch',async()=>{
  const view=setup(true);await new Promise(resolve=>setImmediate(resolve));assert.doesNotThrow(()=>view.events.pointerdown());
 });
+
+test('album manager remains reachable during connection, loading and pending saves',async()=>{
+ const view=setup(true);await new Promise(resolve=>setImmediate(resolve));
+ for(const phase of ['connecting','loading','saving']){
+  view.session.state.phase=phase;view.session.state.pending=phase==='saving'?1:0;view.session.update();
+  assert.equal(view.get('growth-login').disabled,false,'manager must remain available during '+phase);
+  view.get('growth-login').listeners.click();assert.equal(view.get('growth-drive-dialog').open,true);
+  assert.equal(view.get('growth-cloud-connect').disabled,true,'opening status must not enable overlapping authorization');
+  view.get('growth-drive-dialog').close();
+ }
+ view.session.state.phase='error';view.session.state.pending=0;view.session.state.error=new Error('連線失敗');view.session.update();
+ view.get('growth-login').listeners.click();assert.equal(view.get('growth-drive-dialog').open,true);
+ assert.equal(view.get('growth-cloud-message').textContent,'連線失敗');assert.equal(view.get('growth-cloud-connect').disabled,false);
+});
