@@ -30,6 +30,7 @@ test('album manager remains reachable during connection, loading and pending sav
  for(const phase of ['connecting','loading','saving']){
   view.session.state.phase=phase;view.session.state.pending=phase==='saving'?1:0;view.session.update();
   assert.equal(view.get('growth-login').disabled,false,'manager must remain available during '+phase);
+  assert.equal(view.get('growth-login').textContent,'登入');
   view.get('growth-login').listeners.click();assert.equal(view.get('growth-drive-dialog').open,true);
   assert.equal(view.get('growth-cloud-connect').disabled,true,'opening status must not enable overlapping authorization');
   view.get('growth-drive-dialog').close();

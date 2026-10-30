@@ -37,7 +37,7 @@
    }
    const occupied=working||['connecting','loading','saving'].includes(state.phase)||state.pending>0;
    // 入口只開啟狀態視窗；同步時仍可查看進度，真正的雲端操作繼續由 occupied 鎖定。
-   $('growth-login').textContent=occupied?'處理中…':connected()?'管理相簿':'登入';$('growth-login').disabled=false;
+   $('growth-login').textContent='登入';$('growth-login').disabled=false;
    $('growth-login').setAttribute('aria-busy',String(occupied));
    $('growth-cloud-account').textContent=state.error?.code==='account'?'請重新連接原帳號':state.account?.email||'尚未連接';
    $('growth-cloud-connect').disabled=occupied;$('growth-cloud-connect').textContent=connected()?'重新連接 Google Drive':'連接 Google Drive';

@@ -45,7 +45,7 @@ test('真正圖表產生五條性別參考線與年齡量測點，點擊與鍵�
  context.GrowthMetrics.render(root,{records,child,onEdit(){}});
  const card=root.children[1].children[0],panel=card.children[1],svg=panel.children[0].children[0];
  const references=svg.children.filter(n=>n.attributes.class?.startsWith('percentile-reference'));assert.equal(references.length,5);
- const dot=svg.children.find(n=>n.tag==='circle');assert.equal(dot.attributes.cx,210);dot.onclick();assert.match(panel.children[1].textContent,/1 歲/);assert.match(panel.children[1].textContent,/75 cm/);
+ const dot=svg.children.find(n=>n.tag==='circle');assert.equal(dot.attributes.cx,210);dot.onclick();assert.match(panel.children[1].textContent,/1y0m/);assert.match(panel.children[1].textContent,/75 cm/);
  let prevented=false;dot.onkeydown({key:'Enter',preventDefault(){prevented=true;}});assert.ok(prevented);
  context.GrowthMetrics.render(root,{records,child:{...child,growthSex:''},onEdit(){}});
  const unselected=root.children[1].children[0].children[1].children[0].children[0];assert.equal(unselected.children.filter(n=>n.attributes.class?.startsWith('percentile-reference')).length,0);

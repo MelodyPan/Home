@@ -2,10 +2,14 @@
 (function(scope){
 'use strict';
 const fields={heightCm:{name:'身高',unit:'cm',max:300},weightKg:{name:'體重',unit:'kg',max:500}};
-const valid=(value,key)=>typeof value==='number'&&Number.isFinite(value)&&value>0&&value<=fields[key].max;
+const maternalFields={maternalWeightKg:{name:'媽媽體重',unit:'kg',max:500},maternalSystolic:{name:'媽媽收縮壓',unit:'mmHg',max:400,integer:true},maternalDiastolic:{name:'媽媽舒張壓',unit:'mmHg',max:400,integer:true}};
+const inputFields={...fields,...maternalFields};
+const valid=(value,key)=>typeof value==='number'&&Number.isFinite(value)&&value>0&&value<=inputFields[key].max&&(!inputFields[key].integer||Number.isInteger(value));
 // 表單留白代表清除；數字不可用 Number('') 轉為 0，避免把未量測誤畫在曲線上。
-function parseInput(input,key){if(input.trim()==='')return null;const number=Number(input);if(!valid(number,key))throw new Error(fields[key].name+'請填寫大於 0、最多 '+fields[key].max+' '+fields[key].unit+' 的數字，或留白。');return number;}
-function label(record){return Object.entries(fields).filter(([key])=>valid(record[key],key)).map(([key,f])=>f.name+' '+record[key]+' '+f.unit).join(' · ');}
+function parseInput(input,key){if(input.trim()==='')return null;const number=Number(input),field=inputFields[key];if(!valid(number,key))throw new Error(field.name+'請填寫大於 0、最多 '+field.max+' '+field.unit+' 的'+(field.integer?'整數':'數字')+'，或留白。');return number;}
+function bloodPressure(record){return valid(record.maternalSystolic,'maternalSystolic')||valid(record.maternalDiastolic,'maternalDiastolic')?(record.maternalSystolic??'—')+' / '+(record.maternalDiastolic??'—'):'';}
+function maternalLabel(record){return [valid(record.maternalWeightKg,'maternalWeightKg')?'媽媽體重 '+record.maternalWeightKg+' kg':'',bloodPressure(record)?'媽媽血壓 '+bloodPressure(record)+' mmHg':''].filter(Boolean).join(' · ');}
+function label(record){return [...Object.entries(fields).filter(([key])=>valid(record[key],key)).map(([key,f])=>f.name+' '+record[key]+' '+f.unit),maternalLabel(record)].filter(Boolean).join(' · ');}
 function series(records,childId,key){return records.filter(r=>r.childId===childId&&valid(r[key],key)).sort((a,b)=>a.date.localeCompare(b.date)||a.id.localeCompare(b.id));}
 // 使用實際日期間隔定位 X 軸；同日與單筆資料放在中央，Y 軸留白讓相同數值也能顯示。
 function plot(records,key){
@@ -23,7 +27,14 @@ function ageMonths(birthday,date){
  let months=(day.getUTCFullYear()-birth.getUTCFullYear())*12+day.getUTCMonth()-birth.getUTCMonth();if(+day<anniversary(months))months--;
  const start=anniversary(months),end=anniversary(months+1);return months+(+day-start)/(end-start);
 }
-function ageText(months){const complete=Math.floor(months),years=Math.floor(complete/12),rest=complete%12;return complete===0?'未滿 1 個月':(years?years+' 歲':'')+(rest?(years?' ':'')+rest+' 個月':'');}
+function ageText(months){const complete=Math.floor(months),years=Math.floor(complete/12),rest=complete%12;return months>36?years+'y':years+'y'+rest+'m';}
+// 預產期對應孕 40 週；實際生日另用於出生後年齡，不用它反推孕週。
+function pregnancyLabel(dueDate,date){
+ const validDay=value=>typeof value==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(value)&&Number.isFinite(Date.parse(value))&&new Date(value).toISOString().slice(0,10)===value;
+ if(!validDay(dueDate)||!validDay(date))return '';
+ const days=280+(Date.parse(date)-Date.parse(dueDate))/86400000;
+ return days<0?'':'孕 '+Math.floor(days/7)+' 週 '+days%7+' 天';
+}
 // 不把孕期或 7 歲以上的點硬夾在圖框；超界紀錄仍留在明細。Y 軸則擴展以完整顯示有效量測。
 function agePlot(records,key,child,reference){
  const inRange=records.map(record=>({record,age:ageMonths(child.birthday,record.date)})).filter(p=>p.age!==null&&p.age>=0&&p.age<=84);
@@ -85,15 +96,23 @@ function ageChart(records,key,child,reference){
 function render(root,{records,child,onEdit,onEditChild,reference=scope.GrowthReference}){
  root.replaceChildren();if(!child)return;
  const heading=node('div','metrics-heading');heading.append(node('p','eyebrow','LITTLE BY LITTLE'),node('h2','',child.name+'的成長數字'),node('p','','一公分、一點點重量，都是長大的足跡。'));root.append(heading);
- const charts=node('div','metric-charts'+(child.growthSex==='male'?' reference-male':''));for(const key of Object.keys(fields))charts.append(chart(series(records,child.id,key),key,child,reference));root.append(charts);
  const measured=records.filter(r=>r.childId===child.id&&label(r)).sort((a,b)=>b.date.localeCompare(a.date)||b.id.localeCompare(a.id));
+ const prenatal=record=>child.birthday?record.date<child.birthday:!!child.dueDate;
+ const chartRecords=measured.filter(record=>!prenatal(record)&&Object.keys(fields).some(key=>valid(record[key],key))),showCharts=chartRecords.length>0||(!child.birthday&&!measured.length);
+ if(showCharts){
+  const charts=node('div','metric-charts'+(child.growthSex==='male'?' reference-male':''));
+  for(const key of Object.keys(fields)){const values=series(chartRecords,child.id,key);if(child.birthday&&!values.length)continue;charts.append(chart(values,key,child,reference));}
+  root.append(charts);
+ }
  if(!measured.length)root.append(node('p','metric-empty','新增或編輯成長紀錄時，可選填身高、體重；也可以只記錄其中一項。'));
  else{
- const wrapper=node('div','metric-table-wrap'),table=node('table','metric-table'),caption=node('caption','','量測紀錄 · '+measured.length+' 筆（依目前年份與搜尋條件）'),head=node('thead'),headRow=node('tr');
- for(const text of ['日期','故事','身高（cm）','體重（kg）','操作']){const th=node('th','',text);th.scope='col';headRow.append(th);}head.append(headRow);const body=node('tbody');
- for(const r of measured){const row=node('tr');row.append(node('td','',r.date),node('td','',r.title),node('td','',r.heightCm??'—'),node('td','',r.weightKg??'—'));const cell=node('td'),button=node('button','text-button','編輯');button.type='button';button.setAttribute('aria-label','編輯 '+r.date+' '+r.title);button.onclick=()=>onEdit(r);cell.append(button);row.append(cell);body.append(row);}
+ const hasMaternal=measured.some(record=>maternalLabel(record));
+ const wrapper=node('div','metric-table-wrap'),table=node('table','metric-table'),caption=node('caption','',(measured.every(prenatal)?'產檢紀錄':'量測紀錄')+' · '+measured.length+' 筆（依目前年份與搜尋條件）'),head=node('thead'),headRow=node('tr');
+ for(const text of ['日期','故事','身高（cm）','體重（kg）',...(hasMaternal?['媽媽體重（kg）','媽媽血壓（mmHg）']:[]),'操作']){const th=node('th','',text);th.scope='col';headRow.append(th);}head.append(headRow);const body=node('tbody');
+ for(const r of measured){const row=node('tr'),story=node('td','',r.title);if(prenatal(r)){const pregnancy=pregnancyLabel(child.dueDate,r.date);story.append(node('small','metric-prenatal','產檢紀錄'+(pregnancy?' · '+pregnancy:'')));}row.append(node('td','',r.date),story,node('td','',r.heightCm??'—'),node('td','',r.weightKg??'—'));if(hasMaternal)row.append(node('td','',r.maternalWeightKg??'—'),node('td','',bloodPressure(r)||'—'));const cell=node('td'),button=node('button','text-button','編輯');button.type='button';button.setAttribute('aria-label','編輯 '+r.date+' '+r.title);button.onclick=()=>onEdit(r);cell.append(button);row.append(cell);body.append(row);}
  table.append(caption,head,body);wrapper.append(table);root.append(wrapper);
  }
+ if(!showCharts)return;
  const notes=node('div','percentile-notes');
  if(!child.birthday||!['male','female'].includes(child.growthSex)){
   notes.append(node('p','','請在「編輯孩子」補上生日，並選擇男孩／女孩參考曲線；不會依名字猜測。'));
@@ -103,6 +122,6 @@ function render(root,{records,child,onEdit,onEditChild,reference=scope.GrowthRef
  const who=node('a','','WHO 身長／身高與體重標準');who.href='https://www.who.int/tools/child-growth-standards';who.target='_blank';who.rel='noopener noreferrer';
  notes.append(source,node('span','',' · '),who,node('p','','P3、P15、P50、P85、P97 依官方節點連線：身長 0–2 歲、體重 0–5 歲採 WHO 逐月資料，後續至 7 歲採國健署半年資料。供位置參考，不計算精確百分位。紫色點是孩子的量測，可點選查看日期與年齡；圖表不代替專業評估。'));root.append(notes);
 }
-const api={parseInput,label,series,plot,ageMonths,agePlot,render};
+const api={parseInput,label,series,plot,ageMonths,ageText,agePlot,pregnancyLabel,render};
 if(typeof module!=='undefined'&&module.exports)module.exports=api;else scope.GrowthMetrics=api;
 })(globalThis);

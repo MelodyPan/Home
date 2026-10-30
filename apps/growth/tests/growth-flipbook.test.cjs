@@ -104,14 +104,15 @@ test('完整前端載入後，可從時間軸切換電子書，再回到同一�
  assert.match(get('story-age').textContent,/出生前/);
  // 從數字明細編輯同一筆故事，清除體重並更新身高；再讀畫面確認主程式確實送出了量測欄位。
  get('metrics-tab').onclick();assert.equal(get('metrics-view').hidden,false);
- get('metrics-view').children[2].children[0].children[2].children[0].children[4].children[0].onclick();
+ get('metrics-view').children.find(el=>el.className==='metric-table-wrap').children[0].children[2].children[0].children[4].children[0].onclick();
  assert.equal(get('record-height').value,52.5);assert.equal(get('record-weight').value,3.125);
  get('record-height').value='53.2';get('record-weight').value='';
  get('record-photo-layout').value='grid';
  get('record-form').events.submit({preventDefault(){}});await new Promise(resolve=>setImmediate(resolve));
  assert.equal(get('record-error').textContent,'');assert.equal(get('story-measurements').textContent,'身高 53.2 cm');
- assert.equal(get('metrics-view').children[1].children[0].children[0].children[1].textContent,'53.2 cm');
- get('year').value='2025';get('year').onchange();assert.match(get('metrics-view').children[2].textContent,/新增或編輯/);
+ assert.equal(get('metrics-view').children.some(el=>el.className.startsWith('metric-charts')),false);
+ assert.equal(get('metrics-view').children.find(el=>el.className==='metric-table-wrap').children[0].children[2].children[0].children[2].textContent,53.2);
+ get('year').value='2025';get('year').onchange();assert.match(get('metrics-view').children.find(el=>el.className==='metric-empty').textContent,/新增或編輯/);
  get('search').value='第一段';get('search').oninput();assert.equal(get('metrics-view').hidden,true);assert.equal(get('empty').hidden,false);
  get('preview-child').onclick();assert.equal(get('timeline-view').hidden,false);
  assert.match(get('timeline-list').children[0].children[0].children[1].textContent,/出生前/);

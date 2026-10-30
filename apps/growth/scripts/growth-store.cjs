@@ -22,7 +22,7 @@ function validate(data){
  const children=new Map(),records=new Set();
  // avatar 是可省略的大頭貼照片 ID；舊孩子資料缺少欄位或傳 null 仍合法，有設定時則必須符合安全檔名規則。
  // 尚未出生時 birthday 可留空、null 或省略；有填寫仍須是有效日期，不接受其他型別。
- for(const c of data.children){if(!c||!id(c.id)||children.has(c.id)||!text(c.name,80,true)||(![undefined,null,''].includes(c.birthday)&&!validDate(c.birthday))||(c.avatar!==undefined&&c.avatar!==null&&(typeof c.avatar!=='string'||!photoPattern.test(c.avatar))))fail();children.set(c.id,c);}
+ for(const c of data.children){if(!c||!id(c.id)||children.has(c.id)||!text(c.name,80,true)||(![undefined,null,''].includes(c.birthday)&&!validDate(c.birthday))||(![undefined,null,''].includes(c.dueDate)&&!validDate(c.dueDate))||(c.avatar!==undefined&&c.avatar!==null&&(typeof c.avatar!=='string'||!photoPattern.test(c.avatar))))fail();children.set(c.id,c);}
  // 每位孩子的書封設定各自保存；圖片使用本機產生的識別碼，書名與寄語仍為純文字。
  for(const c of children.values()){
   if(c.growthSex!=null&&!['','male','female'].includes(c.growthSex))fail();
@@ -34,12 +34,12 @@ function validate(data){
   // 封面只能引用這一筆紀錄自己的照片；省略時沿用舊版第一張照片的行為。
   if(r.coverPhoto!==undefined&&r.coverPhoto!==null&&(typeof r.coverPhoto!=='string'||!r.photos.includes(r.coverPhoto)))fail();
   // 身高／體重為可選數字；空值不等於零。上下限只用來防止誤輸入，不代表健康標準。
-  for(const [key,max] of [['heightCm',300],['weightKg',500]])if(r[key]!==undefined&&r[key]!==null&&(typeof r[key]!=='number'||!Number.isFinite(r[key])||r[key]<=0||r[key]>max))fail();
+  for(const [key,max] of [['heightCm',300],['weightKg',500],['maternalWeightKg',500],['maternalSystolic',400],['maternalDiastolic',400]])if(r[key]!==undefined&&r[key]!==null&&(typeof r[key]!=='number'||!Number.isFinite(r[key])||r[key]<=0||r[key]>max||(['maternalSystolic','maternalDiastolic'].includes(key)&&!Number.isInteger(r[key]))))fail();
   if(r.photoLayout!=null&&!['editorial','grid','full'].includes(r.photoLayout))fail();
   records.add(r.id);
  }
  // 只輸出支援欄位；未設定的大頭貼與封面不強制補欄位，因此維持 schemaVersion 1 與既有資料相容。
- return {schemaVersion:1,updatedAt:typeof data.updatedAt==='string'?data.updatedAt:null,children:data.children.map(c=>({id:c.id,name:c.name.trim(),birthday:c.birthday||'',...(c.growthSex?{growthSex:c.growthSex}:{}),...(c.avatar?{avatar:c.avatar}:{}),...(c.bookTitle?.trim()?{bookTitle:c.bookTitle.trim()}:{}),...(c.bookDedication?.trim()?{bookDedication:c.bookDedication}:{}),...(c.bookCover?{bookCover:c.bookCover}:{})})),records:data.records.map(r=>({id:r.id,childId:r.childId,date:r.date,title:r.title.trim(),story:r.story,milestone:r.milestone.trim(),photos:[...r.photos],...(r.photoLayout?{photoLayout:r.photoLayout}:{}),...(r.heightCm!=null?{heightCm:r.heightCm}:{}),...(r.weightKg!=null?{weightKg:r.weightKg}:{}),...(r.coverPhoto?{coverPhoto:r.coverPhoto}:{})}))};
+ return {schemaVersion:1,updatedAt:typeof data.updatedAt==='string'?data.updatedAt:null,children:data.children.map(c=>({id:c.id,name:c.name.trim(),birthday:c.birthday||'',...(c.dueDate?{dueDate:c.dueDate}:{}),...(c.growthSex?{growthSex:c.growthSex}:{}),...(c.avatar?{avatar:c.avatar}:{}),...(c.bookTitle?.trim()?{bookTitle:c.bookTitle.trim()}:{}),...(c.bookDedication?.trim()?{bookDedication:c.bookDedication}:{}),...(c.bookCover?{bookCover:c.bookCover}:{})})),records:data.records.map(r=>({id:r.id,childId:r.childId,date:r.date,title:r.title.trim(),story:r.story,milestone:r.milestone.trim(),photos:[...r.photos],...(r.photoLayout?{photoLayout:r.photoLayout}:{}),...(r.heightCm!=null?{heightCm:r.heightCm}:{}),...(r.weightKg!=null?{weightKg:r.weightKg}:{}),...Object.fromEntries(['maternalWeightKg','maternalSystolic','maternalDiastolic'].filter(key=>r[key]!=null).map(key=>[key,r[key]])),...(r.coverPhoto?{coverPhoto:r.coverPhoto}:{})}))};
 }
 // 每個服務實例各有資料路徑與寫入佇列；測試可使用暫存目錄，不碰正式資料。
 // 每個儲存實例有自己的寫入佇列；照片與 JSON 依序保存，停止服務時等待 flush。

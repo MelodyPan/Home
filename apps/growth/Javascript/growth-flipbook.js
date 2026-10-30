@@ -76,7 +76,7 @@ class Flipbook {
    else frame.append(this.node('div','flipbook-no-photo','♡'),this.node('p','','把這一天，收藏在心裡。'));
    page.append(frame,this.node('p','flipbook-caption',this.child.name+'的小小時光'));
   }else{
-   page.append(this.node('p','flipbook-age',this.options.ageAt(this.child.birthday,record.date)+' 的你'),this.node('h3','flipbook-title',record.title));
+   page.append(this.node('p','flipbook-age',this.options.ageAt(this.child.birthday,record.date,this.child.dueDate)+' 的你'),this.node('h3','flipbook-title',record.title));
    if(record.milestone)page.append(this.node('p','flipbook-milestone',record.milestone));
    const measurements=this.options.metricsLabel?.(record);if(measurements)page.append(this.node('p','flipbook-measurements',measurements));
    page.append(this.node('p','flipbook-story',record.story||'這一天，值得被記得。'),this.node('span','flipbook-folio',String(index+1).padStart(2,'0')));
@@ -111,7 +111,7 @@ class Flipbook {
    if(!photos.length)gallery.append(this.node('div','magazine-no-photo',r.photos.length?'下一頁，還有更多小時光。':'♡ 有些回憶，文字就能珍藏。'));
    page.append(gallery,this.node('p','flipbook-caption',entry.type==='gallery'?'照片續頁 · '+this.child.name+'的小小時光':this.child.name+'的小小時光'));
   }else{
-   page.append(this.node('p','flipbook-age',this.options.ageAt(this.child.birthday,r.date)+' 的你'),this.node('h3','flipbook-title',r.title));
+   page.append(this.node('p','flipbook-age',this.options.ageAt(this.child.birthday,r.date,this.child.dueDate)+' 的你'),this.node('h3','flipbook-title',r.title));
    if(r.milestone)page.append(this.node('p','flipbook-milestone',r.milestone));
    const measurements=this.options.metricsLabel?.(r);if(measurements)page.append(this.node('p','flipbook-measurements',measurements));
    page.append(this.node('p','flipbook-story',r.story||'這一天，值得被記得。'));

@@ -9,6 +9,8 @@ const {createGrowthServer}=require('../scripts/server.cjs');
   await context.route('https://accounts.google.com/gsi/client',route=>route.fulfill({contentType:'application/javascript',body:''}));
   await page.goto('http://127.0.0.1:'+server.address().port+'/growth.html');await page.waitForFunction(()=>document.querySelector('#child-select option')?.textContent==='尚未新增孩子');
   assert.equal(await page.locator('.site-header .back,.site-header .home-system-link').count(),0);assert.equal(await page.locator('#growth-login').count(),1);
+  assert.equal(await page.locator('.growth-header-actions #add-child').count(),1);assert.equal(await page.locator('.family-actions #add-child').count(),0);
+  assert.equal(await page.locator('#growth-login').textContent(),'登入');
   assert.equal(await page.locator('#growth-login').evaluate(el=>getComputedStyle(el).touchAction),'manipulation');
   assert.equal(await page.locator('.growth-header-actions').evaluate(el=>getComputedStyle(el).touchAction),'manipulation');
   await page.locator('#growth-login').tap();await page.locator('#growth-drive-dialog').waitFor({state:'visible'});
@@ -30,10 +32,14 @@ const {createGrowthServer}=require('../scripts/server.cjs');
      }
     },{withAvatar,count});
     const layout=await page.evaluate(()=>{
-     const selectors=['#child-list','#preview-child','#edit-child','#add-child'];
+     const selectors=['#child-list','#preview-child','#edit-child'];
      return {overflow:document.documentElement.scrollWidth>innerWidth,rects:selectors.map(selector=>{const r=document.querySelector(selector).getBoundingClientRect();return {selector,left:r.left,right:r.right,top:r.top,bottom:r.bottom};})};
     });
     assert.equal(layout.overflow,false,'page overflow at '+width);
+    const header=await page.evaluate(()=>['.brand','#add-child','#growth-login'].map(selector=>{const r=document.querySelector(selector).getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom};}));
+    for(const rect of header)assert(rect.left>=0&&rect.right<=width+.5,'header exceeds viewport at '+width);
+    assert(header[0].right<=header[1].left&&header[1].right<=header[2].left,'header controls overlap at '+width);
+    assert(Math.abs((header[1].top+header[1].bottom)-(header[2].top+header[2].bottom))<1,'header actions must share a row');
     const centers=layout.rects.map(rect=>(rect.top+rect.bottom)/2);assert(Math.max(...centers)-Math.min(...centers)<1,'family controls must share one row at '+width);
     for(const selector of ['#child-list .child-choice','#preview-child','#edit-child','#add-child']){const box=await page.locator(selector).first().boundingBox();assert(box.width>=44&&box.height>=44,'touch target too small: '+selector);}
     for(const rect of layout.rects){assert(rect.left>=0&&rect.right<=width+.5,'control exceeds viewport at '+width+': '+rect.selector);}

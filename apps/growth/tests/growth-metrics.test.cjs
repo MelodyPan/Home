@@ -6,6 +6,50 @@ const fs=require('node:fs'),vm=require('node:vm');
 const child={id:'a',name:'小星',birthday:''};
 const record={id:'first',childId:'a',date:'2026-03-01',title:'量身高',story:'',milestone:'',photos:[]};
 const data=r=>({schemaVersion:1,children:[child],records:[r]});
+test('媽媽體重與血壓獨立儲存、驗證及完整備份，不補成寶寶體重',async()=>{
+ const portable=require('../Javascript/growth-data.js'),backup=require('../Javascript/growth-backup.js');
+ const mother={maternalWeightKg:62.5,maternalSystolic:118,maternalDiastolic:76};
+ for(const check of [validate,portable.validate]){
+  const saved=check(data({...record,...mother})).records[0];for(const [key,value]of Object.entries(mother))assert.equal(saved[key],value);
+  assert.equal(saved.weightKg,undefined);
+  for(const key of Object.keys(mother))for(const bad of [0,-1,'120',NaN,Infinity])assert.throws(()=>check(data({...record,[key]:bad})));
+  assert.throws(()=>check(data({...record,maternalSystolic:120.5})));
+  assert.equal(check(data({...record,maternalWeightKg:null})).records[0].maternalWeightKg,undefined);
+ }
+ const document=portable.validate(data({...record,...mother})),decoded=await backup.decode(await backup.encode(document,()=>{throw new Error('no photos');}));
+ assert.deepEqual(decoded.document.records[0],document.records[0]);
+ assert.match(metrics.label({...record,...mother}),/媽媽體重 62.5 kg/);assert.match(metrics.label({...record,...mother}),/媽媽血壓 118 \/ 76 mmHg/);
+ assert.equal(metrics.parseInput('118','maternalSystolic'),118);assert.equal(metrics.parseInput('','maternalWeightKg'),null);
+});
+function renderMetrics(records,birthday='2026-04-01'){
+ class Element{constructor(tag){this.tag=tag;this.children=[];this.attributes={};}append(...v){this.children.push(...v);}replaceChildren(...v){this.children=v;}setAttribute(k,v){this.attributes[k]=v;}}
+ const context={document:{createElement:tag=>new Element(tag),createElementNS:(_,tag)=>new Element(tag)}};
+ vm.createContext(context);vm.runInContext(fs.readFileSync('Javascript/growth-metrics.js','utf8'),context);
+ const root=new Element('div'),edited=[];context.GrowthMetrics.render(root,{records,child:{...child,birthday},reference:{sexes:{},percentiles:[]},onEdit:r=>edited.push(r.id)});
+ const all=[];function visit(el){all.push(el);el.children.forEach(visit);}visit(root);
+ return {all,edited};
+}
+
+test('出生前量測只顯示產檢明細，不建立生長曲線或百分位說明',()=>{
+ const prenatal={...record,heightCm:13.2,weightKg:.125},view=renderMetrics([prenatal,{...record,id:'other',childId:'b',date:'2026-05-01',heightCm:60}]);
+ assert.equal(view.all.filter(el=>el.tag==='svg').length,0);assert.equal(view.all.filter(el=>el.className==='percentile-notes').length,0);
+ assert.match(view.all.find(el=>el.tag==='caption').textContent,/產檢紀錄/);
+ assert.ok(view.all.some(el=>el.textContent===13.2));view.all.find(el=>el.tag==='button').onclick();assert.deepEqual(view.edited,['first']);
+});
+
+test('生日當天開始才畫生長曲線，混合紀錄保留產檢明細但不混入曲線與最新量測',()=>{
+ const view=renderMetrics([{...record,heightCm:13.2,weightKg:.125},{...record,id:'birth',date:'2026-04-01',heightCm:50}]);
+ assert.equal(view.all.filter(el=>el.className==='metric-chart-card').length,1);
+ assert.deepEqual(view.all.filter(el=>el.className==='metric-latest').map(el=>el.textContent),['50 cm']);
+ const dots=view.all.filter(el=>el.attributes.class==='percentile-child-dot');assert.equal(dots.length,1);assert.match(dots[0].attributes['aria-label'],/2026-04-01/);
+ assert.ok(view.all.some(el=>el.textContent==='產檢紀錄'));assert.equal(view.all.filter(el=>el.tag==='tbody')[0].children.length,2);
+});
+
+test('只有媽媽的量測時顯示產檢明細，不建立寶寶生長曲線',()=>{
+ const view=renderMetrics([{...record,maternalWeightKg:62.5,maternalSystolic:118,maternalDiastolic:76}]);
+ assert.equal(view.all.filter(el=>el.tag==='svg').length,0);assert.ok(view.all.some(el=>el.textContent==='媽媽體重（kg）'));
+ assert.ok(view.all.some(el=>el.textContent==='118 / 76'));assert.equal(view.all.find(el=>el.tag==='tbody').children.length,1);
+});
 test('數字可選填、分開填寫及清除，舊紀錄不會被補成零',()=>{
  assert.equal(validate(data(record)).records[0].heightCm,undefined);
  const r=validate(data({...record,heightCm:52.3,weightKg:3.125})).records[0];
