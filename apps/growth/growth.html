@@ -58,5 +58,11 @@
  <section><h3>備份</h3><button type="button" id="growth-cloud-backup" class="outline-button" disabled>下載完整相簿備份</button><p class="form-note">包含紀錄、照片與目前有效的表單草稿，下載為 .growth 檔，可在這裡重新匯入。照片讀取失敗時會中止，避免漏掉照片。</p></section>
  <p class="form-note">每月一份完整紀錄，同月更新，跨月有修改才建立新檔。照片獨立保存於私人 Drive，不公開分享。閒置 10 分鐘會登出；未同步內容請先備份，關閉分頁後無法恢復。</p>
 </dialog>
+<dialog id="save-progress-dialog" class="save-progress-dialog" aria-labelledby="save-progress-title" aria-describedby="save-progress-note">
+ <p class="eyebrow">KEEPING YOUR MEMORIES</p><h2 id="save-progress-title">正在儲存回憶</h2>
+ <p id="save-progress-message" role="status" aria-live="polite">正在準備儲存…</p>
+ <progress id="save-progress-bar" max="1" aria-labelledby="save-progress-message"></progress>
+ <p id="save-progress-note" class="form-note">請稍候，完成後會自動關閉。照片較多時需要一些時間，請保持此頁開啟。</p>
+</dialog>
 </body>
 </html>

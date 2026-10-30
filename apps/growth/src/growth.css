@@ -53,6 +53,18 @@ dialog{width:min(640px,calc(100% - 30px));border:1px solid #e8d8ed;border-radius
  .family-actions button{min-width:0;white-space:normal;overflow-wrap:anywhere}
 }
 
+.save-progress-dialog{width:min(420px,calc(100% - 36px));text-align:center;padding:30px 24px;outline:none}
+.save-progress-dialog::backdrop{background:rgba(72,46,65,.38)}
+.save-progress-dialog h2{margin:8px 0 20px}
+#save-progress-message{overflow-wrap:anywhere}
+#save-progress-bar{display:block;width:100%;height:14px;margin:20px 0;accent-color:var(--mauve,#9b648d);border:0;border-radius:999px;overflow:hidden}
+#save-progress-bar::-webkit-progress-bar{background:#f1e5ed;border-radius:999px}
+#save-progress-bar::-webkit-progress-value{background:#9b648d;border-radius:999px}
+#save-progress-bar::-moz-progress-bar{background:#9b648d;border-radius:999px}
+#save-progress-bar:indeterminate{background:linear-gradient(90deg,#f1e5ed 25%,#9b648d 50%,#f1e5ed 75%);background-size:200% 100%;animation:save-progress 1.6s linear infinite}
+#save-progress-bar:indeterminate::-webkit-progress-bar{background:transparent}
+@keyframes save-progress{from{background-position:100% 0}to{background-position:-100% 0}}
+@media(prefers-reduced-motion:reduce){#save-progress-bar:indeterminate{animation:none}}
 /* 日期欄位的原生最小尺寸不可撐開 iPhone 上的表單格線。 */
 .form-row{min-width:0;grid-template-columns:repeat(2,minmax(0,1fr))}
 form>label,.form-row>label{min-width:0}

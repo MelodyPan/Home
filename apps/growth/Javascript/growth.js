@@ -141,14 +141,21 @@ function renderList(list){
 function flip(delta){const next=state.page+delta;if(next<0||next>=records().length)return;state.page=next;state.photo=null;renderBook();$('book').classList.remove('turning');void $('book').offsetWidth;$('book').classList.add('turning');}
 // Drive 確認存檔成功後才清除表單 dirty；失敗時保留表單和照片草稿。
 async function commit(next){
+ saveProgress('正在同步紀錄至 Google Drive…');
  state.data=await cloud.save(next);state.dirty=false;
  status('已同步至私人 Google Drive');
 }
 // 集中管理非同步儲存：防止重複操作，失敗保留表單，最後一律解除鎖定。
 // 集中管理儲存期間的按鈕鎖定與錯誤提示，結束後無論成功失敗都恢復操作。
+function saveProgress(message,completed=null,total=1){
+ $('save-progress-message').textContent=message;
+ const bar=$('save-progress-bar');bar.setAttribute('max',total);
+ if(completed===null)bar.removeAttribute('value');else bar.setAttribute('value',completed);
+}
+$('save-progress-dialog').addEventListener('cancel',event=>event.preventDefault());
 async function busy(errorId,work){
  if(state.busy)return;if(!cloudReady){$(errorId).textContent='請先連接 Google Drive 並完成同步，再儲存相簿。';return;}state.busy=true;controls();$(errorId).textContent='';status('正在同步至 Google Drive，請稍候…');
- try{await work();}catch(error){$(errorId).textContent=error.message;status(error.message,true);}finally{state.busy=false;controls();}
+ try{saveProgress('正在準備儲存…');$('save-progress-dialog').showModal();await work();}catch(error){$(errorId).textContent=error.message;status(error.message,true);}finally{$('save-progress-dialog').close();state.busy=false;controls();}
 }
 // 關閉表單前確認是否放棄未儲存內容；照片表單關閉時也釋放暫時預覽資源。
 function closeDialog(dialog,force=false){if(state.busy)return;if(!force&&state.dirty&&!confirm('這次編輯尚未儲存，確定要放棄嗎？'))return;state.dirty=false;dialog.close();if(dialog.id==='record-dialog')clearDraft();}
@@ -251,10 +258,10 @@ $('child-form').addEventListener('submit',event=>{
   c.growthSex=$('child-growth-sex').value;
   // 補上實際生日時，既有孕期故事保留原日期，由 ageAt() 自動更新顯示。
   // 已上傳的識別碼保留到儲存成功或放棄，JSON 寫入失敗時可直接重試。
-  if(state.avatarDraft?.file){const blob=state.avatarDraft.uploadBlob||=await compressPhoto(state.avatarDraft.file,512);const body=await cloud.uploadPhoto(blob,undefined,c);state.avatarDraft.id=body.id;state.avatarDraft.file=null;}
+  if(state.avatarDraft?.file){saveProgress('正在處理大頭貼…');const blob=state.avatarDraft.uploadBlob||=await compressPhoto(state.avatarDraft.file,512);saveProgress('正在上傳大頭貼…');const body=await cloud.uploadPhoto(blob,undefined,c);state.avatarDraft.id=body.id;state.avatarDraft.file=null;}
   c.avatar=state.avatarDraft?.id||null;
   c.bookTitle=$('child-book-title').value.trim();c.bookDedication=$('child-book-dedication').value;
-  if(state.bookCoverDraft?.file){const blob=state.bookCoverDraft.uploadBlob||=await compressPhoto(state.bookCoverDraft.file);const body=await cloud.uploadPhoto(blob,undefined,c);state.bookCoverDraft.id=body.id;state.bookCoverDraft.file=null;}
+  if(state.bookCoverDraft?.file){saveProgress('正在處理書封照片…');const blob=state.bookCoverDraft.uploadBlob||=await compressPhoto(state.bookCoverDraft.file);saveProgress('正在上傳書封照片…');const body=await cloud.uploadPhoto(blob,undefined,c);state.bookCoverDraft.id=body.id;state.bookCoverDraft.file=null;}
   c.bookCover=state.bookCoverDraft?.id||null;
   const next=structuredClone(state.data),index=next.children.findIndex(v=>v.id===c.id);if(index<0)next.children.push(c);else next.children[index]=c;
   await commit(next);state.childId=c.id;state.page=0;state.photo=null;state.bookPosition='cover';$('year').value='all';$('search').value='';$('child-dialog').close();render();
@@ -268,10 +275,13 @@ $('record-form').addEventListener('submit',event=>{
   const photoChild=state.data.children.find(c=>c.id===$('record-child-select').value);if(!photoChild)throw new Error('請選擇這筆紀錄所屬的孩子。');
   // 在上傳照片前先檢查量測；留白可清除原數字，避免為無效表單產生照片檔案。
   const heightCm=GrowthMetrics.parseInput($('record-height').value,'heightCm'),weightKg=GrowthMetrics.parseInput($('record-weight').value,'weightKg');
-  for(let i=0;i<state.draft.length;i++){
+  const pendingPhotos=state.draft.filter(p=>!p.id);
+  for(let i=0;i<pendingPhotos.length;i++){
    // 已上傳的識別碼保留在草稿，JSON 儲存失敗重試時可略過該照片，避免重複上傳。
-   const p=state.draft[i];if(p.id)continue;status('正在處理照片 '+(i+1)+' / '+state.draft.length+'…');const blob=p.uploadBlob||=await compressPhoto(p.file);
+   const p=pendingPhotos[i];saveProgress('正在處理照片 '+(i+1)+' / '+pendingPhotos.length+'…',i,pendingPhotos.length);const blob=p.uploadBlob||=await compressPhoto(p.file);
+   saveProgress('正在上傳照片 '+(i+1)+' / '+pendingPhotos.length+'…',i,pendingPhotos.length);
    const body=await cloud.uploadPhoto(blob,undefined,photoChild);p.id=body.id;p.file=null;
+   saveProgress('已上傳 '+(i+1)+' / '+pendingPhotos.length+' 張照片',i+1,pendingPhotos.length);
   }
   const r={id:state.recordEdit||crypto.randomUUID(),childId:$('record-child-select').value,date:$('record-date').value,title:$('record-title').value.trim(),story:$('record-story').value,milestone:$('record-milestone').value.trim(),photos:state.draft.map(p=>p.id),coverPhoto:state.coverDraft?.id||null};
   if(heightCm!==null)r.heightCm=heightCm;if(weightKg!==null)r.weightKg=weightKg;
