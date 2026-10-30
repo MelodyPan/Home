@@ -9,7 +9,7 @@ async function addProjectSource(root){
  await fs.copyFile(path.join(home,'apps/admin/projects.public.json'),path.join(directory,'projects.json'));
 }
 
-test('兩站有獨立入口、資源與 API，舊相簿轉址且沿用原資料',async t=>{
+test('兩站有獨立入口與雲端資源，本機相簿 API 停用且保留原資料',async t=>{
  const dataRoot=await fs.mkdtemp(path.join(os.tmpdir(),'split-data-'));
  await fs.mkdir(path.join(dataRoot,'assets'));
  const original={schemaVersion:1,updatedAt:null,children:[{id:'child',name:'測試孩子',birthday:''}],records:[]};
@@ -30,16 +30,16 @@ test('兩站有獨立入口、資源與 API，舊相簿轉址且沿用原資料'
  }
  assert.equal((await fetch(origin+'/bookmarks/Javascript/growth.js')).status,404);
  assert.equal((await fetch(origin+'/growth/Javascript/home.js')).status,404);
- const initial=await fetch(origin+'/growth/api/growth'),data=await initial.json();assert.deepEqual(data,original);
- data.children[0].name='已更新';
- const options={method:'PUT',headers:{Origin:origin,'Content-Type':'application/json','If-Match':initial.headers.get('etag')},body:JSON.stringify(data)};
- assert.equal((await fetch(origin+'/growth/api/growth',options)).status,200);
- assert.equal((await fetch(origin+'/growth/api/growth',options)).status,409);
- assert.equal(JSON.parse(await fs.readFile(path.join(dataRoot,'assets/growth-data.json'))).children[0].name,'已更新');
- const png=Buffer.alloc(24);Buffer.from([137,80,78,71,13,10,26,10]).copy(png);
- const upload=await fetch(origin+'/growth/api/growth/photos',{method:'POST',headers:{Origin:origin,'Content-Type':'image/png'},body:png});assert.equal(upload.status,201);
- const photo=await upload.json();assert.equal((await fetch(origin+'/growth/assets/growth-photos/'+photo.id)).status,200);
- const legacy=await fetch(origin+'/bookmarks/api/growth',{redirect:'manual'});assert.equal(legacy.status,307);assert.equal(legacy.headers.get('location'),'/growth/api/growth');
+ for(const route of ['/growth/api/growth','/growth/api/growth/photos','/growth/assets/growth-photos/private.png','/api/growth','/api/growth/photos','/assets/growth-photos/private.png','/bookmarks/api/growth']){
+  for(const method of ['GET','PUT','POST'])assert.equal((await fetch(origin+route,{method})).status,404,method+' '+route);
+ }
+ assert.equal(await fs.readFile(path.join(dataRoot,'assets/growth-data.json'),'utf8'),JSON.stringify(original));
+ assert.deepEqual(await fs.readdir(path.join(dataRoot,'assets')),['growth-data.json']);
+ const bookmarkConfig=await(await fetch(origin+'/bookmarks/Javascript/site-config.js')).text();
+ const growthConfig=await(await fetch(origin+'/growth/Javascript/site-config.js')).text();
+ assert.match(growthConfig,/"mode":"drive"/);assert.match(growthConfig,/"homeUrl":"\.\.\/index.html"/);
+ assert.equal(JSON.parse(growthConfig.slice(growthConfig.indexOf('=')+1,-1)).googleClientId,JSON.parse(bookmarkConfig.slice(bookmarkConfig.indexOf('=')+1,-1)).googleClientId);
+ for(const name of ['growth-data.js','growth-drive.js','growth-cloud-ui.js','growth-backup.js','bookmark-cloud.js','bookmark-login.js'])assert.equal((await fetch(origin+'/growth/Javascript/'+name)).status,200,name);
  for(const route of ['/.home-local.json','/growth/scripts/growth-store.cjs','/growth/assets/growth-data.json','/apps/growth/growth.html'])assert.equal((await fetch(origin+route)).status,404,route);
 });
 
@@ -56,7 +56,14 @@ test('CathFlow 與 DynastyExplorer 有獨立子站，舊網址轉址且公開產
  const image=await fetch(origin+'/dynasty-explorer/images/logo.png');assert.equal(image.status,200);assert.match(image.headers.get('content-type'),/image\/png/);
  await fs.copyFile(path.join(home,'index.html'),path.join(root,'index.html'));
  await addProjectSource(root);
+ const clientId='123456-growth.apps.googleusercontent.com';
+ await fs.writeFile(path.join(root,'bookmarks.config.json'),JSON.stringify({googleClientId:clientId,privateSecret:'DO_NOT_PUBLISH'}));
  const out=await buildSite(root,{appRoot:path.join(home,'apps/bookmarks')});
+ const growthConfig=await fs.readFile(path.join(out,'growth/Javascript/site-config.js'),'utf8');
+ assert.match(growthConfig,/"mode":"drive"/);assert.match(growthConfig,/"homeUrl":"\.\.\/index.html"/);assert.ok(growthConfig.includes(process.env.BOOKMARKS_GOOGLE_CLIENT_ID||clientId));assert.ok(!growthConfig.includes('DO_NOT_PUBLISH'));
+ for(const name of ['growth-data.js','growth-drive.js','growth-cloud-ui.js','growth-backup.js','bookmark-cloud.js','bookmark-login.js'])await fs.access(path.join(out,'growth/Javascript',name));
+ for(const file of ['assets/growth-data.json','assets/growth-photos','scripts/growth-store.cjs'])await assert.rejects(fs.access(path.join(out,'growth',file)));
+ for(const name of ['bookmark-cloud.js','bookmark-login.js'])assert.deepEqual(await fs.readFile(path.join(out,'growth/Javascript',name)),await fs.readFile(path.join(home,'apps/bookmarks/Javascript',name)));
  for(const [site,file] of [['cathflow','cathflow.html'],['dynasty-explorer','DynastyExplorer.html']]){
   await fs.access(path.join(out,site,file));assert.match(await fs.readFile(path.join(out,file),'utf8'),new RegExp(site+'/'+file));
  }

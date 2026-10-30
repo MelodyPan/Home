@@ -1,6 +1,6 @@
 # 成長電子相簿：操作與程式說明
 
-更新日期：2026-10-25。內容依目前程式碼整理。
+更新日期：2026-10-27。儲存已改為私人 Google Drive，每月一份紀錄檔。
 
 導覽：[Home 整合說明](../../bookmarks/docs/home-integration.md) · [書籤操作指南](../../bookmarks/docs/user-guide.md) · [專案說明](../README.md)
 
@@ -8,7 +8,7 @@
 
 執行 Home 根目錄的 `start-home.cmd` 或 `npm start`，從 Home 首頁點「成長相簿」，或開啟 `http://127.0.0.1:4179/growth/`。
 
-目前以「繽紛童趣」版型搭配[全站溫馨可愛主題](../../bookmarks/docs/cozy-theme.md)：淡紫底色、拍立得照片與便條紙故事。桌面以左側孩子導覽搭配右側內容；較窄畫面改用孩子下拉選單。此為本機網站，同一台電腦上的瀏覽器透過服務存取檔案，其他裝置無法透過自己的 `127.0.0.1` 連到這台電腦。
+目前以「繽紛童趣」版型搭配[全站溫馨可愛主題](../../bookmarks/docs/cozy-theme.md)：淡紫底色、拍立得照片與便條紙故事。桌面以左側孩子導覽搭配右側內容；較窄畫面改用孩子下拉選單。本機及公開網站都使用 Google Drive；以相同 Google 帳號登入，即可讀寫同一份相簿。
 
 | 功能 | 操作與結果 |
 | --- | --- |
@@ -19,12 +19,13 @@
 | 新增紀錄 | 填寫日期、標題、故事及選填的里程碑，照片可不選 |
 | 指定封面 | 在紀錄編輯視窗，點照片下方「設為封面」，再儲存紀錄 |
 | 管理紀錄 | 以清單查看、編輯或刪除紀錄，也能翻到指定故事 |
+| 移動到其他孩子 | 編輯故事時更改「所屬孩子」，按「儲存這段回憶」；照片、封面、故事與成長數字一併保留，儲存成功後切到目標孩子，依其生日重新顯示年齡 |
 | 時間軸預覽 | 點孩子旁的「預覽」，或選擇孩子後按「預覽成長時間軸」 |
 | 電子書預覽 | 專屬書封、章節目錄與多照片雜誌跨頁，保留立體翻頁 |
 | 成長數字 | 每筆紀錄可選填身高、體重，查看目前孩子的曲線與量測明細 |
 | 搜尋與篩選 | 年份可搭配標題、故事、里程碑或日期關鍵字，五種顯示模式共用結果 |
 
-點左上角 Logo 回到成長相簿入口；右上角「← 書籤首頁」回到書籤網站。一般載入、儲存成功的提示列隱藏，錯誤時才顯示。
+點左上角 Logo 回到成長相簿入口；右上角「登入／管理相簿」開啟雲端管理視窗。一般載入、儲存成功的提示列隱藏，錯誤時才顯示。
 
 ### 從孕期開始記錄
 
@@ -32,7 +33,7 @@
 
 未填生日時，年齡位置顯示「還在肚子裡」；有生日且紀錄早於生日，顯示「出生前 N 天」。出生當天及之後沿用原有的天數、月齡或歲數。這些文字由手帳、時間軸、電子書及管理清單共用，不會顯示負數年齡。未提供孕週計算。
 
-補填或修改生日會重新計算顯示文字，原有故事、日期、照片及封面保持原樣；也不會阻止保存已經存在的孕期紀錄。未填生日在 JSON 統一保存為空字串 `""`，API 也接受省略欄位或 `null`，既有生日資料相容。
+補填或修改生日會重新計算顯示文字，原有故事、日期、照片及封面保持原樣；也不會阻止保存已經存在的孕期紀錄。未填生日在 JSON 統一保存為空字串 `""`，資料驗證也接受省略欄位或 `null`，既有生日資料相容。
 
 ### 成長數字：身高與體重
 
@@ -59,7 +60,7 @@
 
 `Javascript/growth-metrics.js` 集中處理 `parseInput()`（空白與輸入驗證）、`label()`（手帳等畫面的文字）、`series()`（孩子隔離與日期排序）、`plot()`（未填生日的日期曲線）、`ageMonths()`（日曆月週年日與當月比例）、`agePlot()`／`ageChart()`（0–84 月定位與參考線）及 `render()`（SVG 和表格）。`Javascript/growth-reference.js` 是由官方原檔產生的離線資料，必須在數字模組前載入。`src/growth-metrics.css` 維護方格紙、參考線與窄螢幕橫向捲動；不載入外部圖表套件。
 
-紀錄新增可省略的數字欄位 `heightCm` 與 `weightKg`，例如 `"heightCm": 85.5, "weightKg": 12.35`。未填寫時省略欄位；API 也接受 `null` 表示清空。維持 `schemaVersion: 1`，舊紀錄不補成 0。既有備份、版本衝突檢查及照片保存流程維持原有方式。
+紀錄新增可省略的數字欄位 `heightCm` 與 `weightKg`，例如 `"heightCm": 85.5, "weightKg": 12.35`。未填寫時省略欄位；資料驗證也接受 `null` 表示清空。維持 `schemaVersion: 1`，舊紀錄不補成 0。儲存採每月 Drive 版本及條件式更新。
 
 孩子的選填欄位 `growthSex` 接受 `male`／`female`；空字串、`null` 或省略表示未選擇，保存時省略欄位。生日及參考設定變更後即重新定位，不修改原量測紀錄。顯示參考資料完全在本機完成，不會把生日或量測傳到官方網站。
 
@@ -108,7 +109,7 @@
 - 「返回成長手帳」會回到目前故事；照片續頁也對應原本同一段故事。書封或目錄則保留上次故事位置。
 - 切換孩子、年份、搜尋或顯示模式時，會取消尚未完成的翻頁。電子書與手帳保留同一個故事位置；沒有符合的紀錄時顯示共用空狀態。
 
-此功能以本機 CSS 3D 及 Web Animations API 製作紙張正反面、書脊與陰影，沒有載入外部翻頁服務，也不會將照片上傳到 FlipHTML5。它提供本機相簿的翻頁閱讀功能，未包含 FlipHTML5 的線上出版、分享或多媒體編輯工具。
+此功能以本機 CSS 3D 及 Web Animations API 製作紙張正反面、書脊與陰影，沒有載入外部翻頁服務，也不會將照片上傳到 FlipHTML5。它提供相簿的翻頁閱讀功能，未包含 FlipHTML5 的線上出版、分享或多媒體編輯工具。
 
 #### 電子書程式說明
 
@@ -127,209 +128,30 @@
 | `Javascript/growth.js` | 註冊電子書頁籤，傳入 `records()` 結果，將閱讀位置同步到既有手帳 |
 | `scripts/server.cjs` | 明確允許電子書 JS／CSS 靜態路徑；不開放任意檔案存取 |
 
-孩子新增可選 `bookTitle`（最多 120 字）、`bookDedication`（最多 2,000 字）、`bookCover`（本機照片 ID）；故事新增可選 `photoLayout`（`editorial`、`grid`、`full`）。維持 `schemaVersion: 1`，舊資料直接相容。照片上傳與實體存在驗證沿用既有服務；書封草稿的 Blob 在更換／關閉時釋放，JSON 保存失敗時保留已上傳 ID 供重試。翻頁與跳目錄只改變記憶體中的閱讀位置，不執行存檔 API。
+孩子新增可選 `bookTitle`（最多 120 字）、`bookDedication`（最多 2,000 字）、`bookCover`（相簿照片 ID）；故事新增可選 `photoLayout`（`editorial`、`grid`、`full`）。維持 `schemaVersion: 1`，舊資料直接相容。照片透過授權存入 Google Drive，保存前確認照片對應存在；書封草稿的 Blob 在更換／關閉時釋放，JSON 保存失敗時保留已上傳 ID 供重試。翻頁與跳目錄只改變記憶體中的閱讀位置，不執行 Drive 存檔。
 
-## 2. 檔案與模組
+## 2. 連接與每月儲存
 
-| 檔案 | 職責 |
-| --- | --- |
-| [growth.html](../growth.html) | 相簿入口、孩子導覽、五種顯示模式及維護對話框 |
-| [src/growth.css](../src/growth.css) | 童趣樣式、拍立得、便條紙、時間軸及響應式排版 |
-| [Javascript/growth.js](../Javascript/growth.js) | 畫面狀態、事件、草稿、縮圖、API 存取及時間軸 |
-| [scripts/growth-store.cjs](../scripts/growth-store.cjs) | 資料驗證、照片上傳、JSON 讀寫、備份與衝突檢查 |
-| [scripts/server.cjs](../scripts/server.cjs) | 共用本機服務，將相簿路由交給儲存模組，提供指定靜態資源 |
-| [scripts/server-version.cjs](../scripts/server-version.cjs) | 計算服務版本指紋，包含相簿儲存模組 |
-| [Home 啟動程式](../../../scripts/home-site-start.cjs) | 確認服務身分、專案路徑及版本，必要時重啟同專案舊服務 |
+右上角開啟管理視窗，按「連接 Google Drive」。設定沿用 bookmarks 的公開 OAuth Client ID，授權範圍為 drive.file；不需要服務帳號、client secret 或公開分享資料夾。第一次可建立空白相簿或匯入舊資料；找到多份資料時須選取，不任意覆蓋。
 
-相簿直接使用 `growth.html`，不由首頁建置工具產生。修改 HTML、CSS 或前端 JS 後重新整理即可；修改服務程式後，重新執行啟動檔更新執行版本。首頁範本仍由 `scripts/build-home.cjs` 產生 `bookmarks.html`。
+每個相簿資料集依台灣儲存月份建立 growth-YYYY-MM.json。同月修改更新該檔，跨月有異動才新增；每份為當時的完整相簿，修改舊故事也更新目前月份的檔案。照片以 UUID 檔名分別保存於 MelodyHome／成長相簿照片／孩子代號 資料夾，大頭貼、書封與故事照片共用此規則。重新載入時整理現有照片，孩子更名會保留原代號，紀錄移到另一位孩子後照片也會搬到對應資料夾；育銓使用 01、Baby 使用 02，其餘孩子從 03 起編號，資料夾不包含孩子姓名，同張照片若被多位孩子引用則放在「共同照片」。搬移保留檔案 ID，不必重新上傳，也不影響過去月份紀錄的照片連結。JSON 的 photoFiles 對應私人 Drive 檔案 ID，畫面以授權讀取後的暫時 Blob 網址顯示。刪除故事或更換照片不自動刪除雲端實體照片，以免舊月份版本缺圖。
 
-## 3. 架構與資料流
+儲存先完成照片上傳，再提交紀錄。版本變動會停止過期覆寫；衝突時在管理視窗選取雲端版本或目前分頁草稿。可下載選取版本的完整備份，再決定繼續使用哪一份。授權過期或網路失敗會保留目前分頁的未同步內容，按「重新連接／重試同步」處理；編輯表單中的「同步與備份」也可開啟管理視窗。
 
-```mermaid
-flowchart LR
-    UI["growth.html／growth.js"] <-->|"同來源 HTTP"| SERVER["server.cjs"]
-    SERVER <--> STORE["growth-store.cjs"]
-    STORE <--> DATA["growth-data.json"]
-    STORE --> BACKUP["growth-data.json.bak"]
-    STORE <--> PHOTOS["growth-photos／照片檔案"]
-```
+紀錄與照片不寫入 localStorage 或 IndexedDB。token 僅存於目前分頁 sessionStorage；閒置 10 分鐘或 token 到期會清除登入、畫面及草稿。關閉分頁前請完成同步或下載備份。離線時暫停新修改；完整備份只有在所有需要的照片均能讀取或已載入記憶體時才會成功。
 
-### 載入與切換畫面
+## 3. 舊相簿匯入與完整備份
 
-1. 前端向 `GET /api/growth` 取得完整相簿與 `ETag`。
-2. 選取目前孩子，建立桌面側欄與手機選單。
-3. `allRecords()` 限定孩子，依日期排序，同日期以識別碼作穩定排序。
-4. `records()` 套用年份與關鍵字條件。
-5. `render()` 依模式顯示相簿、維護清單或時間軸。切換模式及篩選不寫入磁碟。
+1. 保留原有資料位置；選擇含 growth-data.json 與 growth-photos 子目錄的資料夾（通常為原資料根目錄內的 assets）。
+2. 管理視窗的「從舊相簿資料夾匯入」會檢查格式、日期、孩子關聯與所有被引用的照片。缺照片時中止，先補齊再重試。
+3. 確認顯示的孩子、故事及照片數量後才上傳，全部照片成功才提交相簿文件。匯入建立獨立雲端相簿，原雲端與本機來源均保留。
+4. 「下載完整相簿備份」產生 .growth 檔，包含紀錄、照片與有效的表單草稿。備份以校驗碼檢查照片是否損毀；不完整或缺圖時會中止。
+5. 在「從完整備份匯入」選取 .growth，即可還原成獨立相簿。不要只備份每月 JSON；JSON 並未包含照片二進位內容。
 
-### 保存照片與紀錄
+資料 schemaVersion 維持 1，孩子、孕期、封面、書封、身高及體重欄位均相容。Drive 的版本封裝與照片檔案對應由儲存模組處理；可攜備份不攜帶舊帳號的 Drive 檔案對應。
 
-1. 使用者選照，前端以 `blob:` 網址建立暫時預覽。
-2. 按儲存後解碼照片，等比例縮圖並轉成 JPEG。
-3. 將新照片的二進位內容送到 `POST /api/growth/photos`，取得照片 ID。
-4. 把照片 ID 寫入孩子的 `avatar`／`bookCover`，或紀錄的 `photos`、`coverPhoto`。
-5. 用 `PUT /api/growth` 送出完整 JSON 快照，並以 `If-Match` 帶入載入時的版本。
-6. 服務在寫入佇列內重新讀檔、檢查版本與引用照片，備份舊檔並替換正式檔。
-7. 收到成功回應後，前端才更新已儲存資料、版本及未儲存狀態。
+## 4. 模組與測試
 
-照片上傳與 JSON 存檔是兩個步驟。若照片已上傳但 JSON 失敗，草稿保留照片 ID，再試時不會重複上傳；放棄草稿或刪除紀錄也不會自動刪除磁碟照片。
+主要模組見 [README](../README.md)。正式 scripts/server.cjs 只服務靜態資源；舊 /api/growth、/api/growth/photos、/assets/growth-photos 及其 Home 相容路徑均不提供私人資料。公開建置只複製白名單與公開 Client ID。
 
-## 4. 前端狀態與主要函式
-
-### 狀態欄位
-
-| 欄位 | 意義 |
-| --- | --- |
-| `data`、`revision` | 已成功載入／保存的資料，以及與檔案內容對應的版本 |
-| `childId` | 目前孩子的識別碼 |
-| `mode` | `album` 成長手帳、`manage` 管理紀錄、`timeline` 時間軸 |
-| `page` | 篩選後紀錄的索引，從 0 開始 |
-| `photo` | 目前照片索引；`null` 表示進入故事時先使用封面 |
-| `busy` | 非同步儲存中，防止重複送出或修改處理中的資料 |
-| `dirty` | 表單有未儲存編輯，供關閉或離開時提醒 |
-| `childEdit`、`recordEdit` | 正在編輯的孩子／紀錄 ID；新增時為 `null` |
-| `draft` | 照片草稿陣列，可同時包含既有照片與尚未上傳的檔案 |
-| `avatarDraft` | 大頭貼草稿，包含可選的 `file`、`id` 及預覽網址 `preview` |
-| `coverDraft` | 指向 `draft` 中的照片物件，不以陣列位置追蹤封面 |
-
-草稿狀態只存在瀏覽器記憶體，沒有另外保存到 `localStorage`。離開前的提醒不能取代儲存。
-
-### 函式分工
-
-| 函式 | 說明 |
-| --- | --- |
-| `selectChild(id, mode)` | 選取孩子，可直接進入時間軸；重設上一位孩子的搜尋、年份、頁碼與照片索引 |
-| `setMode(mode)`、`render()` | 切換模式及重繪；沒有符合紀錄時顯示共用空狀態 |
-| `renderBook(list)`、`flip(delta)` | 顯示故事、處理封面預設及翻頁邊界 |
-| `renderList(list)` | 建立可編輯、可翻到故事的維護清單 |
-| `renderTimeline(list)` | 建立有序清單與 `time` 元素，卡片索引對應同一份篩選結果 |
-| `ageAt(birthday, date)` | 未填生日顯示孕期文字，出生前顯示相距天數，出生後計算完整月齡／年齡 |
-| `fillAvatar(container, child)` | 顯示大頭貼，無設定或讀取失敗時使用名字圖示 |
-| `openChild()`、`setChildAvatar()`、`renderChildAvatar()` | 開啟孩子表單、更新大頭貼草稿與預覽 |
-| `openRecord()`、`renderDraft()`、`clearDraft()` | 管理照片草稿、封面、移除操作及預覽資源釋放 |
-| `compressPhoto(file, maxEdge)` | 等比例縮圖，預設故事長邊 1800、大頭貼傳入 512；不放大小照片 |
-| `jsonRequest()` | 統一處理連線、JSON 解析與 HTTP 錯誤 |
-| `commit(next)` | 保存完整快照；成功後才更新前端資料與版本 |
-| `busy(errorId, work)`、`controls()` | 儲存期間鎖定操作，失敗保留表單，結束後恢復 |
-| `closeDialog()` | 放棄未儲存編輯前確認，配合對話框關閉事件釋放預覽網址 |
-
-孩子名字、故事標題與內容透過 `textContent` 顯示，不作為 HTML 插入。暫時建立的 `blob:` 預覽須用 `URL.revokeObjectURL()` 釋放；既有照片的服務網址不需執行此操作。
-
-## 5. 資料格式與相容性
-
-正式檔案是 `assets/growth-data.json`，UTF-8 編碼，格式版本為 `schemaVersion: 1`。以下為說明用資料，照片 ID 僅為格式範例，實際使用時必須有對應照片檔案。
-
-```json
-{
-  "schemaVersion": 1,
-  "updatedAt": "2026-10-24T00:00:00.000Z",
-  "children": [
-    {
-      "id": "child-example",
-      "name": "小星",
-      "birthday": "2023-06-15",
-      "avatar": "00000000-0000-4000-8000-000000000003.jpg"
-    }
-  ],
-  "records": [
-    {
-      "id": "record-example",
-      "childId": "child-example",
-      "date": "2024-06-15",
-      "title": "第一個生日",
-      "story": "一起吹蠟燭，收藏今天的笑容。",
-      "milestone": "生日",
-      "photos": [
-        "00000000-0000-4000-8000-000000000001.jpg",
-        "00000000-0000-4000-8000-000000000002.jpg"
-      ],
-      "coverPhoto": "00000000-0000-4000-8000-000000000002.jpg"
-    }
-  ]
-}
-```
-
-`avatar` 與 `coverPhoto` 可省略，送出 `null` 可表示清除設定；服務保存時省略未設定的選填欄位。舊資料無須修改格式版本，前端會提供名字圖示或第一張照片作為預設。
-
-`coverPhoto` 必須出現在同一筆紀錄的 `photos` 中。封面引用的是照片 ID，所以改封面不需要調整照片順序，也不會另外複製圖片。
-
-### 驗證與限制
-
-| 項目 | 限制 |
-| --- | --- |
-| 孩子／紀錄數量 | 最多 100 位孩子、10000 筆紀錄 |
-| 孩子名字 | 必填，最多 80 字元 |
-| 日期 | 紀錄日期必填且為有效的 `YYYY-MM-DD`，允許早於生日；生日可留白，有填寫仍須有效 |
-| 標題／故事／里程碑 | 標題必填且最多 160 字元；故事 20000；里程碑 80 |
-| 每筆紀錄照片 | 最多 20 張，照片 ID 不重複 |
-| 選照格式／原檔大小 | JPG、PNG、WebP；每張最多 12 MB |
-| 縮圖 | 故事最長邊 1800、大頭貼 512 像素；JPEG 品質 0.88，透明背景轉白 |
-| 解碼後圖片 | 瀏覽器拒絕超過 60000000 像素的圖片 |
-| JSON 請求 | 最多 8 MB；照片另行上傳，不內嵌於 JSON |
-
-原始照片不會被修改。瀏覽器重新編碼後的檔案不保留原始 EXIF 或透明背景。後端另外檢查照片 MIME、大小及檔頭，檔頭檢查本身不等同完整圖片解碼。
-
-## 6. 本機介面與存檔機制
-
-| 方法與路徑 | 請求／回應 |
-| --- | --- |
-| `GET /api/growth` | 回傳完整相簿與 `ETag`；只在資料檔不存在時建立空白相簿 |
-| `PUT /api/growth` | JSON 快照、同來源 `Origin`、`Content-Type: application/json`、目前 `If-Match`；成功回傳 `revision`、`updatedAt` |
-| `POST /api/growth/photos` | 同來源 `Origin`、圖片 MIME 與二進位內容；成功回傳 `201` 及 `{ "id": "…" }` |
-| `GET /assets/growth-photos/<uuid>.<ext>` | 提供指定 UUID 照片；不存在或檔名不合法回傳 `404` |
-
-`server.cjs` 先檢查本機 Host，再讓 `growth-store.cjs` 接手相簿 API 與照片路徑。其他請求繼續走原有路由。相簿靜態檔只開放指定的 HTML、CSS、JS，不公開整個專案目錄。
-
-`createGrowthStore(root)` 回傳 `handle()` 與 `flush()`。`handle()` 處理相簿請求後回傳 `true`；不屬於它的路徑回傳 `false`。`flush()` 等待目前已排隊的寫入，供停止服務使用。
-
-同一服務內的相簿寫入依序執行。版本值是完整檔案內容的 SHA-256，服務會在佇列內重新讀檔比對 `If-Match`，避免多個視窗互相覆蓋。備份舊版至 `.bak` 後，先寫 `.tmp`，再用 `rename` 替換正式 JSON。讀取或驗證既有檔案失敗時回報錯誤，不自動清空資料。
-
-| 狀態碼 | 常見原因與處理 |
-| --- | --- |
-| `400` | 資料、日期或關聯不合法，或引用照片不存在；修正表單或重選照片 |
-| `403` | 來源或 JSON 內容型別不符；透過本機服務的正常介面操作 |
-| `409` | 其他視窗或程式已修改資料；先複製未儲存內容，再重新整理 |
-| `413`／`415` | 內容超量／不支援的照片格式；改用符合限制的檔案 |
-| `500` | 檔案損毀或讀寫失敗；檢查檔案、權限或還原備份 |
-| `503` | 服務正在停止；重新啟動後再試 |
-
-## 7. 備份、還原與刪除
-
-| 位置 | 用途 |
-| --- | --- |
-| `assets/growth-data.json` | 孩子、故事、大頭貼與封面關聯 |
-| `assets/growth-data.json.bak` | 上一次成功存檔前的 JSON，只保留上一版 |
-| `assets/growth-photos/` | 故事照片與大頭貼實體檔案 |
-
-等待儲存完成後，將整個 `assets` 資料夾複製到備份位置。還原時先停止服務，再一起還原 JSON 與照片目錄；只還原 JSON 無法補回已遺失的圖片。
-
-刪除孩子會連同其故事關聯移除；刪除紀錄或移除照片不清除磁碟照片，讓上一版備份仍能引用它們。上傳成功但放棄儲存的照片也會保留。目前沒有自動清理未引用照片或多版本回收桶功能。
-
-## 8. 測試與維護入口
-
-在專案根目錄執行：
-
-```powershell
-node --check Javascript/growth.js
-node --check Javascript/growth-flipbook.js
-node --check Javascript/growth-metrics.js
-node --check scripts/growth-store.cjs
-node --test
-```
-
-| 測試檔 | 驗證重點 |
-| --- | --- |
-| [growth-server.test.cjs](../tests/growth-server.test.cjs) | 初始化、備份、跨視窗衝突、照片限制、資料驗證、大頭貼及封面的保存 |
-| [growth-image.test.cjs](../tests/growth-image.test.cjs) | 縮圖尺寸、小圖不放大、超量圖片拒絕及解碼資源釋放 |
-| [growth-drafts.test.cjs](../tests/growth-drafts.test.cjs) | 封面選擇、不改照片順序、刪除回退與儲存鎖定 |
-| [growth-display.test.cjs](../tests/growth-display.test.cjs) | 相簿封面預設、大頭貼替代圖示及草稿清理 |
-| [growth-timeline.test.cjs](../tests/growth-timeline.test.cjs) | 時間軸日期／標題／封面、返回故事、孩子隔離及組合篩選 |
-| [growth-flipbook.test.cjs](../tests/growth-flipbook.test.cjs) | 翻頁邊界、指定封面、文字紀錄、動畫取消、正反紙張、手機拖曳與取消手勢 |
-| [growth-pregnancy.test.cjs](../tests/growth-pregnancy.test.cjs) | 孕期保存、生日選填與補填、出生前天數、原有年齡及紀錄日期預設 |
-| [growth-metrics.test.cjs](../tests/growth-metrics.test.cjs) | 數字選填／清除、錯誤型別與邊界、孩子隔離、日期比例、單點／同日及圖表表格 |
-| [growth-magazine.test.cjs](../tests/growth-magazine.test.cjs) | 書封／目錄章節、三種版型完整照片涵蓋、續頁來源映射與新欄位驗證 |
-| [growth-percentiles.test.cjs](../tests/growth-percentiles.test.cjs) | 生日／閏日月齡、官方數值與來源雜湊、出生／超齡範圍、性別設定及可操作年齡圖表 |
-
-HTTP 測試使用獨立暫存資料夾及動態連接埠，不把示意孩子寫入正式資料。前端邏輯測試使用最小 DOM／Canvas 替身執行實際函式；這些測試不代表已完成真實瀏覽器的版面、選照與觸控檢查。
-
-若要調整版面，先查看 `growth.html` 的識別碼及 `growth.css` 的中文區段註解；調整互動則查看 `growth.js`。新增資料欄位時，應同步更新 `validate()`、保存快照、舊資料相容處理與相關測試。
+在 Home 根目錄執行 npm test 和 npm run build。growth-drive.test.cjs 驗證每月邊界、並行、未知上傳結果重試、權限及照片；growth-backup.test.cjs 驗證完整性和匯入；growth-static.test.cjs 驗證私人路由與建置。既有相簿、圖表、翻頁與舊格式回歸測試仍保留。growth-drive.browser.cjs 是額外的 Playwright 瀏覽器測試，使用模擬 Google 授權與 Drive；它不等於真實帳號或手機跨裝置驗收。

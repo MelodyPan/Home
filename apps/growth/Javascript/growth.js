@@ -1,15 +1,14 @@
 (()=>{
-// 成長相簿前端：孩子與故事透過本機 API 保存，照片以獨立檔案識別碼引用。
+// 成長相簿前端：私人資料與照片透過 Google Drive 保存。
 'use strict';
-const preview=globalThis.BookmarksRuntime?.mode==='preview';
-// 成長相簿前端：以原生 DOM 管理畫面，永久資料由本機 API 讀寫。
+let cloud=null,cloudReady=false;
 const $=id=>document.getElementById(id);
 // 集中管理畫面狀態：revision 是檔案版本；page／photo 是從 0 起算的索引；busy 防重複儲存，dirty 標記未存編輯。
 // busy 防止重複送出，dirty 標記未儲存表單；draft 同時容納既有照片及尚未上傳的檔案。
 // mode 包含手帳、維護、時間軸、立體電子書與 metrics（成長數字）。
 const state={data:null,revision:null,childId:'',page:0,photo:null,bookPosition:'cover',mode:'album',busy:false,dirty:false,childEdit:null,recordEdit:null,draft:[],avatarDraft:null,bookCoverDraft:null,coverDraft:null};
 // JSON 只保存服務產生的照片 ID；顯示時才組合本機網址，不把圖片內容塞入資料快照。
-const photoUrl=id=>globalThis.BookmarksRuntime?.url('/assets/growth-photos/'+id)||'/assets/growth-photos/'+id;
+const photoUrl=id=>cloud?.photoUrl(id)||'';
 // 電子書翻完才同步頁碼；切回手帳時，仍會停在同一段故事並顯示指定封面。
 // 電子書的跨頁含書封、目錄及照片續頁，不能直接當作原故事索引。
 const ebook=new GrowthFlipbook.Flipbook($('ebook-view'),{magazine:true,photoUrl,ageAt,metricsLabel:GrowthMetrics.label,onChange:(index,key)=>{if(index!==null)state.page=index;state.bookPosition=key;state.photo=null;}});
@@ -34,14 +33,14 @@ function ageAt(birthday,date){
 function status(message,error=false){$('status').textContent=message;$('status').classList.toggle('error',error);$('status').hidden=!error;}
 // 載入成功後才開放操作；儲存期間鎖住欄位，避免送出中的內容又被修改。
 function controls(){
- const ready=!!state.data&&!state.busy&&!preview,hasChild=!!child();
+ const ready=!!state.data&&!state.busy&&cloudReady,hasChild=!!child();
  $('add-child').disabled=!ready;$('edit-child').disabled=!ready||!hasChild;$('add-record').disabled=!ready||!hasChild;$('child-select').disabled=!ready||!state.data.children.length;
  $('empty-action').disabled=!ready;$('preview-child').disabled=!ready||!hasChild;$('timeline-tab').disabled=!ready||!hasChild;$('ebook-tab').disabled=!ready||!hasChild;
  $('metrics-tab').disabled=!ready||!hasChild;
  $('ebook-settings').disabled=!ready||!hasChild;
  document.querySelectorAll('.child-choice,.child-preview').forEach(button=>button.disabled=!ready);
- document.querySelectorAll('dialog button,dialog input,dialog textarea,dialog select').forEach(el=>el.disabled=state.busy);
- document.querySelectorAll('dialog .upload-button').forEach(el=>{el.style.pointerEvents=state.busy?'none':'';});
+ document.querySelectorAll('#child-dialog button,#child-dialog input,#child-dialog textarea,#child-dialog select,#record-dialog button,#record-dialog input,#record-dialog textarea,#record-dialog select').forEach(el=>el.disabled=state.busy||(!cloudReady&&!el.matches('[data-close],.close-button,[data-growth-manage]')));
+ document.querySelectorAll('#child-dialog .upload-button,#record-dialog .upload-button').forEach(el=>{el.style.pointerEvents=state.busy||!cloudReady?'none':'';});
 }
 // 切換顯示模式只重繪畫面，不變更孩子選擇、篩選條件或磁碟資料。
 function setMode(mode){state.mode=mode;render();}
@@ -140,24 +139,15 @@ function renderList(list){
 }
 // 翻頁後重設照片索引；讀取 offsetWidth 讓移除再加上的 CSS 動畫能重新播放。
 function flip(delta){const next=state.page+delta;if(next<0||next>=records().length)return;state.page=next;state.photo=null;renderBook();$('book').classList.remove('turning');void $('book').offsetWidth;$('book').classList.add('turning');}
-// 統一處理連線、JSON 解析與 HTTP 錯誤，將本機服務回報的錯誤顯示在表單。
-async function jsonRequest(url,options={}){
- if(preview)throw new Error('雲端儲存尚未設定，目前為網站預覽。');
- let response;try{response=await fetch(globalThis.BookmarksRuntime?.url(url)||url,options);}catch{throw new Error('無法連線到本機服務。請重新執行 start-home.cmd，保留此表單後再試一次。');}
- let body;try{body=await response.json();}catch{throw new Error('本機服務回應異常，請確認已用啟動檔開啟最新版。');}
- if(!response.ok)throw new Error(body.error||'儲存失敗，請稍後再試。');return {response,body};
-}
-// 送出完整快照並附上 If-Match 版本；服務確認存檔成功後，才更新記憶體資料及清除 dirty。
-// 只有服務成功回覆才更新已儲存資料與 ETag；失敗時表單仍保留供重試。
+// Drive 確認存檔成功後才清除表單 dirty；失敗時保留表單和照片草稿。
 async function commit(next){
- const {body}=await jsonRequest('/api/growth',{method:'PUT',headers:{'Content-Type':'application/json','If-Match':state.revision},body:JSON.stringify(next)});
- next.updatedAt=body.updatedAt;state.data=next;state.revision=body.revision;state.dirty=false;
- status('已儲存到本機 · '+new Date(body.updatedAt).toLocaleString('zh-TW',{hour12:false})+' · 照片與故事只保存在這台電腦');
+ state.data=await cloud.save(next);state.dirty=false;
+ status('已同步至私人 Google Drive');
 }
 // 集中管理非同步儲存：防止重複操作，失敗保留表單，最後一律解除鎖定。
 // 集中管理儲存期間的按鈕鎖定與錯誤提示，結束後無論成功失敗都恢復操作。
 async function busy(errorId,work){
- if(state.busy)return;state.busy=true;controls();$(errorId).textContent='';status('正在儲存到本機，請稍候…');
+ if(state.busy)return;if(!cloudReady){$(errorId).textContent='請先連接 Google Drive 並完成同步，再儲存相簿。';return;}state.busy=true;controls();$(errorId).textContent='';status('正在同步至 Google Drive，請稍候…');
  try{await work();}catch(error){$(errorId).textContent=error.message;status(error.message,true);}finally{state.busy=false;controls();}
 }
 // 關閉表單前確認是否放棄未儲存內容；照片表單關閉時也釋放暫時預覽資源。
@@ -171,7 +161,7 @@ function fillAvatar(container,c){
 }
 // 更換或關閉草稿時釋放暫存網址，不刪除本機已保存的大頭貼照片。
 function setChildAvatar(draft){
- if(state.avatarDraft?.preview?.startsWith('blob:'))URL.revokeObjectURL(state.avatarDraft.preview);
+ if((state.avatarDraft?.localPreview||!state.avatarDraft?.id)&&state.avatarDraft?.preview?.startsWith('blob:'))URL.revokeObjectURL(state.avatarDraft.preview);
  state.avatarDraft=draft;$('child-avatar-file').value='';renderChildAvatar();
 }
 // 同步表單的大頭貼預覽、名字替代圖示與移除按鈕；此時仍是草稿，不會變更孩子的已保存資料。
@@ -182,6 +172,7 @@ function renderChildAvatar(){
 }
 // 新增與編輯共用表單；既有大頭貼只帶入照片 ID，只有另選照片時才需要重新上傳。
 function openChild(edit=false){
+ if(!cloudReady||state.busy)return;
  if(!state.data||state.busy)return;state.childEdit=edit?child().id:null;const c=edit?child():null;
  $('child-dialog-title').textContent=edit?'編輯孩子':'新增孩子';$('child-name').value=c?.name||'';$('child-birthday').value=c?.birthday||'';$('child-error').textContent='';$('delete-child').hidden=!edit;setChildAvatar(c?.avatar?{id:c.avatar,preview:photoUrl(c.avatar)}:null);state.dirty=false;$('child-dialog').showModal();
  $('child-book-title').value=c?.bookTitle||'';$('child-book-dedication').value=c?.bookDedication||'';setBookCover(c?.bookCover?{id:c.bookCover,preview:photoUrl(c.bookCover)}:null);
@@ -189,18 +180,20 @@ function openChild(edit=false){
 }
 // 書封與大頭貼分開管理草稿；更換、關閉或放棄編輯時釋放暫存網址，不刪除保存照片。
 function setBookCover(draft){
- if(state.bookCoverDraft?.preview?.startsWith('blob:'))URL.revokeObjectURL(state.bookCoverDraft.preview);
+ if((state.bookCoverDraft?.localPreview||!state.bookCoverDraft?.id)&&state.bookCoverDraft?.preview?.startsWith('blob:'))URL.revokeObjectURL(state.bookCoverDraft.preview);
  state.bookCoverDraft=draft;$('child-book-cover-file').value='';$('child-book-cover-preview').hidden=!draft;
  if(draft)$('child-book-cover-preview').src=draft.preview;else $('child-book-cover-preview').removeAttribute('src');
  $('remove-book-cover').hidden=!draft;
 }
 // 釋放 blob 預覽網址及草稿，不刪除磁碟照片，避免影響已保存資料或備份。
 // 草稿預覽的 Blob 網址需要手動釋放；既有照片的伺服器網址不做 revoke。
-function clearDraft(){state.draft.forEach(p=>{if(p.preview?.startsWith('blob:'))URL.revokeObjectURL(p.preview);});state.draft=[];state.coverDraft=null;$('draft-photos').replaceChildren();$('record-photos').value='';}
+function clearDraft(){state.draft.forEach(p=>{if((p.localPreview||!p.id)&&p.preview?.startsWith('blob:'))URL.revokeObjectURL(p.preview);});state.draft=[];state.coverDraft=null;$('draft-photos').replaceChildren();$('record-photos').value='';}
 // 建立編輯草稿；既有照片保留識別碼與網址，送出時不必重新上傳。
 function openRecord(r=null){
+ if(!cloudReady||state.busy)return;
  if(!child()||state.busy)return;clearDraft();state.recordEdit=r?.id||null;
- $('record-dialog-title').textContent=r?'編輯成長紀錄':'新增成長紀錄';$('record-child').textContent='為 '+child().name+' 收藏一段回憶';
+ $('record-dialog-title').textContent=r?'編輯成長紀錄':'新增成長紀錄';$('record-child').textContent='更改所屬孩子後，照片、故事與成長數字會一起移動。';
+ $('record-child-select').replaceChildren(...state.data.children.map(c=>new Option(c.name,c.id)));$('record-child-select').value=r?.childId||state.childId;
  // 孕期也能新增，日期不再以生日為下限；新故事預設今天，既有故事保留原日期。
  $('record-date').min='';$('record-date').value=r?.date||today();$('record-title').value=r?.title||'';$('record-story').value=r?.story||'';$('record-milestone').value=r?.milestone||'';$('record-error').textContent='';$('delete-record').hidden=!r;
  $('record-height').value=r?.heightCm??'';$('record-weight').value=r?.weightKg??'';
@@ -216,7 +209,7 @@ function renderDraft(){
  state.draft.forEach((p,index)=>{
   const wrap=document.createElement('div');wrap.className='draft-photo';
   const img=document.createElement('img');img.src=p.preview;img.alt='待儲存照片 '+(index+1);
-  const remove=actionButton('×',()=>{if(state.busy)return;const [removed]=state.draft.splice(index,1);if(removed.preview.startsWith('blob:'))URL.revokeObjectURL(removed.preview);state.dirty=true;renderDraft();},'remove-photo');remove.setAttribute('aria-label','移除第 '+(index+1)+' 張照片');
+  const remove=actionButton('×',()=>{if(state.busy)return;const [removed]=state.draft.splice(index,1);if((removed.localPreview||!removed.id)&&removed.preview.startsWith('blob:'))URL.revokeObjectURL(removed.preview);state.dirty=true;renderDraft();},'remove-photo');remove.setAttribute('aria-label','移除第 '+(index+1)+' 張照片');
   const selected=state.coverDraft===p;
   const cover=actionButton(selected?'✓ 封面照片':'設為封面',()=>{if(state.busy)return;state.coverDraft=p;state.dirty=true;renderDraft();},'set-cover');cover.setAttribute('aria-pressed',selected);cover.setAttribute('aria-label',(selected?'目前封面：':'設為封面：')+'第 '+(index+1)+' 張照片');
   const num=document.createElement('small');num.textContent=index+1;wrap.append(img,remove,num,cover);$('draft-photos').append(wrap);
@@ -238,7 +231,7 @@ async function compressPhoto(file,maxEdge=1800){
 $('child-avatar-file').addEventListener('change',event=>{
  const file=event.target.files[0];if(!file)return;
  if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size===0||file.size>12*1024*1024){$('child-error').textContent='請選擇 12 MB 以內的 JPG、PNG 或 WebP 大頭貼。';event.target.value='';return;}
- $('child-error').textContent='';setChildAvatar({file,preview:URL.createObjectURL(file)});state.dirty=true;
+ $('child-error').textContent='';setChildAvatar({file,localPreview:true,preview:URL.createObjectURL(file)});state.dirty=true;
 });
 $('remove-child-avatar').onclick=()=>{if(state.busy)return;setChildAvatar(null);state.dirty=true;};
 $('child-name').addEventListener('input',renderChildAvatar);
@@ -248,7 +241,7 @@ $('child-dialog').addEventListener('close',()=>setBookCover(null));
 $('child-book-cover-file').addEventListener('change',event=>{
  const file=event.target.files[0];if(!file)return;
  if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size===0||file.size>12*1024*1024){$('child-error').textContent='請選擇 12 MB 以內的 JPG、PNG 或 WebP 書封照片。';event.target.value='';return;}
- $('child-error').textContent='';setBookCover({file,preview:URL.createObjectURL(file)});state.dirty=true;
+ $('child-error').textContent='';setBookCover({file,localPreview:true,preview:URL.createObjectURL(file)});state.dirty=true;
 });
 $('remove-book-cover').onclick=()=>{if(state.busy)return;setBookCover(null);state.dirty=true;};
 $('child-form').addEventListener('submit',event=>{
@@ -258,10 +251,10 @@ $('child-form').addEventListener('submit',event=>{
   c.growthSex=$('child-growth-sex').value;
   // 補上實際生日時，既有孕期故事保留原日期，由 ageAt() 自動更新顯示。
   // 已上傳的識別碼保留到儲存成功或放棄，JSON 寫入失敗時可直接重試。
-  if(state.avatarDraft?.file){const blob=await compressPhoto(state.avatarDraft.file,512);const {body}=await jsonRequest('/api/growth/photos',{method:'POST',headers:{'Content-Type':blob.type},body:blob});state.avatarDraft.id=body.id;state.avatarDraft.file=null;}
+  if(state.avatarDraft?.file){const blob=state.avatarDraft.uploadBlob||=await compressPhoto(state.avatarDraft.file,512);const body=await cloud.uploadPhoto(blob,undefined,c);state.avatarDraft.id=body.id;state.avatarDraft.file=null;}
   c.avatar=state.avatarDraft?.id||null;
   c.bookTitle=$('child-book-title').value.trim();c.bookDedication=$('child-book-dedication').value;
-  if(state.bookCoverDraft?.file){const blob=await compressPhoto(state.bookCoverDraft.file);const {body}=await jsonRequest('/api/growth/photos',{method:'POST',headers:{'Content-Type':blob.type},body:blob});state.bookCoverDraft.id=body.id;state.bookCoverDraft.file=null;}
+  if(state.bookCoverDraft?.file){const blob=state.bookCoverDraft.uploadBlob||=await compressPhoto(state.bookCoverDraft.file);const body=await cloud.uploadPhoto(blob,undefined,c);state.bookCoverDraft.id=body.id;state.bookCoverDraft.file=null;}
   c.bookCover=state.bookCoverDraft?.id||null;
   const next=structuredClone(state.data),index=next.children.findIndex(v=>v.id===c.id);if(index<0)next.children.push(c);else next.children[index]=c;
   await commit(next);state.childId=c.id;state.page=0;state.photo=null;state.bookPosition='cover';$('year').value='all';$('search').value='';$('child-dialog').close();render();
@@ -272,18 +265,19 @@ $('child-form').addEventListener('submit',event=>{
 $('record-form').addEventListener('submit',event=>{
  event.preventDefault();if(!$('record-title').value.trim()){$('record-error').textContent='請為這段回憶填上標題。';return;}
  busy('record-error',async()=>{
+  const photoChild=state.data.children.find(c=>c.id===$('record-child-select').value);if(!photoChild)throw new Error('請選擇這筆紀錄所屬的孩子。');
   // 在上傳照片前先檢查量測；留白可清除原數字，避免為無效表單產生照片檔案。
   const heightCm=GrowthMetrics.parseInput($('record-height').value,'heightCm'),weightKg=GrowthMetrics.parseInput($('record-weight').value,'weightKg');
   for(let i=0;i<state.draft.length;i++){
    // 已上傳的識別碼保留在草稿，JSON 儲存失敗重試時可略過該照片，避免重複上傳。
-   const p=state.draft[i];if(p.id)continue;status('正在處理照片 '+(i+1)+' / '+state.draft.length+'…');const blob=await compressPhoto(p.file);
-   const {body}=await jsonRequest('/api/growth/photos',{method:'POST',headers:{'Content-Type':blob.type},body:blob});p.id=body.id;p.file=null;
+   const p=state.draft[i];if(p.id)continue;status('正在處理照片 '+(i+1)+' / '+state.draft.length+'…');const blob=p.uploadBlob||=await compressPhoto(p.file);
+   const body=await cloud.uploadPhoto(blob,undefined,photoChild);p.id=body.id;p.file=null;
   }
-  const r={id:state.recordEdit||crypto.randomUUID(),childId:state.childId,date:$('record-date').value,title:$('record-title').value.trim(),story:$('record-story').value,milestone:$('record-milestone').value.trim(),photos:state.draft.map(p=>p.id),coverPhoto:state.coverDraft?.id||null};
+  const r={id:state.recordEdit||crypto.randomUUID(),childId:$('record-child-select').value,date:$('record-date').value,title:$('record-title').value.trim(),story:$('record-story').value,milestone:$('record-milestone').value.trim(),photos:state.draft.map(p=>p.id),coverPhoto:state.coverDraft?.id||null};
   if(heightCm!==null)r.heightCm=heightCm;if(weightKg!==null)r.weightKg=weightKg;
   r.photoLayout=$('record-photo-layout').value;
   const next=structuredClone(state.data),index=next.records.findIndex(v=>v.id===r.id);if(index<0)next.records.push(r);else next.records[index]=r;
-  await commit(next);$('record-dialog').close();clearDraft();$('year').value='all';$('search').value='';state.page=allRecords().findIndex(v=>v.id===r.id);state.photo=null;render();
+  await commit(next);state.childId=r.childId;state.bookPosition='cover';$('record-dialog').close();clearDraft();$('year').value='all';$('search').value='';state.page=allRecords().findIndex(v=>v.id===r.id);state.photo=null;render();
  });
 });
 // 選照片時先驗證張數、型別與大小；先產生本機預覽，縮圖和上傳留到儲存時執行。
@@ -292,7 +286,7 @@ $('record-photos').addEventListener('change',event=>{
  if(state.draft.length+files.length>20){$('record-error').textContent='每筆紀錄最多可放 20 張照片。';event.target.value='';return;}
  const bad=files.find(f=>!['image/jpeg','image/png','image/webp'].includes(f.type)||f.size>12*1024*1024||f.size===0);
  if(bad){$('record-error').textContent='「'+bad.name+'」無法使用。請選擇 12 MB 以內的 JPG、PNG 或 WebP 照片。';event.target.value='';return;}
- files.forEach(file=>state.draft.push({file,preview:URL.createObjectURL(file)}));if(files.length)state.dirty=true;event.target.value='';renderDraft();
+ files.forEach(file=>state.draft.push({file,localPreview:true,preview:URL.createObjectURL(file)}));if(files.length)state.dirty=true;event.target.value='';renderDraft();
 });
 // 刪除前再次確認；移除該孩子及其故事，保留其他孩子資料，磁碟照片仍留供備份還原。
 $('delete-child').onclick=()=>{
@@ -329,15 +323,38 @@ $('book').addEventListener('touchstart',event=>{if(event.touches.length!==1||eve
 $('book').addEventListener('touchend',event=>{if(!touch)return;const end=event.changedTouches[0],dx=end.clientX-touch.x,dy=end.clientY-touch.y;touch=null;if(Math.abs(dx)>65&&Math.abs(dx)>Math.abs(dy)*1.5)flip(dx<0?1:-1);},{passive:true});
 // 關閉按鈕與 Esc 共用未儲存確認；欄位變動時標記 dirty。
 document.querySelectorAll('[data-close]').forEach(button=>button.onclick=()=>closeDialog(button.closest('dialog')));
-document.querySelectorAll('dialog').forEach(dialog=>{dialog.addEventListener('cancel',event=>{event.preventDefault();closeDialog(dialog);});dialog.addEventListener('input',()=>state.dirty=true);});
+document.querySelectorAll('#child-dialog,#record-dialog').forEach(dialog=>{dialog.addEventListener('cancel',event=>{event.preventDefault();closeDialog(dialog);});dialog.addEventListener('input',()=>state.dirty=true);});
 // 離開或重新整理時，若仍有未儲存編輯或正在存檔，請瀏覽器顯示內建提醒。
 // 儲存中或表單尚未儲存時提示離開；這是防誤關閉提醒，並非自動保存草稿。
-window.addEventListener('beforeunload',event=>{if(state.busy||state.dirty){event.preventDefault();event.returnValue='';}});
-// 初次開啟從本機 API 載入資料及版本；file:// 無法存檔，因此提示使用啟動檔。
-(async()=>{
- if(preview){state.data={schemaVersion:1,children:[],records:[]};render();return;}
- if(location.protocol==='file:'){status('請先執行 start-home.cmd，再從書籤首頁開啟「成長相簿」。',true);return;}
- try{const {response,body}=await jsonRequest('/api/growth');state.data=body;state.revision=response.headers.get('etag');status(body.updatedAt?'已從本機載入 · 最後儲存 '+new Date(body.updatedAt).toLocaleString('zh-TW',{hour12:false}):'本機相簿準備好了 · 新增第一位孩子，開始收藏成長故事');render();}
- catch(error){status(error.message,true);}
-})();
+window.addEventListener('beforeunload',event=>{if(state.busy||state.dirty||cloud?.hasUnsaved){event.preventDefault();event.returnValue='';}});
+function clearPrivateView(){
+ clearDraft();setChildAvatar(null);setBookCover(null);state.dirty=false;state.childId='';state.page=0;state.photo=null;state.bookPosition='cover';
+ for(const id of ['child-dialog','record-dialog']){$(id).close();$(id).querySelector('form').reset();}
+ for(const id of ['record-list','timeline-list','story-content','story-title','photo-thumbs','story-age','story-date','story-milestone','story-measurements','photo-date','photo-caption','photo-number','timeline-title','timeline-count','record-child','record-child-select'])$(id).replaceChildren();
+ document.querySelectorAll('img').forEach(img=>{if(img.getAttribute('src')?.startsWith('blob:'))img.removeAttribute('src');});
+ state.data=GrowthData.empty();render();
+}
+// Include current valid form fields and unuploaded photos in a portable backup.
+async function backupDraft(){
+ if(!state.dirty)return null;const next=structuredClone(state.data),photos=new Map();
+ const photo=draft=>{if(!draft)return null;if(draft.id)return draft.id;const ext=draft.file.type==='image/png'?'png':draft.file.type==='image/webp'?'webp':'jpg';draft.backupId||=crypto.randomUUID()+'.'+ext;photos.set(draft.backupId,draft.file);return draft.backupId;};
+ if($('child-dialog').open){
+  const c={id:state.childEdit||crypto.randomUUID(),name:$('child-name').value.trim(),birthday:$('child-birthday').value,growthSex:$('child-growth-sex').value,avatar:photo(state.avatarDraft),bookCover:photo(state.bookCoverDraft),bookTitle:$('child-book-title').value.trim(),bookDedication:$('child-book-dedication').value};
+  const index=next.children.findIndex(item=>item.id===c.id);if(index<0)next.children.push(c);else next.children[index]=c;
+ }
+ if($('record-dialog').open){
+  const r={id:state.recordEdit||crypto.randomUUID(),childId:$('record-child-select').value,date:$('record-date').value,title:$('record-title').value.trim(),story:$('record-story').value,milestone:$('record-milestone').value.trim(),photos:state.draft.map(photo),coverPhoto:photo(state.coverDraft),photoLayout:$('record-photo-layout').value};
+  const height=GrowthMetrics.parseInput($('record-height').value,'heightCm'),weight=GrowthMetrics.parseInput($('record-weight').value,'weightKg');if(height!==null)r.heightCm=height;if(weight!==null)r.weightKg=weight;
+  const index=next.records.findIndex(item=>item.id===r.id);if(index<0)next.records.push(r);else next.records[index]=r;
+ }
+ try{return {document:GrowthData.validate(next),photos};}catch{throw new Error('表單尚未完整，請先填寫名字／故事標題與日期，再下載含草稿的完整備份。');}
+}
+state.data=GrowthData.empty();render();
+function refreshPhotoPreviews(){
+ if(state.avatarDraft?.id&&!state.avatarDraft.localPreview){state.avatarDraft.preview=photoUrl(state.avatarDraft.id);renderChildAvatar();}
+ if(state.bookCoverDraft?.id&&!state.bookCoverDraft.localPreview){state.bookCoverDraft.preview=photoUrl(state.bookCoverDraft.id);setBookCover(state.bookCoverDraft);}
+ for(const draft of state.draft)if(draft.id&&!draft.localPreview)draft.preview=photoUrl(draft.id);
+ if($('record-dialog').open)renderDraft();render();
+}
+cloud=GrowthCloudUI.mount({onDocument:document=>{state.data=document;render();},onState:current=>{cloudReady=current.editable;controls();if(current.error)status(current.error.message,true);else status('');},onClear:clearPrivateView,onPhotos:refreshPhotoPreviews,hasEdits:()=>state.dirty||state.busy||$('child-dialog').open||$('record-dialog').open,getDraft:backupDraft});
 })();

@@ -3,7 +3,8 @@ const fs=require('node:fs/promises'),path=require('node:path');
 const {publicDocument}=require('../apps/admin/public/project-model.js');
 const BOOKMARK_JS=['bookmark-core.js','bookmark-file.js','bookmark-drive.js','bookmark-cloud.js','bookmark-login.js','bookmark-cache.js','bookmark-drive-ui.js','bookmark-check.js','bookmark-quick.js','home.js'];
 const {loadDriveConfig}=require('../apps/bookmarks/scripts/drive-config.cjs');
-const GROWTH_JS=['growth.js','growth-flipbook.js','growth-metrics.js','growth-reference.js'];
+const GROWTH_JS=['growth.js','growth-flipbook.js','growth-metrics.js','growth-reference.js','growth-data.js','growth-drive.js','growth-cloud-ui.js','growth-backup.js'];
+const GROWTH_SHARED_JS=['bookmark-cloud.js','bookmark-login.js'];
 const GROWTH_CSS=['growth.css','growth-flipbook.css','growth-metrics.css'];
 // The local source is ignored by Git; CI consumes this published-only snapshot.
 async function loadPublicProjects(homeRoot){
@@ -43,7 +44,7 @@ async function buildSite(homeRoot,options={}){
   await fs.mkdir(path.join(output,site,'Javascript'),{recursive:true});await fs.mkdir(path.join(output,site,'src'),{recursive:true});
   await fs.copyFile(path.join(sharedRoot,'Javascript/app-runtime.js'),path.join(output,site,'Javascript/app-runtime.js'));
   await fs.copyFile(path.join(sharedRoot,'src/cozy-theme.css'),path.join(output,site,'src/cozy-theme.css'));
-  const config=site==='bookmarks'?await loadDriveConfig(homeRoot):{mode:'preview',homeUrl:'../index.html'};
+  const config={...await loadDriveConfig(homeRoot),...(site==='growth'?{homeUrl:'../index.html'}:{})};
   await fs.writeFile(path.join(output,site,'Javascript/site-config.js'),'window.BookmarksConfig='+JSON.stringify(config)+';\n');
  }
  // 公開首頁不列出私人的書籤與成長相簿入口；本機首頁維持原樣。
@@ -68,6 +69,7 @@ async function buildSite(homeRoot,options={}){
  for(const icon of ['chatgpt.ico','gemini.png'])await fs.copyFile(path.join(appRoot,'images/icons',icon),path.join(output,'bookmarks/images/icons',icon));
  for(const file of BOOKMARK_JS)await fs.copyFile(path.join(appRoot,'Javascript',file),path.join(output,'bookmarks/Javascript',file));
  for(const file of GROWTH_JS)await fs.copyFile(path.join(growthRoot,'Javascript',file),path.join(output,'growth/Javascript',file));
+ for(const file of GROWTH_SHARED_JS)await fs.copyFile(path.join(appRoot,'Javascript',file),path.join(output,'growth/Javascript',file));
  for(const file of GROWTH_CSS)await fs.copyFile(path.join(growthRoot,'src',file),path.join(output,'growth/src',file));
  for(const [site,title] of [['bookmarks','書籤工作台'],['growth','成長相簿']])await fs.writeFile(path.join(output,site,'index.html'),redirectPage(site+'.html',title));
  await fs.writeFile(path.join(output,'bookmarks/growth.html'),redirectPage('../growth/growth.html','成長相簿'));

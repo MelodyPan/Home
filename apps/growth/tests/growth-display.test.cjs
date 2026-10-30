@@ -35,3 +35,9 @@ test('書封草稿可預覽更換及移除，釋放 blob 而不刪除既有照�
  assert.deepEqual(revoked,['blob:old-cover']);assert.equal(view.get('child-book-cover-preview').src,'/photos/saved.jpg');assert.equal(view.get('child-book-cover-preview').hidden,false);
  view.c.setBookCover(null);assert.deepEqual(revoked,['blob:old-cover']);assert.equal(view.get('child-book-cover-preview').hidden,true);assert.equal(view.get('remove-book-cover').hidden,true);assert.equal(state.bookCoverDraft,null);
 });
+
+test('cloud-owned blob URLs survive cancelling avatar and cover edits',()=>{
+ const revoked=[],state={avatarDraft:{id:'saved.jpg',preview:'blob:drive-photo'},bookCoverDraft:{id:'cover.jpg',preview:'blob:drive-cover'}},view=context({state,URL:{revokeObjectURL:url=>revoked.push(url)}});
+ view.get('child-name').value='小星';load(view.c,'renderChildAvatar');load(view.c,'setChildAvatar');load(view.c,'setBookCover');
+ view.c.setChildAvatar(null);view.c.setBookCover(null);assert.deepEqual(revoked,[]);
+});

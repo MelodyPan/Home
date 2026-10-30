@@ -4,7 +4,7 @@
  const base=new URL('../',document.currentScript.src),config=globalThis.BookmarksConfig||{};
  const runtime={mode:config.mode||'local',url:pathname=>new URL(pathname.replace(/^\/+/,''),base).href};
  globalThis.BookmarksRuntime=runtime;
- if(config.homeUrl&&document.body.dataset.page!=='bookmarks'){
+ if(config.homeUrl&&document.body.dataset.page!=='bookmarks'&&document.body.dataset.homeLink!=='hidden'){
   const link=document.createElement('a');link.href=new URL(config.homeUrl,base).href;link.className='home-system-link';link.textContent='← Home 首頁';
   const target=document.querySelector('.site-header')||document.querySelector('.sidebar');if(target)target.append(link);
  }

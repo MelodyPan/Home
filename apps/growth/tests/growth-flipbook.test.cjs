@@ -91,7 +91,7 @@ test('完整前端載入後，可從時間軸切換電子書，再回到同一�
   {id:'2',childId:'child-a',date:'2025-01-01',title:'第二段故事',story:'',milestone:'',photos:['second']},
   {id:'3',childId:'child-b',date:'2025-02-01',title:'另一位孩子',story:'',milestone:'',photos:[]}
  ]};
- const context={structuredClone,document:{getElementById:get,createElement:elements,createElementNS:elements,querySelectorAll:()=>[]},Option:function(text,value){this.text=text;this.value=value;},
+ const context={structuredClone,GrowthData:{empty:()=>({schemaVersion:1,children:[],records:[]})},GrowthCloudUI:{mount({onDocument,onState}){setImmediate(()=>{onState({editable:true});onDocument(data);});return {photoUrl:id=>'/photos/'+id,save:async next=>next,hasUnsaved:false};}},document:{getElementById:get,createElement:elements,createElementNS:elements,querySelectorAll:()=>[]},Option:function(text,value){this.text=text;this.value=value;},
   matchMedia:()=>({matches:true,addEventListener(){}}),window:{addEventListener(){}},location:{protocol:'http:'},
   fetch:async()=>({ok:true,json:async()=>data,headers:{get:()=> 'revision'}})};
  vm.createContext(context);

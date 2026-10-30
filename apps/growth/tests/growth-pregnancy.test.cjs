@@ -33,8 +33,8 @@ test('年齡顯示涵蓋孕期、出生前天數、出生當天及原有月齡�
 });
 
 test('新增紀錄不再限制生日以前，孕期相簿預設今天而非未來出生日期',()=>{
- const nodes=new Map(),get=id=>{if(!nodes.has(id))nodes.set(id,{showModal(){},value:'',textContent:''});return nodes.get(id);};
- const state={data:{},busy:false},context={state,$:get,child:()=>child,today:()=> '2026-03-01',clearDraft(){},renderDraft(){}};
+ const nodes=new Map(),get=id=>{if(!nodes.has(id))nodes.set(id,{showModal(){},replaceChildren(){},value:'',textContent:''});return nodes.get(id);};
+ const state={data:{children:[child]},busy:false},context={state,Option:function(text,value){this.value=value;},cloudReady:true,$:get,child:()=>child,today:()=> '2026-03-01',clearDraft(){},renderDraft(){}};
  vm.createContext(context);vm.runInContext(source.match(/function openRecord\([\s\S]*?^}/m)[0],context);
  context.openRecord();assert.ok(!get('record-date').min);assert.equal(get('record-date').value,'2026-03-01');
  context.openRecord(record);assert.equal(get('record-date').value,record.date);

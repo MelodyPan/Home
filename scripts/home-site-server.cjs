@@ -1,6 +1,7 @@
-// Home 與子系統共用一個本機服務；公開程式在 apps，私人資料位置由被 Git 忽略的設定決定。
+// Home 與子系統共用一個本機服務；相簿與書籤只供應公開程式及設定。
 const fs=require('node:fs/promises'),path=require('node:path');
 const {createHash}=require('node:crypto');
+const {loadDriveConfig}=require('../apps/bookmarks/scripts/drive-config.cjs');
 async function getHomeVersion(homeRoot,appRoot=path.join(homeRoot,'apps/bookmarks')){
  const {getServerVersion}=require(path.join(appRoot,'scripts/server-version.cjs'));const hash=createHash('sha256').update(getServerVersion());
  for(const file of ['scripts/home-site-server.cjs','apps/growth/scripts/server.cjs','apps/growth/scripts/growth-store.cjs','apps/admin/server/handler.cjs','apps/admin/server/auth.cjs','apps/admin/server/config.cjs','apps/admin/server/store.cjs','apps/admin/server/public-config.cjs','apps/admin/public/project-model.js','apps/admin/projects.seed.json','portfolio.config.json','bookmarks.config.json','.home-portfolio.json','.home-local.json'])try{hash.update(await fs.readFile(path.join(homeRoot,file)));}catch(e){if(e.code!=='ENOENT')throw e;}
@@ -9,12 +10,10 @@ async function getHomeVersion(homeRoot,appRoot=path.join(homeRoot,'apps/bookmark
 }
 async function createHomeServer(homeRoot,options={}){
  homeRoot=path.resolve(homeRoot);const appRoot=options.appRoot||path.join(homeRoot,'apps/bookmarks');
- let config={};try{config=JSON.parse(await fs.readFile(path.join(homeRoot,'.home-local.json'),'utf8'));}catch(error){if(error.code!=='ENOENT')throw error;}
- const dataRoot=options.dataRoot||path.resolve(homeRoot,config.bookmarksDataRoot||'data/bookmarks');
- // 缺省沿用原資料位置，因此拆站不需要搬移孩子紀錄或照片。
+ // 相簿只供應靜態程式與公開 OAuth 設定，不開啟私人資料位置。
  const growthRoot=options.growthRoot||path.join(homeRoot,'apps/growth');
  const {createGrowthHandler}=require(path.join(growthRoot,'scripts/server.cjs'));
- const growth=createGrowthHandler(growthRoot,{basePath:'/growth',dataRoot:options.growthDataRoot||(config.growthDataRoot?path.resolve(homeRoot,config.growthDataRoot):dataRoot),runtimeConfig:{mode:'local',homeUrl:'../index.html'}});
+ const growth=createGrowthHandler(growthRoot,{basePath:'/growth',bookmarkRoot:appRoot,runtimeConfig:{...await loadDriveConfig(homeRoot),homeUrl:'../index.html'}});
  const {createBookmarkServer}=require(path.join(appRoot,'scripts/server.cjs'));
  const {createAdminHandler}=require(path.join(homeRoot,'apps/admin/server/handler.cjs'));
  const portfolio=await createAdminHandler({root:homeRoot,...options.portfolio,canShutdown:true});
@@ -42,12 +41,11 @@ async function createHomeServer(homeRoot,options={}){
   }else{send(404,'Not found');return;}
   try{send(200,await fs.readFile(file),type);}catch(error){if(error.code!=='ENOENT')throw error;send(404,'Not found');}
  }});
- // 舊書籤中的相簿網址仍能使用；API／照片保留 HTTP 方法與請求內容。
+ // 舊書籤中的相簿入口仍可轉址；本機私人 API／照片網址不再提供。
  function legacyGrowth(req,res){
   const url=new URL(req.url,'http://127.0.0.1');
   let target,status=307;
   if(url.pathname==='/growth.html'){target='/growth/growth.html';status=302;}
-  else if(url.pathname==='/api/growth'||url.pathname.startsWith('/api/growth/')||url.pathname.startsWith('/assets/growth-photos/'))target='/growth'+url.pathname;
   if(!target)return false;
   res.writeHead(status,{Location:target+url.search,'Cache-Control':'no-store'});res.end();return true;
  }

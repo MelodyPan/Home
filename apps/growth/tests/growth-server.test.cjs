@@ -3,11 +3,12 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs/promises');
 const os=require('node:os');
 const path=require('node:path');
-const {createGrowthServer:createBookmarkServer}=require('../scripts/server.cjs');
+const {createGrowthServer:createBookmarkServer}=require('./fixtures/legacy-growth-server.cjs');
+const {createGrowthServer}=require('../scripts/server.cjs');
 // 每項測試使用獨立暫存目錄與隨機連接埠，結束後關閉服務並清除測試資料。
-async function setup(t){
+async function setup(t,{production=false}={}){
  const root=await fs.mkdtemp(path.join(os.tmpdir(),'growth-test-'));
- const server=createBookmarkServer(root);await new Promise(r=>server.listen(0,'127.0.0.1',r));
+ const server=(production?createGrowthServer:createBookmarkServer)(root);await new Promise(r=>server.listen(0,'127.0.0.1',r));
  t.after(async()=>{await new Promise(r=>server.close(r));await fs.rm(root,{recursive:true,force:true});});
  const origin='http://127.0.0.1:'+server.address().port;
  const request=(url,method='GET',body,tag,source=origin)=>fetch(origin+url,{method,headers:{Origin:source,'Content-Type':'application/json',...(tag?{'If-Match':tag}:{})},...(body===undefined?{}:{body:JSON.stringify(body)})});
@@ -64,7 +65,7 @@ test('pregnancy stories persist before birth and survive adding the actual birth
 });
 // 電子書只開放明確列出的靜態檔案，內容與 MIME 正確，其他程式檔不對外提供。
 test('growth serves local flipbook assets with the expected content types',async t=>{
- const {root,origin}=await setup(t);
+ const {root,origin}=await setup(t,{production:true});
  for(const [file,type] of [['Javascript/growth-flipbook.js','application/javascript'],['src/growth-flipbook.css','text/css'],['Javascript/growth-metrics.js','application/javascript'],['src/growth-metrics.css','text/css'],['Javascript/growth-reference.js','application/javascript']]){
   await fs.mkdir(path.dirname(path.join(root,file)),{recursive:true});
   const source=await fs.readFile(path.resolve(file),'utf8');await fs.writeFile(path.join(root,file),source);
@@ -135,7 +136,7 @@ test('growth deletion preserves sibling records and concurrent saves cannot over
 });
 // 驗證相簿與指定前端資源可讀取，但後端儲存程式不能經 HTTP 下載。
 test('growth page and only explicitly allowed assets are served',async t=>{
- const {root,request}=await setup(t);
+ const {root,request}=await setup(t,{production:true});
  for(const file of ['growth.html','src/growth.css','Javascript/growth.js']){await fs.mkdir(path.dirname(path.join(root,file)),{recursive:true});await fs.copyFile(file,path.join(root,file));}
  for(const [url,type] of [['/growth.html','text/html'],['/src/growth.css','text/css'],['/Javascript/growth.js','application/javascript']]){const result=await request(url);assert.equal(result.status,200);assert.ok(result.headers.get('content-type').startsWith(type));assert.ok((await result.text()).length>100);}
  assert.equal((await request('/scripts/growth-store.cjs')).status,404);
