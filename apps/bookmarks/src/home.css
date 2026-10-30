@@ -129,3 +129,21 @@ body[data-page=bookmarks] #toast{color:#fff;font-size:14px;font-weight:500;line-
 #quick-links .home-favorite-link .quick-label{min-width:0}
 
 #quick-links .home-favorite-link .site-symbol[hidden]{display:none}
+
+/* 首頁收藏用途切換與其他篩選分開，支援窄螢幕與鍵盤操作。 */
+#quick-purpose-filters{display:flex;flex-wrap:wrap;gap:6px;width:fit-content;max-width:100%;margin:0 0 16px;padding:4px;border:1px solid #e5d4e3;border-radius:12px;background:#fffdfb}
+#quick-purpose-filters[hidden]{display:none}
+#quick-purpose-filters button{min-height:36px;min-width:64px;padding:6px 16px;border:0;border-radius:8px;background:transparent;color:#80617b;font-size:13px}
+#quick-purpose-filters button[aria-pressed=true]{background:#916087;color:#fff;box-shadow:0 2px 6px #79527122}
+#quick-purpose-filters button:focus-visible{outline:2px solid #547ca8;outline-offset:2px}
+#quick-empty{margin:8px 0 0;color:#806f7e;font-size:13px;line-height:1.7}
+/* 手機的簡易書籤入口固定兩欄；詳細卡片與首頁收藏清單各自維持原本版面。 */
+@media(max-width:740px){#bookmark-grid[data-presentation=simple]{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}}
+/* 收藏標題與用途切換固定同排，排序按鈕在空間不足時可另起一排。 */
+.quick-section>.section-caption{flex-wrap:wrap}
+.quick-caption-main{display:flex;align-items:center;gap:16px;min-width:0}
+.quick-caption-main h2{flex-shrink:0;white-space:nowrap}
+.quick-caption-main #quick-purpose-filters{flex-wrap:nowrap;flex-shrink:0;margin:0}
+#manage-quick-order{margin-left:auto}
+@media(max-width:740px){.quick-caption-main{gap:10px}}
+@media(max-width:380px){.quick-caption-main{gap:8px}.quick-caption-main #quick-purpose-filters{gap:3px;padding:3px}.quick-caption-main #quick-purpose-filters button{min-width:44px;padding:6px 8px}}
