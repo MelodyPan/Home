@@ -44,12 +44,21 @@ dialog{width:min(640px,calc(100% - 30px));border:1px solid #e8d8ed;border-radius
 .growth-header-actions{display:flex;align-items:center;gap:16px}.growth-header-actions .outline-button{white-space:nowrap}.growth-drive-dialog{width:min(620px,calc(100vw - 28px));max-height:85dvh;overflow:auto;padding:28px;color:#765486}.growth-drive-dialog h3{font-size:15px;margin:0 0 12px}.growth-drive-dialog section{padding-top:20px;margin-top:20px;border-top:1px solid #e8daef}.growth-drive-dialog select{width:100%;margin:8px 0 12px}.growth-cloud-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px}.growth-cloud-imports{display:grid;gap:12px;margin-top:14px}.growth-cloud-imports label{display:grid;gap:6px;font-size:13px}.growth-cloud-imports input{max-width:100%;font-size:12px}.growth-drive-dialog #growth-cloud-message{font-size:13px;line-height:1.8;overflow-wrap:anywhere}.growth-drive-dialog #growth-cloud-account{font-size:12px;overflow-wrap:anywhere}.growth-drive-dialog .form-note{line-height:1.8}.growth-drive-dialog button:disabled{opacity:.5;cursor:not-allowed}@media(max-width:560px){.growth-header-actions{gap:8px}.growth-header-actions .back{font-size:10px}.growth-header-actions .outline-button{padding:8px 10px;font-size:11px}.growth-drive-dialog{padding:20px}}
 
 .family-action-compact{display:none}
-/* 手機使用單排工具列；選單可縮小，操作保留可點擊尺寸與完整無障礙名稱。 */
+.child-list-empty{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* 手機使用單排工具列；大頭貼列可滑動，操作保留可點擊尺寸與完整無障礙名稱。 */
 @media(max-width:800px){
  .family-bar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
  .family-bar>div:first-child{width:100%;min-width:0;display:flex;flex-wrap:nowrap;gap:6px;flex:none}
  .family-bar .field-label{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
- .family-bar select{width:0;min-width:0;max-width:100%;min-height:44px;flex:1;padding:10px 6px;text-overflow:ellipsis}
+ .family-bar select,.family-bar .mobile-child-avatar{display:none}
+ .family-bar .child-list{display:flex;align-items:center;gap:6px;width:100%;min-width:0;padding:4px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin}
+ .family-bar .child-choice-row{flex:0 0 54px;width:54px}
+ .family-bar .child-preview{display:none}
+ .family-bar .child-choice{flex-direction:column;justify-content:center;gap:4px;width:54px;min-height:66px;padding:4px;border-radius:12px}
+ .family-bar .child-avatar{width:36px;height:36px}
+ .family-bar .child-name{display:block;max-width:44px;font-size:10px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .family-bar .child-choice[aria-pressed=true] .child-avatar{box-shadow:0 0 0 2px #a66f96}
+ .family-bar .child-list-empty{display:block;min-height:44px;line-height:44px}
  .family-actions{display:flex;flex-direction:row;flex-wrap:nowrap;width:auto;min-width:0;margin-left:0;gap:6px}
  .family-actions button,.family-actions #preview-child{min-width:44px;min-height:44px;white-space:nowrap;font-size:12px;padding:8px 9px}
  .family-action-full{display:none}

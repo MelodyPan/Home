@@ -53,10 +53,11 @@ function render(){
  if(!state.data.children.length)$('child-select').append(new Option('尚未新增孩子',''));
  state.data.children.forEach(c=>$('child-select').append(new Option(c.name,c.id)));$('child-select').value=state.childId;
  fillAvatar($('selected-child-avatar'),child());$('selected-child-avatar').hidden=!child();
- // 桌面側欄的孩子快捷按鈕與手機下拉選單共用同一份選擇狀態。
+ // 桌面側欄與手機大頭貼列共用孩子按鈕與選擇狀態。
  // 重新建立每位孩子的大頭貼、選取按鈕與獨立預覽按鈕；預覽會直接選取該孩子並開啟時間軸。
  $('child-list').replaceChildren();
- state.data.children.forEach(c=>{const button=document.createElement('button');button.type='button';button.className='child-choice';button.setAttribute('aria-pressed',c.id===state.childId);button.disabled=state.busy;const avatar=document.createElement('span');avatar.className='child-avatar';fillAvatar(avatar,c);avatar.setAttribute('aria-hidden','true');const name=document.createElement('span');name.textContent=c.name;button.append(avatar,name);button.onclick=()=>selectChild(c.id);const preview=actionButton('預覽',()=>selectChild(c.id,'timeline'),'child-preview');preview.setAttribute('aria-label','預覽'+c.name+'的成長時間軸');preview.disabled=state.busy;const row=document.createElement('div');row.className='child-choice-row';row.append(button,preview);$('child-list').append(row);});
+ if(!state.data.children.length){const empty=document.createElement('span');empty.className='child-list-empty';empty.textContent='尚未新增孩子';$('child-list').append(empty);}
+ state.data.children.forEach(c=>{const button=document.createElement('button');button.type='button';button.className='child-choice';button.title=c.name;button.setAttribute('aria-pressed',c.id===state.childId);button.disabled=state.busy;const avatar=document.createElement('span');avatar.className='child-avatar';fillAvatar(avatar,c);avatar.setAttribute('aria-hidden','true');const name=document.createElement('span');name.className='child-name';name.textContent=c.name;button.append(avatar,name);button.onclick=()=>selectChild(c.id);const preview=actionButton('預覽',()=>selectChild(c.id,'timeline'),'child-preview');preview.setAttribute('aria-label','預覽'+c.name+'的成長時間軸');preview.disabled=state.busy;const row=document.createElement('div');row.className='child-choice-row';row.append(button,preview);$('child-list').append(row);});
  // 年份取自目前孩子的全部紀錄；重繪後，原選項若仍存在就繼續保留。
  const years=[...new Set(allRecords().map(r=>r.date.slice(0,4)))].sort().reverse(),selectedYear=$('year').value;
  $('year').replaceChildren(new Option('所有年份','all'));years.forEach(y=>$('year').append(new Option(y+' 年',y)));$('year').value=years.includes(selectedYear)?selectedYear:'all';
