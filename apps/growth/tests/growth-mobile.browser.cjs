@@ -13,15 +13,19 @@ const {createGrowthServer}=require('../scripts/server.cjs');
   assert.equal(await page.locator('.growth-header-actions').evaluate(el=>getComputedStyle(el).touchAction),'manipulation');
   await page.locator('#growth-login').tap();await page.locator('#growth-drive-dialog').waitFor({state:'visible'});
   await page.locator('#growth-cloud-close').tap();
-  for(const width of [320,375,390,414,560,768]){
+  for(const width of [320,375,390,414,560,600,640,768,800]){
    await page.setViewportSize({width,height:844});
    for(const withAvatar of [false,true]){
     await page.evaluate(withAvatar=>{const avatar=document.querySelector('#selected-child-avatar');avatar.hidden=!withAvatar;avatar.textContent='育';document.querySelector('#child-select option').textContent='這是一個比較長的孩子暱稱';},withAvatar);
     const layout=await page.evaluate(()=>{
-     const selectors=['.family-bar .field-label','#child-select','#preview-child','#edit-child','#add-child'];if(!document.querySelector('#selected-child-avatar').hidden)selectors.push('#selected-child-avatar');
+     const selectors=['#child-select','#preview-child','#edit-child','#add-child'];if(!document.querySelector('#selected-child-avatar').hidden)selectors.push('#selected-child-avatar');
      return {overflow:document.documentElement.scrollWidth>innerWidth,rects:selectors.map(selector=>{const r=document.querySelector(selector).getBoundingClientRect();return {selector,left:r.left,right:r.right,top:r.top,bottom:r.bottom};})};
     });
     assert.equal(layout.overflow,false,'page overflow at '+width);
+    if(width<=800){
+     const centers=layout.rects.map(rect=>(rect.top+rect.bottom)/2);assert(Math.max(...centers)-Math.min(...centers)<1,'family controls must share one row at '+width);
+     for(const selector of ['#preview-child','#edit-child','#add-child']){const box=await page.locator(selector).boundingBox();assert(box.width>=44&&box.height>=44,'touch target too small: '+selector);}
+    }
     for(const rect of layout.rects){assert(rect.left>=0&&rect.right<=width+.5,'control exceeds viewport at '+width+': '+rect.selector);}
     for(let i=0;i<layout.rects.length;i++)for(let j=i+1;j<layout.rects.length;j++){
      const a=layout.rects[i],b=layout.rects[j],overlap=Math.min(a.right,b.right)-Math.max(a.left,b.left)>1&&Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top)>1;
@@ -38,6 +42,6 @@ const {createGrowthServer}=require('../scripts/server.cjs');
    }
   }
   console.log('Date inputs match text input widths without horizontal overflow.');
-  console.log('Mobile family controls: no overlap at 320, 375, 390, 414, 560, 768px with long names, avatars and touch styles.');
+  console.log('Mobile family controls: one row without overlap at 320–800px with long names, avatars and touch styles.');
  }finally{await browser?.close();await new Promise(resolve=>server.close(resolve));}
 })().catch(error=>{console.error(error);process.exitCode=1;});
