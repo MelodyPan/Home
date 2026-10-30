@@ -26,6 +26,14 @@ const {createGrowthServer}=require('../scripts/server.cjs');
    }
   }
   await page.setViewportSize({width:390,height:844});await page.locator('.family-sidebar').screenshot({path:path.join(os.tmpdir(),'growth-mobile-family.png')});
+  for(const width of [320,375,390,414,560,768]){
+   await page.setViewportSize({width,height:844});
+   for(const [dialog,date,text]of [['record-dialog','record-date','record-milestone'],['child-dialog','child-birthday','child-name']]){
+    const sizes=await page.evaluate(({dialog,date,text})=>{const modal=document.getElementById(dialog);modal.showModal();document.getElementById(date).value='2026-10-30';const a=document.getElementById(date).getBoundingClientRect(),b=document.getElementById(text).getBoundingClientRect();const result={dateWidth:a.width,textWidth:b.width,overflow:modal.scrollWidth>modal.clientWidth};modal.close();return result;},{dialog,date,text});
+    assert(Math.abs(sizes.dateWidth-sizes.textWidth)<1,'date width differs from text at '+width+': '+date);assert.equal(sizes.overflow,false,'dialog scrolls horizontally at '+width+': '+dialog);
+   }
+  }
+  console.log('Date inputs match text input widths without horizontal overflow.');
   console.log('Mobile family controls: no overlap at 320, 375, 390, 414, 560, 768px with long names, avatars and touch styles.');
  }finally{await browser?.close();await new Promise(resolve=>server.close(resolve));}
 })().catch(error=>{console.error(error);process.exitCode=1;});
