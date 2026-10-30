@@ -157,6 +157,15 @@ body[data-page=bookmarks] #toast{color:#fff;font-size:14px;font-weight:500;line-
 #manage-quick-order{margin-left:auto}
 @media(max-width:740px){.quick-caption-main{gap:10px}}
 @media(max-width:380px){.quick-caption-main{gap:8px}.quick-caption-main #quick-purpose-filters{gap:3px;padding:3px}.quick-caption-main #quick-purpose-filters button{min-width:44px;padding:6px 8px}}
+/* 排序工具不套用表單欄位的手機 16px 字級，與相鄰工具按鈕保持一致。 */
+@media(max-width:740px){body[data-page=bookmarks] #sort{font-size:13px;font-weight:500;line-height:1.4;max-width:110px;min-height:40px}}
+
+/* 簡易卡片始終保留分類圖示，網站圖示載入成功後才並列顯示。 */
+#bookmark-grid .simple-bookmark-link .site-symbol[hidden]{display:none}
+
+#bookmark-grid .simple-bookmark-link .site-category-icon{display:grid;place-items:center}
+#bookmark-grid .simple-link-icons{display:inline-flex;align-items:center;justify-content:center;gap:8px;flex-shrink:0}
+#bookmark-grid .simple-website-icon{width:24px;height:24px;flex:0 0 24px;background:transparent;border-radius:4px}
 </style>
  <link rel="stylesheet" href="src/cozy-theme.css">
 </head>

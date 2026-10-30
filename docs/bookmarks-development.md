@@ -1,6 +1,6 @@
 # 書籤網站開發維護說明
 
-更新日期：2026-10-29。以目前本機程式核對；一般操作先看 [使用指南](bookmarks-guide.md)。本文件只描述書籤子網站，不替其他子網站定義儲存方式。
+更新日期：2026-10-30。以目前本機程式核對；一般操作先看 [使用指南](bookmarks-guide.md)。本文件只描述書籤子網站，不替其他子網站定義儲存方式。
 
 ## 先認識架構
 
@@ -110,9 +110,24 @@ Google 的正常 popup 錯誤由 `error_callback` 處理，參考 [官方錯誤�
 - `allSort` 與其他詳細頁的 `sort` 分開。網址排序不再套用工作系統優先，以免破壞網址順序。
 - `expandedCategory` 只記錄側欄展開狀態；收合不能重置右側已選的子分類結果。
 - `changes.quickOrder` 控制首頁全部可開啟收藏的順序，不是所有書籤的排序。首頁用緊密多欄連結清單，依上到下、再由左到右排列；透過 `#quick-links` 限定樣式，不能改到其他頁的簡易卡片。
+- `quickPurpose` 是首頁獨立的工作／生活切換，初始值為 work，沒有 all 選項；使用 getBookmarkPurpose 分類，再篩選已排序的收藏，不改變全站 state.purpose 或 Drive 內容。標題與切換位於 quick-caption-main 同排，窄螢幕的排序按鈕可另起一排。
+- 手機寬度不超過 740px 時，#bookmark-grid[data-presentation=simple] 固定兩欄；不套用到首頁清單或詳細卡片。#sort 以同範圍 13px 規則覆蓋共用手機表單的 16px 字級，其他表單欄位維持原設定。
+- 所有書籤／常用收藏已移除裝飾說明，頁面底部的宣傳文字、回到頂端按鈕及 footer 也已移除；浮動「上」按鈕保留。
 - 浮動「上」按鈕取決於非首頁、分類為 all、不是 favorites 且頁面已捲動；目前不出現在其他分類。
 
 這些 UI 篩選與展開狀態不寫進私人書籤檔，收藏／分類／常用入口順序等資料異動才會同步。
+
+## 書籤圖示規則
+
+| 畫面 | 分類圖示 | 網站圖示失敗時 |
+| --- | --- | --- |
+| 首頁常用收藏清單 | 不顯示 | 不顯示圖示或備用文字，不留圖示空位 |
+| 所有書籤／常用收藏簡易卡片 | 固定顯示 | 只保留分類圖示；成功才與網站圖示並列 |
+| 詳細卡片 | 不另外顯示分類圖示 | 沿用名稱首字等文字備援 |
+
+home.js 的 simpleLink() 建立 simple-link-icons 容器，內含獨立的 site-category-icon 與 simple-website-icon。網站部分呼叫 siteSymbol(entry, category.color, false)，false 表示不建立文字備援；分類部分不屬於載入備援，所以網站圖示成功也不能將它隱藏。圖片確認 load 才揭露網站圖示，所有來源都失敗就移除圖片。首頁同樣使用不帶文字備援的模式，詳細卡片則保留預設備援。
+
+bookmark-core.js 的 bookmarkIconSources() 依序提供：精確主機對應的站內固定圖示、可接受的內嵌點陣圖、外站根目錄 favicon.ico。ChatGPT（含舊 chat.openai.com）與 Gemini 的固定資源位於 [images/icons](../apps/bookmarks/images/icons/README.md)，不用每次向外站讀圖。不使用第三方圖示服務；其他網站的 favicon 不保證可取得，來源與資源白名單維護方式見該目錄說明。
 
 ## 網址檢查的邊界
 
