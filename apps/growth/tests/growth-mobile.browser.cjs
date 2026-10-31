@@ -59,6 +59,21 @@ const {createGrowthServer}=require('../scripts/server.cjs');
    }
   }
   console.log('Date inputs match text input widths without horizontal overflow.');
+  for(const width of [320,375,390,414,560,768]){
+   await page.setViewportSize({width,height:844});await page.locator('#growth-login').tap();
+   await page.evaluate(()=>{
+    for(const id of ['growth-cloud-folder','growth-cloud-import']){const files=new DataTransfer();files.items.add(new File(['backup'],'很長的成長相簿備份檔名'.repeat(15)+'.growth'));document.getElementById(id).files=files.files;}
+   });
+   const layout=await page.evaluate(()=>{
+    const dialog=document.querySelector('#growth-drive-dialog'),bounds=dialog.getBoundingClientRect(),style=getComputedStyle(dialog);
+    return {clientWidth:dialog.clientWidth,scrollWidth:dialog.scrollWidth,left:bounds.left,right:bounds.right,paddingLeft:parseFloat(style.paddingLeft),paddingRight:parseFloat(style.paddingRight),inputs:[...dialog.querySelectorAll('input[type=file]')].map(input=>{const r=input.getBoundingClientRect();return {id:input.id,left:r.left,right:r.right};})};
+   });
+   assert(layout.scrollWidth<=layout.clientWidth,'Drive dialog overflows at '+width);
+   for(const input of layout.inputs)assert(input.left>=layout.left+layout.paddingLeft&&input.right<=layout.right-layout.paddingRight,'file input exceeds content width at '+width+': '+input.id);
+   await page.evaluate(()=>{const dialog=document.querySelector('#growth-drive-dialog');dialog.scrollLeft=50;});assert.equal(await page.locator('#growth-drive-dialog').evaluate(el=>el.scrollLeft),0,'Drive dialog must not scroll horizontally');
+   await page.locator('#growth-cloud-close').tap();
+  }
+  console.log('Drive file inputs fit the dialog with long filenames and no horizontal scrolling at 320–768px.');
   console.log('Mobile avatars: one row, scrolling, 44px touch targets and no overlap at 320–800px with 1, 2 or 8 children.');
  }finally{await browser?.close();await new Promise(resolve=>server.close(resolve));}
 })().catch(error=>{console.error(error);process.exitCode=1;});
